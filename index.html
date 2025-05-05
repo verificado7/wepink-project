@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wepink :: Perfumaria</title>
+  <meta name="description" content="A We Pink veio para inovar o conceito beleza e a importância do cuidado com a sua pele com uma tecnologia única! Convidamos você para conhecer e se encantar com o mundo We Pink.">
+  <meta name="copyright" content="WePink">
+  <meta name="author" content="WePink">
+  <meta name="country" content="BRA">
+  <meta name="language" content="pt-BR">
+  <link rel="icon" href="img/we.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fff; /* Fundo branco puro, como no design original */
+    }
+    header, footer, section { padding: 20px; }
+    .product-grid { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .product-card { background: #fff; border-radius: 10px; padding: 16px; max-width: 300px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; border: 1px solid #eee; }
+    .product-card img { max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; }
+    .product-card h3 { font-size: 1.1rem; font-weight: 600; margin: 10px 0; }
+    .product-card p { font-size: 0.9rem; color: #666; margin: 5px 0; }
+    .price-old { text-decoration: line-through; color: #aaa; font-size: 0.9rem; }
+    .price-new { color: #000; font-weight: bold; font-size: 1.2rem; }
+    .installments { font-size: 0.9rem; color: #666; }
+    .button { background: #ff2e82; color: white; padding: 12px 20px; border: none; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; font-weight: bold; font-size: 0.9rem; }
+    .notification-bar { background-color: #ff2e82; color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 0.95rem; }
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background-color: #fff;
+      position: relative;
+    }
+    .header-bar .logo-text {
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: #ff2e82;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .header-icons { display: flex; gap: 10px; }
+    .header-icons svg { width: 24px; height: 24px; stroke: #000; stroke-width: 2; }
+    .header-icons a { text-decoration: none; }
+    .menu-icon { background: none; border: none; cursor: pointer; }
+    .menu-icon svg { width: 24px; height: 24px; stroke: #000; stroke-width: 2; }
+    .banner-principal {
+      position: relative;
+      height: 500px;
+      background-size: cover;
+      background-position: center;
+    }
+    h2.section-title { text-align: center; color: #ff2e82; font-size: 1.5rem; margin: 40px 0 20px; }
+    footer {
+      background-color: #ff2e82;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .social-links a {
+      background-color: #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+    .social-links img {
+      width: 24px;
+      height: 24px;
+    }
+    .payment-methods {
+      margin: 20px 0;
+    }
+    .payment-methods h4 {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .payment-methods img {
+      margin: 0 5px;
+      height: 30px;
+    }
+    .payment-methods img.pix-icon {
+      height: 40px;
+    }
+    .footer-info p {
+      font-size: 0.8rem;
+      margin: 5px 0;
+    }
+    .scroll-to-top {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .scroll-to-top .circle {
+      background-color: #ff99cc;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+    }
+    .scroll-to-top svg {
+      width: 16px;
+      height: 16px;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+    .scroll-to-top p {
+      font-size: 0.8rem;
+      margin: 0;
+      color: #fff;
+    }
+    @media (max-width: 600px) {
+      .product-card { max-width: 90%; }
+      .banner-principal { height: 400px; }
+      .header-bar .logo-text { font-size: 1.2rem; }
+      .header-icons svg { width: 20px; height: 20px; }
+      .menu-icon svg { width: 20px; height: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Barra de Notificação -->
+  <div class="notification-bar">
+    Garanta agora o seu <strong>we favorito!</strong> <a href="feminino.html" style="color: white;">Confira</a>
+  </div>
+
+  <!-- Cabeçalho -->
+  <div class="header-bar">
+    <button class="menu-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+    <div class="logo-text">wepink</div>
+    <div class="header-icons">
+      <a href="login.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </a>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Banner Principal -->
+  <section class="banner-principal" style="background-image: url('img/fundoindex.gif');">
+  </section>
+
+  <!-- Seção de Produtos -->
+  <h2 class="section-title">Queridinhos da WePink</h2>
+  <section class="product-grid" id="product-grid">
+    <!-- Produtos serão adicionados dinamicamente aqui -->
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter" style="text-align: center; padding: 20px;">
+    <h3 style="font-size: 1.2rem; margin-bottom: 20px;">Ama promos e lançamentos? ❤️ Vem receber tudo em 1ª mão! 👇🏻✨</h3>
+    <form style="display: flex; justify-content: center; flex-wrap: wrap;">
+      <input type="email" placeholder="seu e-mail" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin: 5px; width: 200px;">
+      <button type="submit" class="button">Enviar</button>
+    </form>
+  </section>
+
+  <!-- Rodapé -->
+  <footer>
+    <div class="social-links">
+      <a href="https://www.instagram.com" target="_blank">
+        <img src="img/instagram.png" alt="Instagram">
+      </a>
+      <a href="https://www.facebook.com" target="_blank">
+        <img src="img/facebook.png" alt="Facebook">
+      </a>
+    </div>
+    <div class="payment-methods">
+      <h4>Formas de pagamento</h4>
+      <img src="img/visa.png" alt="Visa" height="30">
+      <img src="img/mastercard.png" alt="Mastercard" height="30">
+      <img src="img/elo.png" alt="Elo" height="30">
+      <img src="img/amex.png" alt="Amex" height="30">
+      <img src="img/boleto.png" alt="Boleto" height="30">
+      <img src="img/pix.png" alt="Pix" class="pix-icon" height="40">
+    </div>
+    <div class="scroll-to-top">
+      <div class="circle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </div>
+      <p>voltar ao topo</p>
+    </div>
+    <div class="footer-info">
+      <p>Política de Privacidade | Termos de Uso</p>
+      <p>Todos os direitos reservados © 2025 | SAVI COSMÉTICOS LTDA | CNPJ: 42.422.967/0001-01</p>
+    </div>
+  </footer>
+
+  <script>
+    // Dados padrão dos produtos (sincronizados com admin.html)
+    const defaultProducts = [
+      {
+        id: "onetouch",
+        name: "One Touch Silk Desodorante Colônia 100ml - Wepink",
+        description: "exale delicadeza e doçura com um toque que encanta",
+        fullDescription: "Sinta um toque delicado de carinho com o Desodorante Colônia Wepink One Touch Silk, um aroma alegre que revive a essência de um romance. Sua fragrância Floral e Frutada inicia no charme da Bergamota e no frescor do Morango, evoluindo em um coração floral encantador. Finaliza em um fundo doce e suave de Baunilha, florescendo a essência feminina inesquecível.",
+        notes: "Notas de topo: Bergamota e Morango<br>Notas de coração: Floral<br>Notas de fundo: Baunilha",
+        priceOld: 1000.00,
+        priceNew: 350.00,
+        installmentsPerUnit: 58.33,
+        image: "img/onetouch.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "liberte",
+        name: "Liberté Desodorante Colônia 100ml - Wepink",
+        description: "Transborde a sua essência mais nobre.",
+        fullDescription: "Liberté Desodorante Colônia Wepink é uma fragrância que reflete liberdade e sofisticação. Com notas florais orientais, inicia com um toque cítrico de Mandarina e Pêra, evoluindo para um coração de Jasmim e Flor de Laranjeira, e finalizando com um fundo quente de Âmbar e Baunilha, criando uma essência marcante e inesquecível.",
+        notes: "Notas de topo: Mandarina e Pêra<br>Notas de coração: Jasmim e Flor de Laranjeira<br>Notas de fundo: Âmbar e Baunilha",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/liberte.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "golden",
+        name: "VF Golden Desodorante Colônia 75ml - Wepink",
+        description: "Fragrância preciosa que transforma momentos em ouro.",
+        fullDescription: "VF Golden Desodorante Colônia Wepink é uma fragrância que evoca luxo e sofisticação. Com um caminho olfativo Âmbar Floral, inicia com notas de Pêssego e Maçã, passa por um coração floral de Rosa e Jasmim, e finaliza com um fundo rico de Âmbar e Sândalo, transformando cada momento em uma experiência dourada.",
+        notes: "Notas de topo: Pêssego e Maçã<br>Notas de coração: Rosa e Jasmim<br>Notas de fundo: Âmbar e Sândalo",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/golden.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "obsessed",
+        name: "Obsessed Desodorante Colônia 100ml - Wepink",
+        description: "A elegância do mistério em uma essência única.",
+        fullDescription: "Obsessed Desodorante Colônia Wepink é uma fragrância que captura o mistério e a elegância. Com um caminho olfativo Oriental Amadeirado, inicia com notas de Cardamomo e Pimenta Rosa, evolui para um coração de Lavanda e Gerânio, e finaliza com um fundo profundo de Patchouli e Âmbar, criando uma essência envolvente e inesquecível.",
+        notes: "Notas de topo: Cardamomo e Pimenta Rosa<br>Notas de coração: Lavanda e Gerânio<br>Notas de fundo: Patchouli e Âmbar",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/obsessed.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "vf",
+        name: "VF Bloom Desodorante Colônia 75ml - Wepink",
+        description: "Beleza no sutil florescer do aroma.",
+        fullDescription: "VF Bloom Desodorante Colônia Wepink é uma fragrância que celebra a beleza do florescer. Com um caminho olfativo Floral Cítrico, inicia com notas frescas de Limão Siciliano e Laranja, evolui para um coração de Peônia e Lírio, e finaliza com um fundo suave de Almíscar e Cedro, trazendo frescor e delicadeza a cada aplicação.",
+        notes: "Notas de topo: Limão Siciliano e Laranja<br>Notas de coração: Peônia e Lírio<br>Notas de fundo: Almíscar e Cedro",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/vf.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "seduce",
+        name: "VF Seduce Desodorante Colônia 75ml - Wepink",
+        description: "Aura de magnetismo e sedução envolvente.",
+        fullDescription: "VF Seduce Desodorante Colônia Wepink é uma fragrância que exala magnetismo e sedução. Com um caminho olfativo Floral Gourmand, inicia com notas doces de Caramelo e Framboesa, evolui para um coração de Rosa e Violeta, e finaliza com um fundo quente de Baunilha e Tonka, criando uma aura irresistível.",
+        notes: "Notas de topo: Caramelo e Framboesa<br>Notas de coração: Rosa e Violeta<br>Notas de fundo: Baunilha e Tonka",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/seduce.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "therainy",
+        name: "The Rainy Desodorante Colônia 75ml - Wepink",
+        description: "Mergulhe na essência refrescante da natureza!",
+        fullDescription: "The Rainy Desodorante Colônia Wepink traz a essência refrescante da natureza. Com um caminho olfativo Cítrico Aquático, inicia com notas de Limão e Notas Aquáticas, evolui para um coração de Menta e Jasmim, e finaliza com um fundo de Almíscar e Madeiras Brancas, trazendo uma sensação de frescor e serenidade.",
+        notes: "Notas de topo: Limão e Notas Aquáticas<br>Notas de coração: Menta e Jasmim<br>Notas de fundo: Almíscar e Madeiras Brancas",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/therainy.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      },
+      {
+        id: "celebrate",
+        name: "Celebrate Life Desodorante Colônia 100ml - Wepink",
+        description: "Comemore a vida com um aroma extraordinário.",
+        fullDescription: "Celebrate Life Desodorante Colônia Wepink é uma fragrância que celebra a alegria de viver. Com um caminho olfativo Frutado Gourmand, inicia com notas de Maçã e Cassis, evolui para um coração de Praliné e Jasmim, e finaliza com um fundo doce de Baunilha e Caramelo, trazendo uma explosão de felicidade em cada borrifada.",
+        notes: "Notas de topo: Maçã e Cassis<br>Notas de coração: Praliné e Jasmim<br>Notas de fundo: Baunilha e Caramelo",
+        priceOld: 329.00,
+        priceNew: 115.15,
+        installmentsPerUnit: 19.19,
+        image: "img/celebrate.png",
+        deliveryFees: {
+          sp: { option1: 3.00, option2: 4.00 },
+          southeast: { option1: 5.00, option2: 6.00 },
+          other: { option1: 7.00, option2: 8.00 }
+        }
+      }
+    ];
+
+    // Função para formatar valores monetários
+    function formatCurrency(value) {
+      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+    }
+
+    // Função para carregar os produtos dinamicamente
+    let products = [];
+    function loadProducts() {
+      try {
+        const storedProducts = JSON.parse(localStorage.getItem('wepink_products'));
+        if (storedProducts && Array.isArray(storedProducts) && storedProducts.length > 0) {
+          products = storedProducts; // Usar os produtos já salvos no localStorage
+          console.log('Produtos carregados do localStorage:', products);
+        } else {
+          products = defaultProducts; // Fallback para defaultProducts se localStorage estiver vazio
+          localStorage.setItem('wepink_products', JSON.stringify(products)); // Inicializar o localStorage
+          console.log('Produtos inicializados com defaultProducts:', products);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar produtos do localStorage:', error);
+        products = defaultProducts; // Fallback em caso de erro
+        localStorage.setItem('wepink_products', JSON.stringify(products));
+        console.log('Produtos inicializados com defaultProducts após erro:', products);
+      }
+
+      const productGrid = document.getElementById('product-grid');
+      productGrid.innerHTML = ''; // Limpar a grade antes de preenchê-la
+      products.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.innerHTML = `
+          <img src="${product.image}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>${product.description}</p>
+          <p class="price-old">${formatCurrency(product.priceOld)}</p>
+          <p class="price-new">${formatCurrency(product.priceNew)}</p>
+          <p class="installments">ou 6x ${formatCurrency(product.installmentsPerUnit)}</p>
+          <a href="product.html?product=${product.id}" class="button">Comprar</a>
+        `;
+        productGrid.appendChild(productCard);
+      });
+    }
+
+    // Carregar os produtos ao iniciar a página
+    loadProducts();
+
+    // Escutar mudanças no localStorage para atualizar a lista de produtos dinamicamente
+    window.addEventListener('storage', function(event) {
+      if (event.key === 'wepink_products') {
+        console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
+        loadProducts(); // Recarregar os produtos quando o localStorage for atualizado
+      }
+    });
+
+    // Incrementar o contador de acessos para o admin
+    let accessCount = parseInt(localStorage.getItem('accessCount')) || 0;
+    accessCount++;
+    localStorage.setItem('accessCount', accessCount.toString());
+    console.log('Contador de acessos atualizado:', accessCount);
+
+    // Função para rolar ao topo
+    document.querySelector('.scroll-to-top').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

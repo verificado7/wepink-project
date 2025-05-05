@@ -1,0 +1,42 @@
+{
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    { "source": "/create-payment", "destination": "/api/server.js" },
+    { "source": "/api/(.*)", "destination": "/api/server.js" }
+  ],
+  "headers": [
+    {
+      "source": "/create-payment",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 128,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/admin(.*)",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/payment.html"
+    }
+  ]
+}
