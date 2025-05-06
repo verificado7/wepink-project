@@ -13,6 +13,7 @@
     { "source": "/create-payment", "destination": "/api/server.js" },
     { "source": "/payment-status/:id", "destination": "/api/server.js" },
     { "source": "/api/(.*)", "destination": "/api/server.js" },
+    { "source": "/img/(.*)", "destination": "/img/$1" },
     { "source": "/product(.*)", "destination": "/product.html" },
     { "source": "/login(.*)", "destination": "/login.html" },
     { "source": "/payment(.*)", "destination": "/payment.html" },
