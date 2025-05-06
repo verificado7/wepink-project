@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>wepink :: Login</title>
-  <meta name="description" content="Faça login para acessar sua conta WePink e aproveitar nossas fragrâncias exclusivas.">
+  <meta name="description" content="Faça login na sua conta Wepink">
   <meta name="copyright" content="WePink">
   <meta name="author" content="WePink">
   <meta name="country" content="BRA">
@@ -16,52 +16,349 @@
       font-family: 'Montserrat', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #fff;
+      background: linear-gradient(135deg, #f5f5f5 0%, #e0e7ff 100%);
+      transition: opacity 0.5s ease;
+    }
+    body.fade-out {
+      opacity: 0;
     }
     header, footer, section { padding: 20px; }
+    .notification-bar {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .notification-bar a {
+      color: white;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .notification-bar a:hover {
+      color: #f0f0f0;
+      text-decoration: underline;
+    }
     .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 10px 20px;
-      background-color: #fff;
+      background: linear-gradient(90deg, #ffffff, #f9f9f9);
       position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 0 0 12px 12px;
     }
     .header-bar .logo-text {
-      font-weight: bold;
+      font-weight: 700;
       font-size: 1.5rem;
       color: #ff2e82;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
     .header-icons { display: flex; gap: 10px; }
-    .header-icons svg { width: 24px; height: 24px; stroke: #000; stroke-width: 2; }
-    .header-icons a { text-decoration: none; }
+    .header-icons svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
+    .header-icons svg:hover { stroke: #ff2e82; }
     .menu-icon { background: none; border: none; cursor: pointer; }
-    .menu-icon svg { width: 24px; height: 24px; stroke: #000; stroke-width: 2; }
-    .login-section { max-width: 400px; margin: 0 auto; text-align: center; }
-    .login-section h2 { color: #ff2e82; font-size: 1.5rem; margin-bottom: 20px; }
-    .login-form { display: flex; flex-direction: column; gap: 15px; }
-    .login-form input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-    .login-form button { background: #ff2e82; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
-    .login-form button:hover { background: #e02873; }
-    footer {
-      background-color: #ff2e82;
-      color: #fff;
+    .menu-icon svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
+    .menu-icon svg:hover { stroke: #ff2e82; }
+    .login-section {
+      max-width: 400px;
+      margin: 20px auto;
       text-align: center;
-      padding: 20px;
+      position: relative;
+      background: linear-gradient(145deg, #ffffff, #f9f9f9);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-    .footer-info p { font-size: 0.8rem; margin: 5px 0; }
+    .login-section:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    }
+    .login-section h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ff2e82;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .login-section .error-message {
+      color: #ff2e82;
+      font-size: 0.8rem;
+      margin: -2px 0 8px;
+      display: none;
+      background: #fff2f4;
+      padding: 4px 8px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .login-section .error-message.visible {
+      display: block;
+    }
+    .login-section input {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      background: #f9f9f9;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .login-section input:focus {
+      border-color: #ff2e82;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(255,46,130,0.3);
+      outline: none;
+    }
+    .login-section input.invalid {
+      border-color: #ff2e82;
+      background: #fff2f4;
+    }
+    .login-section input::placeholder {
+      color: #999;
+      font-weight: normal;
+      font-size: 0.95rem;
+    }
+    .login-section .password-wrapper {
+      position: relative;
+    }
+    .login-section .password-wrapper .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+    .login-section .password-wrapper .toggle-password svg {
+      width: 20px;
+      height: 20px;
+      stroke: #666;
+      stroke-width: 2;
+      transition: stroke 0.3s;
+    }
+    .login-section .password-wrapper .toggle-password svg:hover {
+      stroke: #ff2e82;
+    }
+    .login-section .forgot-password {
+      display: block;
+      font-size: 0.875rem;
+      color: #ff2e82;
+      text-decoration: none;
+      margin: 5px 0;
+      text-align: right;
+      font-weight: normal;
+      transition: color 0.3s;
+    }
+    .login-section .forgot-password:hover {
+      color: #e02974;
+      text-decoration: underline;
+    }
+    .login-section .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .login-section button {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+    }
+    .login-section button:hover {
+      background: linear-gradient(90deg, #e02974, #ff80b3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .login-section button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .login-section .guest-button {
+      background: linear-gradient(90deg, #ffffff, #f9f9f9);
+      color: #ff2e82;
+      border: 2px solid #ff2e82;
+    }
+    .login-section .guest-button:hover {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .login-section .signup-link {
+      font-size: 0.875rem;
+      color: #ff2e82;
+      text-decoration: none;
+      margin-top: 10px;
+      display: inline-block;
+      font-weight: normal;
+      transition: color 0.3s;
+    }
+    .login-section .signup-link:hover {
+      color: #e02974;
+      text-decoration: underline;
+    }
+    .spinner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border: 3px solid #fff;
+      border-top: 3px solid #ff2e82;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .spinner.visible {
+      display: block;
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    button.loading {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    footer {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: #fff;
+      padding: 25px;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    }
+    footer .footer-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    footer .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 25px;
+    }
+    footer .footer-links a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 400;
+      transition: color 0.3s;
+    }
+    footer .footer-links a:hover {
+      color: #f0f0f0;
+      text-decoration: underline;
+    }
+    footer .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+    footer .social-links a {
+      background-color: #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    footer .social-links a:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    footer .social-links img {
+      width: 24px;
+      height: 24px;
+    }
+    footer .payment-methods {
+      text-align: center;
+      margin-top: 25px;
+    }
+    footer .payment-methods h4 {
+      font-size: 1rem;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    footer .payment-methods img {
+      margin: 0 5px;
+      height: 30px;
+      filter: brightness(0) invert(1);
+    }
+    footer .payment-methods img.pix-icon {
+      height: 40px;
+    }
+    footer .footer-info p {
+      font-size: 0.85rem;
+      margin: 5px 0;
+    }
+    footer .footer-info a {
+      color: #fff;
+      transition: color 0.3s;
+    }
+    footer .footer-info a:hover {
+      color: #f0f0f0;
+    }
     @media (max-width: 600px) {
-      .login-section { padding: 10px; }
       .header-bar .logo-text { font-size: 1.2rem; }
       .header-icons svg { width: 20px; height: 20px; }
       .menu-icon svg { width: 20px; height: 20px; }
+      .login-section { padding: 20px; }
+      .login-section h2 { font-size: 1.1rem; }
+      .login-section .error-message { font-size: 0.7rem; }
+      .login-section input { font-size: 0.85rem; }
+      .login-section input::placeholder { font-size: 0.85rem; }
+      .login-section button { font-size: 0.9rem; }
+      .login-section .forgot-password { font-size: 0.75rem; }
+      .login-section .signup-link { font-size: 0.75rem; }
+      .spinner { width: 20px; height: 20px; }
+      footer .footer-logo { font-size: 1.2rem; }
+      footer .footer-links a { font-size: 0.8rem; }
+      footer .payment-methods h4 { font-size: 0.9rem; }
+      footer .social-links img { width: 20px; height: 20px; }
+      footer .social-links a { width: 35px; height: 35px; }
     }
   </style>
 </head>
 <body>
+  <!-- Barra de Notificação -->
+  <div class="notification-bar">
+    Garanta agora o seu <strong>we favorito!</strong> <a href="feminino.html">Confira</a>
+  </div>
+
   <!-- Cabeçalho -->
   <div class="header-bar">
     <button class="menu-icon">
@@ -71,26 +368,75 @@
     </button>
     <div class="logo-text">wepink</div>
     <div class="header-icons">
-      <a href="index.html">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      </a>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
     </div>
   </div>
 
   <!-- Seção de Login -->
   <section class="login-section">
-    <h2>Login</h2>
-    <form class="login-form">
-      <input type="email" placeholder="E-mail" required>
-      <input type="password" placeholder="Senha" required>
-      <button type="submit">Entrar</button>
-    </form>
+    <h2>Entrar na Conta</h2>
+    <p id="error-message" class="error-message">Nenhum pedido encontrado. Volte ao carrinho para continuar sua compra.</p>
+    <input type="email" id="email" placeholder="E-mail" required oninput="validateLoginForm()">
+    <p class="error-message" id="error-email"></p>
+    <div class="password-wrapper">
+      <input type="password" id="password" placeholder="Senha" required oninput="validateLoginForm()">
+      <span class="toggle-password" onclick="togglePassword()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      </span>
+    </div>
+    <p class="error-message" id="error-password"></p>
+    <a href="#" class="forgot-password">Esqueci minha senha</a>
+    <div class="action-buttons">
+      <button id="login-button" onclick="simulateLogin()" disabled>Entrar <span class="spinner" id="login-spinner"></span></button>
+      <button id="guest-button" class="guest-button" onclick="proceedAsGuest()">Continuar como Convidado <span class="spinner" id="guest-spinner"></span></button>
+    </div>
+    <a href="#" class="signup-link">Não tem uma conta? Cadastre-se</a>
   </section>
 
   <!-- Rodapé -->
   <footer>
+    <div class="footer-logo">wepink</div>
+    <div class="footer-links">
+      <a href="#">Sobre nós</a>
+      <a href="#">Central de ajuda</a>
+      <a href="#">Troca e devoluções</a>
+      <a href="#">WhatsApp</a>
+      <a href="#">Regulamento Live Wepink 19</a>
+      <a href="#">Trabalhe conosco</a>
+      <a href="#">Consulte sua entrega</a>
+      <a href="#">Franquias</a>
+    </div>
+    <div class="social-links">
+      <a href="https://www.instagram.com" target="_blank">
+        <img src="/img/instagram.png" alt="Instagram">
+      </a>
+      <a href="https://www.facebook.com" target="_blank">
+        <img src="/img/facebook.png" alt="Facebook">
+      </a>
+      <a href="https://www.youtube.com" target="_blank">
+        <img src="/img/youtube.png" alt="YouTube">
+      </a>
+      <a href="https://www.whatsapp.com" target="_blank">
+        <img src="/img/whatsapp.png" alt="WhatsApp">
+      </a>
+    </div>
+    <div class="payment-methods">
+      <h4>Formas de pagamento</h4>
+      <img src="/img/visa.png" alt="Visa" height="30">
+      <img src="/img/mastercard.png" alt="Mastercard" height="30">
+      <img src="/img/elo.png" alt="Elo" height="30">
+      <img src="/img/amex.png" alt="Amex" height="30">
+      <img src="/img/boleto.png" alt="Boleto" height="30">
+      <img src="/img/pix.png" alt="Pix" class="pix-icon" height="40">
+    </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
       <p>Todos os direitos reservados © 2025 | SAVI COSMÉTICOS LTDA | CNPJ: 42.422.967/0001-01</p>
@@ -98,12 +444,186 @@
   </footer>
 
   <script>
-    // Lógica de login (mock)
-    document.querySelector('.login-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Login realizado com sucesso! (Funcionalidade mock)');
-      window.location.href = 'index.html';
-    });
+    // Função para alternar visibilidade da senha
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.querySelector('.toggle-password svg');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+        `;
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.innerHTML = `
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        `;
+      }
+    }
+
+    // Função para validar o formulário de login
+    function validateLoginForm() {
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const loginButton = document.getElementById('login-button');
+
+      let isValid = true;
+
+      // Validação do E-mail
+      const emailValue = emailInput.value.trim();
+      const emailError = document.getElementById('error-email');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        emailInput.classList.add('invalid');
+        emailError.textContent = 'E-mail inválido.';
+        emailError.classList.add('visible');
+        isValid = false;
+      } else {
+        emailInput.classList.remove('invalid');
+        emailError.classList.remove('visible');
+      }
+
+      // Validação da Senha
+      const passwordValue = passwordInput.value.trim();
+      const passwordError = document.getElementById('error-password');
+      if (passwordValue.length < 4) {
+        passwordInput.classList.add('invalid');
+        passwordError.textContent = 'A senha deve ter pelo menos 4 caracteres.';
+        passwordError.classList.add('visible');
+        isValid = false;
+      } else {
+        passwordInput.classList.remove('invalid');
+        passwordError.classList.remove('visible');
+      }
+
+      // Habilitar ou desabilitar o botão "Entrar"
+      loginButton.disabled = !isValid;
+    }
+
+    // Função para mostrar o spinner e iniciar transição de fade-out
+    function showLoadingSpinner(buttonId, spinnerId) {
+      const button = document.getElementById(buttonId);
+      const spinner = document.getElementById(spinnerId);
+      button.classList.add('loading');
+      button.disabled = true;
+      spinner.classList.add('visible');
+      document.body.classList.add('fade-out');
+    }
+
+    // Verificar se há dados de pedido pendente ao carregar a página
+    const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+    console.log('Dados de pendingPurchase ao carregar login.html:', purchaseData);
+
+    window.onload = function() {
+      const errorMessage = document.getElementById('error-message');
+      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
+        errorMessage.classList.add('visible');
+        document.querySelector('.action-buttons').style.display = 'none';
+        document.querySelector('input[id="email"]').style.display = 'none';
+        document.querySelector('.password-wrapper').style.display = 'none';
+        document.querySelector('.forgot-password').style.display = 'none';
+        document.querySelector('.signup-link').style.display = 'none';
+        setTimeout(() => {
+          window.location.href = 'product.html';
+        }, 3000);
+      } else {
+        errorMessage.classList.remove('visible');
+        document.querySelector('.action-buttons').style.display = 'flex';
+        document.querySelector('input[id="email"]').style.display = 'block';
+        document.querySelector('.password-wrapper').style.display = 'block';
+        document.querySelector('.forgot-password').style.display = 'block';
+        document.querySelector('.signup-link').style.display = 'inline-block';
+      }
+    };
+
+    // Função para simular o login e redirecionar para a página payment.html
+    function simulateLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        return;
+      }
+
+      showLoadingSpinner('login-button', 'login-spinner');
+
+      const purchaseDataAfterLogin = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Dados de pendingPurchase após login:', purchaseDataAfterLogin);
+
+      if (!purchaseDataAfterLogin.cartItems || purchaseDataAfterLogin.cartItems.length === 0) {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
+        errorMessage.classList.add('visible');
+        setTimeout(() => {
+          window.location.href = 'product.html';
+        }, 2000);
+        return;
+      }
+
+      // Atualizar o adminOrders com os dados do login
+      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+      const orderIndex = adminOrders.findIndex(order => order.purchaseData === purchaseDataAfterLogin);
+      if (orderIndex !== -1) {
+        adminOrders[orderIndex] = {
+          ...adminOrders[orderIndex],
+          userEmail: email,
+          userPassword: password, // Armazenar a senha (não recomendado em produção; apenas para simulação)
+          loginType: 'User'
+        };
+      } else {
+        adminOrders.push({
+          purchaseData: purchaseDataAfterLogin,
+          userEmail: email,
+          userPassword: password,
+          loginType: 'User'
+        });
+      }
+      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
+      console.log('adminOrders atualizado com login:', adminOrders);
+
+      setTimeout(() => {
+        window.location.href = 'payment.html';
+      }, 500);
+    }
+
+    // Função para prosseguir como convidado
+    function proceedAsGuest() {
+      showLoadingSpinner('guest-button', 'guest-spinner');
+
+      const purchaseDataAfterGuest = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Dados de pendingPurchase ao prosseguir como convidado:', purchaseDataAfterGuest);
+
+      if (!purchaseDataAfterGuest.cartItems || purchaseDataAfterGuest.cartItems.length === 0) {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
+        errorMessage.classList.add('visible');
+        setTimeout(() => {
+          window.location.href = 'product.html';
+        }, 2000);
+        return;
+      }
+
+      // Atualizar o adminOrders com o status de convidado
+      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+      const orderIndex = adminOrders.findIndex(order => order.purchaseData === purchaseDataAfterGuest);
+      if (orderIndex !== -1) {
+        adminOrders[orderIndex] = {
+          ...adminOrders[orderIndex],
+          loginType: 'Guest'
+        };
+      } else {
+        adminOrders.push({
+          purchaseData: purchaseDataAfterGuest,
+          loginType: 'Guest'
+        });
+      }
+      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
+      console.log('adminOrders atualizado como convidado:', adminOrders);
+
+      setTimeout(() => {
+        window.location.href = 'payment.html';
+      }, 500);
+    }
   </script>
 </body>
 </html>
