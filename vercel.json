@@ -1,45 +1,12 @@
 {
   "builds": [
     {
-      "src": "/*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "/img/**",
+      "src": "**/*",
       "use": "@vercel/static"
     },
     {
       "src": "api/**/*.js",
       "use": "@vercel/node"
     }
-  ],
-  "routes": [
-    { "src": "/create-payment", "dest": "/api/server.js" },
-    { "src": "/payment-status/(.*)", "dest": "/api/server.js" },
-    { "src": "/api/(.*)", "dest": "/api/server.js" },
-    { "src": "/product", "dest": "/product.html" },
-    { "src": "/login", "dest": "/login.html" },
-    { "src": "/payment", "dest": "/payment.html" },
-    { "src": "/admin", "dest": "/admin.html" },
-    { "src": "/", "dest": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/create-payment",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
-      ]
-    },
-    {
-      "source": "/payment-status/:id",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
-      ]
-    }
-  ],
-  "cleanUrls": true
+  ]
 }
