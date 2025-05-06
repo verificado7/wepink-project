@@ -11,6 +11,7 @@
   ],
   "rewrites": [
     { "source": "/create-payment", "destination": "/api/server.js" },
+    { "source": "/payment-status/:id", "destination": "/api/server.js" },
     { "source": "/api/(.*)", "destination": "/api/server.js" }
   ],
   "headers": [
@@ -21,16 +22,21 @@
         { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
       ]
+    },
+    {
+      "source": "/payment-status/:id",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
     }
   ],
   "routes": [
-    {
-      "src": "/admin(.*)",
-      "dest": "/admin.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/payment.html"
-    }
+    { "src": "/product(.*)", "dest": "/product.html" },
+    { "src": "/login(.*)", "dest": "/login.html" },
+    { "src": "/payment(.*)", "dest": "/payment.html" },
+    { "src": "/admin(.*)", "dest": "/admin.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
