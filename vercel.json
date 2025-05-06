@@ -17,7 +17,8 @@
     { "source": "/product(.*)", "destination": "/product.html" },
     { "source": "/login(.*)", "destination": "/login.html" },
     { "source": "/payment(.*)", "destination": "/payment.html" },
-    { "source": "/admin(.*)", "destination": "/admin.html" }
+    { "source": "/admin(.*)", "destination": "/admin.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
