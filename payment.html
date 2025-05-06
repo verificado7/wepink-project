@@ -1069,7 +1069,7 @@
 
   <script>
     const mp = new MercadoPago('APP_USR-44c96b6c-33f1-49e4-9f9c-95dbe0338c2d', { locale: 'pt-BR' });
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000/create-payment' : '/create-payment';
+    const backendUrl = '/create-payment'; // Ajustado para Vercel
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1144,7 +1144,7 @@
     }
 
     async function checkPaymentStatus(paymentId) {
-      const statusUrl = `http://localhost:3000/payment-status/${paymentId}`;
+      const statusUrl = `/payment-status/${paymentId}`; // Ajustado para Vercel
       const maxWaitTime = 5 * 60 * 1000; // 5 minutos
       const intervalTime = 5000; // 5 segundos
       let elapsedTime = 0;
@@ -1505,6 +1505,23 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Adicionar botão de logout no header
+      const headerIcons = document.querySelector('.header-icons');
+      const logoutButton = document.createElement('button');
+      logoutButton.setAttribute('aria-label', 'Sair');
+      logoutButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+      `;
+      logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('pendingPurchase');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartAddress');
+        window.location.href = 'index.html';
+      });
+      headerIcons.appendChild(logoutButton);
+
       updateOrderSummary();
 
       document.getElementById('pix-button').addEventListener('click', () => showPaymentForm('pix'));
