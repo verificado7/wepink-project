@@ -9,17 +9,6 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
-    { "source": "/create-payment", "destination": "/api/server.js" },
-    { "source": "/payment-status/:id", "destination": "/api/server.js" },
-    { "source": "/api/(.*)", "destination": "/api/server.js" },
-    { "source": "/img/(.*)", "destination": "/img/$1" },
-    { "source": "/product(.*)", "destination": "/product.html" },
-    { "source": "/login(.*)", "destination": "/login.html" },
-    { "source": "/payment(.*)", "destination": "/payment.html" },
-    { "source": "/admin(.*)", "destination": "/admin.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
   "headers": [
     {
       "source": "/create-payment",
