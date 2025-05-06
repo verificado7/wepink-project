@@ -1,24 +1,63 @@
 const express = require('express');
-const path = require('path');
-const apiRoutes = require('./api/server'); // Importa o servidor da API
+const cors = require('cors');
+const mercadopago = require('mercadopago');
 
-const app = express();
+const router = express.Router();
 
-// Configura o Express para servir arquivos estáticos da raiz do projeto
-app.use(express.static(path.join(__dirname, '/')));
+// Middleware para parsing de JSON e CORS
+router.use(express.json());
+router.use(cors());
 
-// Roteia as requisições da API para o servidor em api/server.js
-app.use('/api', apiRoutes);
-app.use('/create-payment', apiRoutes);
-app.use('/payment-status', apiRoutes);
-
-// Para qualquer outra rota, serve o index.html (para suportar roteamento do lado do cliente)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Configura o Mercado Pago com o token de acesso
+mercadopago.configure({
+  access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN || 'APP_USR-3709341188085811-050219-1dde9cca4db5f13738f043119fdb7c30-220520212',
 });
 
-// Inicia o servidor na porta fornecida pelo Render (ou 3000 localmente)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Rota para criar um pagamento
+router.post('/create-payment', async (req, res) => {
+  try {
+    const { transaction_amount, description, payment_method_id, payer } = req.body;
+
+    const preference = {
+      items: [
+        {
+          title: description,
+          unit_price: transaction_amount,
+          quantity: 1,
+        },
+      ],
+      payer: {
+        email: payer.email,
+      },
+      payment_methods: {
+        default_payment_method_id: payment_method_id,
+      },
+      back_urls: {
+        success: "https://wepink-project.onrender.com/success", // Ajustado para o domínio do Render
+        failure: "https://wepink-project.onrender.com/failure",
+        pending: "https://wepink-project.onrender.com/pending",
+      },
+      auto_return: "approved",
+    };
+
+    const response = await mercadopago.preferences.create(preference);
+    res.json({ id: response.body.id });
+  } catch (error) {
+    console.error("Erro ao criar pagamento:", error);
+    res.status(500).json({ error: "Erro ao criar pagamento" });
+  }
 });
+
+// Rota para verificar o status do pagamento
+router.get('/payment-status/:id', async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    const response = await mercadopago.payment.get(paymentId);
+    res.json({ status: response.body.status });
+  } catch (error) {
+    console.error("Erro ao verificar status do pagamento:", error);
+    res.status(500).json({ error: "Erro ao verificar status do pagamento" });
+  }
+});
+
+module.exports = router;
