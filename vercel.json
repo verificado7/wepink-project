@@ -1,13 +1,27 @@
 {
   "builds": [
     {
-      "src": "*.html",
+      "src": "/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "/img/**",
       "use": "@vercel/static"
     },
     {
       "src": "api/**/*.js",
       "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    { "src": "/create-payment", "dest": "/api/server.js" },
+    { "src": "/payment-status/(.*)", "dest": "/api/server.js" },
+    { "src": "/api/(.*)", "dest": "/api/server.js" },
+    { "src": "/product", "dest": "/product.html" },
+    { "src": "/login", "dest": "/login.html" },
+    { "src": "/payment", "dest": "/payment.html" },
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/", "dest": "/index.html" }
   ],
   "headers": [
     {
@@ -26,5 +40,6 @@
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
       ]
     }
-  ]
+  ],
+  "cleanUrls": true
 }
