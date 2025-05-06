@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const apiRoutes = require('./api/server'); // Importa o roteador da API
+const fetch = require('node-fetch'); // Para fazer requisições HTTP
 
 const app = express();
 
@@ -8,7 +9,23 @@ const app = express();
 app.use(express.static(path.join(__dirname, '/')));
 
 // Roteia as requisições da API para o roteador em api/server.js
-app.use('/', apiRoutes); // As rotas /create-payment e /payment-status já estão definidas no api/server.js
+app.use('/', apiRoutes);
+
+// Proxy para a API ViaCEP
+app.get('/api/viacep/:cep', async (req, res) => {
+  const cep = req.params.cep;
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    if (!response.ok) {
+      throw new Error('Erro na resposta da API ViaCEP: ' + response.statusText);
+    }
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Erro ao buscar endereço via ViaCEP:', error);
+    res.status(500).json({ erro: true, mensagem: 'Erro ao buscar endereço: ' + error.message });
+  }
+});
 
 // Para qualquer outra rota, serve o index.html (para suportar roteamento do lado do cliente)
 app.get('*', (req, res) => {
