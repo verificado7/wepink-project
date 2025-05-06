@@ -1,16 +1,14 @@
 const express = require('express');
 const path = require('path');
-const apiRoutes = require('./api/server'); // Importa o servidor da API
+const apiRoutes = require('./api/server'); // Importa o roteador da API
 
 const app = express();
 
 // Configura o Express para servir arquivos estáticos da raiz do projeto
 app.use(express.static(path.join(__dirname, '/')));
 
-// Roteia as requisições da API para o servidor em api/server.js
-app.use('/api', apiRoutes);
-app.use('/create-payment', apiRoutes);
-app.use('/payment-status', apiRoutes);
+// Roteia as requisições da API para o roteador em api/server.js
+app.use('/', apiRoutes); // As rotas /create-payment e /payment-status já estão definidas no api/server.js
 
 // Para qualquer outra rota, serve o index.html (para suportar roteamento do lado do cliente)
 app.get('*', (req, res) => {
