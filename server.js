@@ -1,82 +1,48 @@
 const express = require('express');
 const cors = require('cors');
-const mercadopago = require('mercadopago');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 const app = express();
 
-// Configurar CORS para aceitar requisições do frontend
+// Configuração de CORS robusta
 app.use(cors({
-  origin: 'https://wepink-project.onrender.com'
+  origin: '[invalid url, do not cite]
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Configurar parsing de JSON
+// Middleware para requisições OPTIONS (preflight)
+app.options('*', cors());
+
+// Middleware para parsear JSON
 app.use(express.json());
 
-// Configurar credenciais do Mercado Pago
-mercadopago.configure({
-  access_token: 'APP_USR-370934188085811-050219-1dde9cca4db5f13738f043119fdb7c30-22052021'
-}));
-
-// Endpoint de teste para verificar se o backend está ativo
-app.get('/health', (req, res) => {
-  res.json({ status: 'Backend está funcionando!' });
-});
-
-// Endpoint para criar o Pix
-app.post('/create-pix', async (req, res) => {
-  const { amount, description, payer } = req.body;
+// Rota para buscar informações de CEP
+app.get('/cep/:cep', async (req, res) => {
+  const cep = req.params.cep.replace(/\D/g, '');
+  if (cep.length !== 8) {
+    return res.status(400).json({ error: 'CEP inválido. Deve conter 8 dígitos.' });
+  }
 
   try {
-    const paymentData = {
-      transaction_amount: amount,
-      description: description || 'Compra Wepink',
-      payment_method_id: 'pix',
-      payer: {
-        email: payer.email,
-        first_name: payer.first_name,
-        last_name: payer.last_name,
-        identification: {
-          type: payer.identification.type,
-          number: payer.identification.number
-        }
-      },
-      notification_url: 'https://wepink-backend.onrender.com/webhook'
-    };
-
-    const payment = await mercadopago.payment.create(paymentData);
-    const qrCodeBase64 = payment.body.point_of_interaction.transaction_data.qr_code_base64;
-    const qrCode = payment.body.point_of_interaction.transaction_data.qr_code;
-
-    res.json({
-      payment_id: payment.body.id,
-      qr_code_base64: qrCodeBase64,
-      qr_code: qrCode
-    });
+    const response = await fetch(`[invalid url, do not cite]);
+    const data = await response.json();
+    if (data.erro) {
+      return res.status(404).json({ error: 'CEP não encontrado.' });
+    }
+    res.json(data);
   } catch (error) {
-    console.error('Erro ao gerar Pix:', error);
-    res.status(500).json({ error: 'Erro ao gerar Pix: ' + error.message });
+    console.error('Erro ao buscar CEP:', error);
+    res.status(500).json({ error: 'Erro ao buscar CEP. Tente novamente mais tarde.' });
   }
 });
 
-// Endpoint para verificar o status do pagamento
-app.get('/payment-status/:paymentId', async (req, res) => {
-  const { paymentId } = req.params;
-
-  try {
-    const payment = await mercadopago.payment.get(paymentId);
-    res.json({ status: payment.body.status });
-  } catch (error) {
-    console.error('Erro ao verificar status do pagamento:', error);
-    res.status(500).json({ error: 'Erro ao verificar o status do pagamento: ' + error.message });
-  }
-});
-
-// Rota para receber notificações (webhook)
-app.post('/webhook', (req, res) => {
-  console.log('Webhook recebido:', req.body);
-  res.status(200).send('Webhook recebido');
-});
+// Rota para criar pagamento PIX
+const createPixPayment = require('./create-pix-payment');
+app.post('/create-pix', createPixPayment);
 
 // Iniciar o servidor
-app.listen(process.env.PORT || 3000, () => {
-  console.log('Servidor rodando na porta', process.env.PORT || 3000);
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
 });
