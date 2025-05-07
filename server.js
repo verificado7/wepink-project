@@ -5,7 +5,7 @@ const app = express();
 
 // Configurar CORS para aceitar requisições do frontend
 app.use(cors({
-  origin: 'https://wepink-project.onrender.com'
+  origin: 'https://wepink-project.onrender.com' // Domínio do frontend
 }));
 
 // Configurar parsing de JSON
@@ -16,24 +16,30 @@ mercadopago.configure({
   access_token: 'APP_USR-370934188085811-050219-1dde9cca4db5f13738f043119fdb7c30-22052021'
 }));
 
+// Endpoint de teste para verificar se o backend está ativo
+app.get('/health', (req, res) => {
+  res.json({ status: 'Backend está funcionando!' });
+});
+
 // Endpoint para criar o Pix
 app.post('/create-pix', async (req, res) => {
-  const { amount, payer } = req.body;
+  const { amount, description, payer } = req.body;
 
   try {
     const paymentData = {
       transaction_amount: amount,
-      description: 'Compra Wepink',
+      description: description || 'Compra Wepink',
       payment_method_id: 'pix',
       payer: {
         email: payer.email,
         first_name: payer.first_name,
         last_name: payer.last_name,
         identification: {
-          type: 'CPF',
+          type: payer.identification.type,
           number: payer.identification.number
         }
-      }
+      },
+      notification_url: 'https://wepink-backend.onrender.com/webhook'
     };
 
     const payment = await mercadopago.payment.create(paymentData);
@@ -49,6 +55,25 @@ app.post('/create-pix', async (req, res) => {
     console.error('Erro ao gerar Pix:', error);
     res.status(500).json({ error: 'Erro ao gerar Pix: ' + error.message });
   }
+});
+
+// Endpoint para verificar o status do pagamento
+app.get('/payment-status/:paymentId', async (req, res) => {
+  const { paymentId } = req.params;
+
+  try {
+    const payment = await mercadopago.payment.get(paymentId);
+    res.json({ status: payment.body.status });
+  } catch (error) {
+    console.error('Erro ao verificar status do pagamento:', error);
+    res.status(500).json({ error: 'Erro ao verificar o status do pagamento: ' + error.message });
+  }
+});
+
+// Rota para receber notificações (webhook)
+app.post('/webhook', (req, res) => {
+  console.log('Webhook recebido:', req.body);
+  res.status(200).send('Webhook recebido');
 });
 
 // Iniciar o servidor
