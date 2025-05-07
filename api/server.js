@@ -4,8 +4,17 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const app = express();
 
-// Middleware para CORS
-app.use(cors({ origin: 'https://wepink-project.onrender.com' }));
+// Configuração de CORS mais robusta
+app.use(cors({
+  origin: 'https://wepink-project.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Middleware para lidar com requisições OPTIONS (preflight)
+app.options('*', cors());
+
+// Middleware para parsear JSON
 app.use(express.json());
 
 // Rota para buscar informações de CEP
