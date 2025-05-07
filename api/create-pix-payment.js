@@ -34,6 +34,12 @@ module.exports = async (req, res) => {
       }
     };
 
+    // Verificar se o Access Token está configurado
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error('Access Token do Mercado Pago não configurado.');
+      return res.status(500).json({ error: 'Access Token do Mercado Pago não configurado.' });
+    }
+
     // Gerar uma chave de idempotência única
     const idempotencyKey = uuidv4();
     console.log('Chave de idempotência gerada:', idempotencyKey);
