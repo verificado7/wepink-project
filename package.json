@@ -1,5 +1,5 @@
 {
-  "name": "wepink-frontend",
+  "name": "wepink-backend",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -8,7 +8,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "cors": "^2.8.5",
-    "node-fetch": "^3.3.2"
     "mercadopago": "^1.5.16"
   }
 }
