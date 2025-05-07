@@ -12,7 +12,7 @@ app.use(apiServer);
 // Serve arquivos estáticos da raiz do projeto
 app.use(express.static(path.join(__dirname, '.')));
 
-// Rota padrão para servir o index.html
+// Rota padrão para servir o index.html (opcional)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
