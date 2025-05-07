@@ -1,4 +1,5 @@
 const mercadopago = require('mercadopago');
+const { v4: uuidv4 } = require('uuid');
 
 // Configurar as credenciais do Mercado Pago
 mercadopago.configure({
@@ -9,6 +10,11 @@ mercadopago.configure({
 module.exports = async (req, res) => {
   try {
     const { amount, payerEmail, payerCpf, payerName } = req.body;
+
+    // Validar dados recebidos
+    if (!amount || !payerEmail || !payerCpf || !payerName) {
+      return res.status(400).json({ error: 'Dados incompletos. Forneça amount, payerEmail, payerCpf e payerName.' });
+    }
 
     // Criar o objeto de pagamento
     const paymentData = {
@@ -26,8 +32,20 @@ module.exports = async (req, res) => {
       }
     };
 
-    // Fazer a requisição para criar o pagamento
-    const response = await mercadopago.payment.create(paymentData);
+    // Gerar uma chave de idempotência única
+    const idempotencyKey = uuidv4();
+
+    // Fazer a requisição para criar o pagamento com a chave de idempotência
+    const response = await mercadopago.payment.create(paymentData, {
+      headers: {
+        'X-Idempotency-Key': idempotencyKey
+      }
+    });
+
+    // Verificar se os dados do PIX foram retornados
+    if (!response.body.point_of_interaction || !response.body.point_of_interaction.transaction_data) {
+      return res.status(500).json({ error: 'Resposta do Mercado Pago incompleta. Verifique a configuração da chave PIX.' });
+    }
 
     // Retornar o QR code e informações do Pix
     res.status(200).json({
@@ -37,6 +55,6 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao gerar Pix:', error);
-    res.status(500).json({ error: 'Erro ao gerar Pix: ' + error.message });
+    res.status(500).json({ error: `Erro ao gerar Pix: ${error.message}` });
   }
 };
