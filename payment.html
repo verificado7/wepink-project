@@ -1211,18 +1211,22 @@
       const cardForm = document.getElementById('card-form');
       const pixButton = document.getElementById('pix-button');
       const cardButton = document.getElementById('card-button');
+      const paymentOptions = document.querySelector('.payment-options');
 
       pixButton.classList.remove('active');
       cardButton.classList.remove('active');
       pixForm.classList.remove('active');
       cardForm.classList.remove('active');
+      paymentOptions.style.display = 'flex'; // Garantir que os botões estejam visíveis inicialmente
 
       if (type === 'card') {
         cardButton.classList.add('active');
         cardForm.classList.add('active');
+        paymentOptions.style.display = 'none'; // Esconder os botões ao selecionar cartão
       } else if (type === 'pix') {
         pixButton.classList.add('active');
         pixForm.classList.add('active');
+        paymentOptions.style.display = 'none'; // Esconder os botões ao selecionar PIX
       }
     }
 
@@ -1264,6 +1268,7 @@
       const emailInput = document.getElementById('pix-email-input').value.trim();
       const qrImage = document.getElementById('pix-qr-image');
       const generateButton = document.getElementById('generate-pix-button');
+      const paymentOptions = document.querySelector('.payment-options');
 
       // Calcular o valor total do pedido
       let subtotal = 0;
@@ -1278,28 +1283,31 @@
       if (totalAmount <= 0) {
         console.error('Valor do pedido inválido:', totalAmount);
         showErrorScreen('Valor do pedido inválido. Verifique os itens no carrinho.');
+        paymentOptions.style.display = 'flex'; // Mostra os botões de PIX e cartão novamente
         return;
       }
 
       if (!nameInput || nameInput.split(' ').length < 2) {
         showErrorScreen('Por favor, insira o nome completo (nome e sobrenome).');
+        paymentOptions.style.display = 'flex';
         return;
       }
 
       if (!cpfInput || cpfInput.length !== 11) {
         showErrorScreen('Por favor, insira um CPF válido com 11 dígitos.');
+        paymentOptions.style.display = 'flex';
         return;
       }
 
       if (!emailInput || !emailInput.includes('@') || !emailInput.includes('.')) {
         showErrorScreen('Por favor, insira um e-mail válido.');
+        paymentOptions.style.display = 'flex';
         return;
       }
 
       // Montar os dados para o backend
       const paymentData = {
         amount: totalAmount,
-        description: 'Pagamento Wepink - Perfumaria',
         payerEmail: emailInput,
         payerCpf: cpfInput,
         payerName: nameInput
@@ -1363,6 +1371,7 @@
       } catch (error) {
         console.error('Erro ao gerar Pix:', error);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
+        paymentOptions.style.display = 'flex'; // Mostra os botões de PIX e cartão novamente em caso de erro
       } finally {
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
