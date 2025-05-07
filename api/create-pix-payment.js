@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
     const idempotencyKey = uuidv4();
     console.log('Chave de idempotência gerada:', idempotencyKey);
 
-    // Fazer a requisição para criar o pagamento com a chave de idempotência
+    // Fazer a requisição para criar o pagamento
     console.log('Enviando requisição ao Mercado Pago:', paymentData);
     const response = await mercadopago.payment.create(paymentData, {
       idempotencyKey: idempotencyKey
