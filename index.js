@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000;
 
 // Configuração do Mercado Pago
 mercadopago.configure({
-  access_token: process.env.APP_USR-3709341188085811-050219-1dde9cca4db5f13738f043119fdb7c30-220520212 // Chave secreta será configurada via variável de ambiente
+  access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN // Chave secreta será configurada via variável de ambiente
 });
 
 // Middleware
