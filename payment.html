@@ -1070,8 +1070,10 @@
   <script>
     // Substitua 'YOUR_PUBLIC_KEY' pela sua chave pública do Mercado Pago (produção)
     const mp = new MercadoPago('APP_USR-44c96b6c-33f1-49e4-9f9c-95dbe0338c2d', { locale: 'pt-BR' });
-    // Substitua pela URL do seu backend hospedado no Render
-    const backendUrl = 'https://wepink-backend.onrender.com/create-payment';
+    // URL do backend para pagamento Pix
+    const paymentBackendUrl = 'https://wepink-backend.onrender.com/create-payment';
+    // URL da API de CEP (rodando no mesmo serviço)
+    const cepApiUrl = '/cep/';
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1146,7 +1148,7 @@
     }
 
     async function checkPaymentStatus(paymentId) {
-      const statusUrl = `https://wepink-backend.onrender.com/payment-status/${paymentId}`; // Substitua pela URL do seu backend
+      const statusUrl = `https://wepink-backend.onrender.com/payment-status/${paymentId}`;
       const maxWaitTime = 5 * 60 * 1000; // 5 minutos
       const intervalTime = 5000; // 5 segundos
       let elapsedTime = 0;
@@ -1293,14 +1295,14 @@
           last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
           identification: { type: 'CPF', number: cpfInput }
         },
-        notification_url: 'https://wepink-backend.onrender.com/webhook' // Substitua pela URL do seu backend
+        notification_url: 'https://wepink-backend.onrender.com/webhook'
       };
 
       try {
         generateButton.disabled = true;
         generateButton.textContent = 'Gerando...';
 
-        const response = await fetch(backendUrl, {
+        const response = await fetch(paymentBackendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(paymentData)
