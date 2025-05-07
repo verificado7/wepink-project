@@ -1260,11 +1260,12 @@
     async function generatePixQRCode() {
       const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       const nameInput = document.getElementById('pix-payer-name').value.trim();
-      const cpfInput = document.getElementById('pix-payer-cpf').value.trim();
+      const cpfInput = document.getElementById('pix-payer-cpf').value.replace(/\D/g, '').trim();
       const emailInput = document.getElementById('pix-email-input').value.trim();
       const qrImage = document.getElementById('pix-qr-image');
       const generateButton = document.getElementById('generate-pix-button');
 
+      // Calcular o valor total do pedido
       let subtotal = 0;
       purchase.cartItems.forEach(item => {
         if (item.priceNew && item.quantity) {
@@ -1273,21 +1274,35 @@
       });
       const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
 
+      // Validações iniciais
       if (totalAmount <= 0) {
         console.error('Valor do pedido inválido:', totalAmount);
-        alert('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
+        showErrorScreen('Valor do pedido inválido. Verifique os itens no carrinho.');
         return;
       }
 
+      if (!nameInput || nameInput.split(' ').length < 2) {
+        showErrorScreen('Por favor, insira o nome completo (nome e sobrenome).');
+        return;
+      }
+
+      if (!cpfInput || cpfInput.length !== 11) {
+        showErrorScreen('Por favor, insira um CPF válido com 11 dígitos.');
+        return;
+      }
+
+      if (!emailInput || !emailInput.includes('@') || !emailInput.includes('.')) {
+        showErrorScreen('Por favor, insira um e-mail válido.');
+        return;
+      }
+
+      // Montar os dados para o backend
       const paymentData = {
-        amount: parseFloat(totalAmount.toFixed(2)),
-        description: 'Compra Wepink',
-        payer: {
-          email: emailInput,
-          first_name: nameInput.split(' ')[0] || 'Nome',
-          last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
-          identification: { type: 'CPF', number: cpfInput }
-        }
+        amount: totalAmount,
+        description: 'Pagamento Wepink - Perfumaria',
+        payerEmail: emailInput,
+        payerCpf: cpfInput,
+        payerName: nameInput
       };
 
       try {
@@ -1300,20 +1315,19 @@
           body: JSON.stringify(paymentData)
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao conectar com o servidor.');
+        }
+
         const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Erro ao gerar o Pix. Verifique se o backend está ativo.');
+        // Verificar se os dados necessários foram retornados
+        if (!data.qrCode || !data.qrCodeBase64 || !data.transactionId) {
+          throw new Error('Dados do PIX incompletos. Verifique se a chave PIX está registrada no Mercado Pago.');
         }
 
-        if (!data.qr_code || !data.qr_code_base64) {
-          throw new Error('Dados do QR code não retornados pela API. Verifique se a chave PIX está registrada no Mercado Pago.');
-        }
-
-        if (!data.payment_id) {
-          throw new Error('ID do pagamento não retornado pela API.');
-        }
-
+        // Exibir o QR Code e o código manual
         document.getElementById('pix-inputs').style.display = 'none';
         const codeContainer = document.getElementById('pix-code-manual');
         const codeText = document.getElementById('pix-code-text');
@@ -1321,23 +1335,24 @@
 
         codeContainer.style.display = 'block';
         qrContainer.style.display = 'block';
-        codeText.textContent = data.qr_code;
-        qrImage.src = `data:image/png;base64,${data.qr_code_base64}`;
+        codeText.textContent = data.qrCode;
+        qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
 
-        window.pixPaymentId = data.payment_id;
-        window.pixCode = data.qr_code;
+        // Armazenar o ID do pagamento e o código PIX
+        window.pixPaymentId = data.transactionId;
+        window.pixCode = data.qrCode;
 
+        // Salvar o pedido no localStorage
         const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
         orders.push({
           purchaseData: purchase,
           paymentMethod: 'Pix',
           pixDetails: {
             email: emailInput,
-            first_name: nameInput.split(' ')[0] || 'Nome',
-            last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
-            identification: { type: 'CPF', number: cpfInput },
-            paymentId: data.payment_id,
-            qrCode: data.qr_code,
+            payerName: nameInput,
+            payerCpf: cpfInput,
+            paymentId: data.transactionId,
+            qrCode: data.qrCode,
             amount: totalAmount,
             status: 'Gerado'
           },
@@ -1347,7 +1362,7 @@
         console.log('Código PIX gerado com sucesso:', data);
       } catch (error) {
         console.error('Erro ao gerar Pix:', error);
-        alert(`Erro ao gerar Pix: ${error.message}`);
+        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
       } finally {
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
