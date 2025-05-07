@@ -1303,11 +1303,11 @@
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Erro ao gerar o Pix.');
+          throw new Error(data.error || 'Erro ao gerar o Pix. Verifique se o backend está ativo.');
         }
 
         if (!data.qr_code || !data.qr_code_base64) {
-          throw new Error('Dados do QR code não retornados pela API. Verifique se a chave PIX está registrada.');
+          throw new Error('Dados do QR code não retornados pela API. Verifique se a chave PIX está registrada no Mercado Pago.');
         }
 
         if (!data.payment_id) {
@@ -1356,7 +1356,7 @@
 
     function validateCardForm() {
       const cardNameInput = document.getElementById('card-name');
-      const cardCPFInput = document.getElement viven('card-cpf');
+      const cardCPFInput = document.getElementById('card-cpf');
       const cardNumberInput = document.getElementById('card-number');
       const expMonthInput = document.getElementById('exp-month');
       const expYearInput = document.getElementById('exp-year');
