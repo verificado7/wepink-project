@@ -18,6 +18,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Dados incompletos. Forneça amount, payerEmail, payerCpf e payerName.' });
     }
 
+    // Verificar se o Access Token está configurado
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error('Access Token do Mercado Pago não configurado.');
+      return res.status(500).json({ error: 'Access Token do Mercado Pago não configurado.' });
+    }
+
     // Criar o objeto de pagamento
     const paymentData = {
       transaction_amount: parseFloat(amount),
@@ -34,12 +40,6 @@ module.exports = async (req, res) => {
       }
     };
 
-    // Verificar se o Access Token está configurado
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error('Access Token do Mercado Pago não configurado.');
-      return res.status(500).json({ error: 'Access Token do Mercado Pago não configurado.' });
-    }
-
     // Gerar uma chave de idempotência única
     const idempotencyKey = uuidv4();
     console.log('Chave de idempotência gerada:', idempotencyKey);
@@ -50,10 +50,10 @@ module.exports = async (req, res) => {
       idempotencyKey: idempotencyKey
     });
 
-    console.log('Resposta do Mercado Pago:', response.body);
+    console.log('Resposta completa do Mercado Pago:', response);
 
     // Verificar se os dados do PIX foram retornados
-    if (!response.body.point_of_interaction || !response.body.point_of_interaction.transaction_data) {
+    if (!response.body || !response.body.point_of_interaction || !response.body.point_of_interaction.transaction_data) {
       console.error('Resposta do Mercado Pago incompleta:', response.body);
       return res.status(500).json({ error: 'Resposta do Mercado Pago incompleta. Verifique a configuração da chave PIX.' });
     }
@@ -67,7 +67,12 @@ module.exports = async (req, res) => {
     console.log('PIX gerado com sucesso:', pixData);
     res.status(200).json(pixData);
   } catch (error) {
-    console.error('Erro ao gerar Pix:', error.message, error.stack);
+    console.error('Erro ao gerar Pix:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause,
+      response: error.response ? error.response.body : null
+    });
     res.status(500).json({ error: `Erro ao gerar Pix: ${error.message}` });
   }
 };
