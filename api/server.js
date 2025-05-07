@@ -2,11 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const app = express(); // Use app diretamente em vez de router
+const app = express();
 
 // Middleware para CORS
-app.use(cors({ origin: '[invalid url, do not cite]' }));
-app.use(express.json()); // Necessário para parsear o corpo das requisições POST
+app.use(cors({ origin: 'https://wepink-project.onrender.com' }));
+app.use(express.json());
 
 // Rota para buscar informações de CEP
 app.get('/cep/:cep', async (req, res) => {
