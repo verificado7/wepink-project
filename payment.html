@@ -1314,7 +1314,7 @@
         generateButton.disabled = true;
         generateButton.textContent = 'Gerando...';
 
-        console.log('Enviando requisição para o backend:', paymentData);
+        console.log('Enviando requisição para o backend:', JSON.stringify(paymentData));
         const response = await fetch(`${backendUrl}/create-pix`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
