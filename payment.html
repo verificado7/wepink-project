@@ -269,7 +269,7 @@
     .payment-form input:focus, .payment-form select:focus {
       border-color: #ff2e82;
       background: #fff;
-      box-shadow: 0 0 8px rgba(255, 46, 130, 0.3);
+      box-shadow: 0 0 8px rgba(255,46,130,0.3);
       outline: none;
     }
 
@@ -1068,8 +1068,10 @@
   </footer>
 
   <script>
+    // Substitua 'YOUR_PUBLIC_KEY' pela sua chave pública do Mercado Pago (produção)
     const mp = new MercadoPago('APP_USR-44c96b6c-33f1-49e4-9f9c-95dbe0338c2d', { locale: 'pt-BR' });
-    const backendUrl = '/create-payment';
+    // Substitua pela URL do seu backend hospedado no Render
+    const backendUrl = 'https://wepink-backend.onrender.com/create-payment';
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1144,7 +1146,7 @@
     }
 
     async function checkPaymentStatus(paymentId) {
-      const statusUrl = `/payment-status/${paymentId}`;
+      const statusUrl = `https://wepink-backend.onrender.com/payment-status/${paymentId}`; // Substitua pela URL do seu backend
       const maxWaitTime = 5 * 60 * 1000; // 5 minutos
       const intervalTime = 5000; // 5 segundos
       let elapsedTime = 0;
@@ -1291,7 +1293,7 @@
           last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
           identification: { type: 'CPF', number: cpfInput }
         },
-        notification_url: 'https://your-notification-url.com/webhook'
+        notification_url: 'https://wepink-backend.onrender.com/webhook' // Substitua pela URL do seu backend
       };
 
       try {
