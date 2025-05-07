@@ -4,7 +4,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const app = express();
 
-// Configuração de CORS robusta
+// Configuração de CORS para permitir requisições do frontend
 app.use(cors({
   origin: 'https://wepink-project.onrender.com',
   methods: ['GET', 'POST', 'OPTIONS'],
