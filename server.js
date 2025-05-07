@@ -5,7 +5,7 @@ const app = express();
 
 // Configurar CORS para aceitar requisições do frontend
 app.use(cors({
-  origin: '[invalid url, do not cite]'
+  origin: 'https://wepink-project.onrender.com'
 }));
 
 // Configurar parsing de JSON
@@ -39,7 +39,7 @@ app.post('/create-pix', async (req, res) => {
           number: payer.identification.number
         }
       },
-      notification_url: '[invalid url, do not cite]'
+      notification_url: 'https://wepink-backend.onrender.com/webhook'
     };
 
     const payment = await mercadopago.payment.create(paymentData);
