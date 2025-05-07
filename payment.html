@@ -1067,7 +1067,7 @@
   </footer>
 
   <script>
-    const backendUrl = 'https://wepink-backend.onrender.com'; // Substitua pelo URL do seu backend implantado
+    const backendUrl = 'https://wepink-backend.onrender.com';
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1125,7 +1125,7 @@
 
       if (redirect) {
         setTimeout(() => {
-          window.location.href = 'product.html'; // Redireciona para product.html após o pagamento
+          window.location.href = 'https://www.google.com';
         }, 3000);
       }
     }
@@ -1172,11 +1172,7 @@
           if (data.status === 'approved') {
             clearInterval(interval);
             hidePaymentLoadingOverlay();
-            showConfirmationScreen('Pix', true);
-            // Limpar o carrinho e dados de compra após o pagamento
-            localStorage.removeItem('cartItems');
-            localStorage.removeItem('cartAddress');
-            localStorage.removeItem('pendingPurchase');
+            showConfirmationScreen('Pix');
           } else if (data.status === 'rejected') {
             clearInterval(interval);
             hidePaymentLoadingOverlay();
@@ -1360,7 +1356,7 @@
 
     function validateCardForm() {
       const cardNameInput = document.getElementById('card-name');
-      const cardCPFInput = document.getElementById('card-cpf');
+      const cardCPFInput = document.getElement viven('card-cpf');
       const cardNumberInput = document.getElementById('card-number');
       const expMonthInput = document.getElementById('exp-month');
       const expYearInput = document.getElementById('exp-year');
@@ -1501,10 +1497,6 @@
 
         confirmButton.textContent = 'Confirmar Pagamento';
         showConfirmationScreen('Cartão', true);
-        // Limpar o carrinho e dados de compra após o pagamento
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('cartAddress');
-        localStorage.removeItem('pendingPurchase');
       }, 1000);
     }
 
