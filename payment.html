@@ -10,9 +10,8 @@
   <meta name="country" content="BRA">
   <meta name="language" content="pt-BR">
   <meta name="robots" content="index, follow">
-  <link rel="icon" href="/img/we.png" type="image/png">
+  <link rel="icon" href="img/we.png" type="image/png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
-  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <style>
     * {
       margin: 0;
@@ -269,7 +268,7 @@
     .payment-form input:focus, .payment-form select:focus {
       border-color: #ff2e82;
       background: #fff;
-      box-shadow: 0 0 8px rgba(255,46,130,0.3);
+      box-shadow: 0 0 8px rgba(255, 46, 130, 0.3);
       outline: none;
     }
 
@@ -1046,20 +1045,20 @@
     </nav>
     <div class="social-links" role="navigation" aria-label="Links sociais">
       <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
-        <img src="/img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
+        <img src="img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
       </a>
       <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
-        <img src="/img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
+        <img src="img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
       </a>
     </div>
     <div class="payment-methods">
       <h4>Formas de pagamento</h4>
-      <img src="/img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
-      <img src="/img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
-      <img src="/img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
-      <img src="/img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
-      <img src="/img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
-      <img src="/img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
+      <img src="img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
+      <img src="img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
+      <img src="img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
+      <img src="img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
+      <img src="img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
+      <img src="img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
     </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
@@ -1068,12 +1067,7 @@
   </footer>
 
   <script>
-    // Substitua 'YOUR_PUBLIC_KEY' pela sua chave pública do Mercado Pago (produção)
-    const mp = new MercadoPago('APP_USR-44c96b6c-33f1-49e4-9f9c-95dbe0338c2d', { locale: 'pt-BR' });
-    // URL do backend para pagamento Pix
-    const paymentBackendUrl = 'https://wepink-backend.onrender.com/create-payment';
-    // URL da API de CEP (rodando no mesmo serviço)
-    const cepApiUrl = '/cep/';
+    const backendUrl = 'https://wepink-backend.onrender.com'; // Substitua pelo URL do seu backend implantado
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1131,7 +1125,7 @@
 
       if (redirect) {
         setTimeout(() => {
-          window.location.href = 'https://www.google.com';
+          window.location.href = 'product.html'; // Redireciona para product.html após o pagamento
         }, 3000);
       }
     }
@@ -1148,7 +1142,7 @@
     }
 
     async function checkPaymentStatus(paymentId) {
-      const statusUrl = `https://wepink-backend.onrender.com/payment-status/${paymentId}`;
+      const statusUrl = `${backendUrl}/payment-status/${paymentId}`;
       const maxWaitTime = 5 * 60 * 1000; // 5 minutos
       const intervalTime = 5000; // 5 segundos
       let elapsedTime = 0;
@@ -1178,7 +1172,11 @@
           if (data.status === 'approved') {
             clearInterval(interval);
             hidePaymentLoadingOverlay();
-            showConfirmationScreen('Pix');
+            showConfirmationScreen('Pix', true);
+            // Limpar o carrinho e dados de compra após o pagamento
+            localStorage.removeItem('cartItems');
+            localStorage.removeItem('cartAddress');
+            localStorage.removeItem('pendingPurchase');
           } else if (data.status === 'rejected') {
             clearInterval(interval);
             hidePaymentLoadingOverlay();
@@ -1286,35 +1284,33 @@
       }
 
       const paymentData = {
-        transaction_amount: parseFloat(totalAmount.toFixed(2)),
+        amount: parseFloat(totalAmount.toFixed(2)),
         description: 'Compra Wepink',
-        payment_method_id: 'pix',
         payer: {
           email: emailInput,
           first_name: nameInput.split(' ')[0] || 'Nome',
           last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
           identification: { type: 'CPF', number: cpfInput }
-        },
-        notification_url: 'https://wepink-backend.onrender.com/webhook'
+        }
       };
 
       try {
         generateButton.disabled = true;
         generateButton.textContent = 'Gerando...';
 
-        const response = await fetch(paymentBackendUrl, {
+        const response = await fetch(`${backendUrl}/create-pix`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(paymentData)
         });
 
-        if (!response.ok) {
-          throw new Error('Erro na API do Mercado Pago: ' + response.statusText);
-        }
-
         const data = await response.json();
 
-        if (!data || !data.qr_code || !data.qr_code_base64) {
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro ao gerar o Pix.');
+        }
+
+        if (!data.qr_code || !data.qr_code_base64) {
           throw new Error('Dados do QR code não retornados pela API. Verifique se a chave PIX está registrada.');
         }
 
@@ -1505,6 +1501,10 @@
 
         confirmButton.textContent = 'Confirmar Pagamento';
         showConfirmationScreen('Cartão', true);
+        // Limpar o carrinho e dados de compra após o pagamento
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartAddress');
+        localStorage.removeItem('pendingPurchase');
       }, 1000);
     }
 
