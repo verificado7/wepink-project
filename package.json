@@ -9,5 +9,6 @@
     "express": "^4.17.1",
     "cors": "^2.8.5",
     "node-fetch": "^3.3.2"
+    "mercadopago": "^1.5.16"
   }
 }
