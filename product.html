@@ -1286,7 +1286,7 @@
       updateCart();
     }
 
-    // Função para buscar o endereço via proxy no servidor
+    // Função para buscar o endereço diretamente via API ViaCEP
     async function fetchAddress() {
       const cep = cepInput.value.trim();
       cepInput.classList.remove('invalid');
@@ -1302,7 +1302,7 @@
       }
 
       try {
-        const response = await fetch(`/cep/${cep}`, {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -1310,20 +1310,19 @@
         });
 
         if (!response.ok) {
-          throw new Error('Erro na resposta do servidor: ' + response.statusText);
+          throw new Error(`Erro na resposta da API ViaCEP: ${response.statusText}`);
         }
 
         const data = await response.json();
 
-        if (data.error) {
+        if (data.erro) {
           cepInput.classList.add('invalid');
-          errorCepInput.textContent = data.error;
+          errorCepInput.textContent = 'CEP não encontrado. Verifique o número digitado.';
           errorCepInput.classList.add('visible');
           resetAddressFields();
           return;
         }
 
-        // Verificar e exibir os campos de rua e bairro
         if (data.logradouro) {
           streetElement.textContent = data.logradouro;
           streetElement.style.display = 'block';
@@ -1352,11 +1351,8 @@
 
         cityElement.textContent = data.localidade || '-';
         stateElement.textContent = data.uf || '-';
-
-        // Exibir o card de endereço
         addressDetails.classList.add('visible');
 
-        // Determinar as taxas de entrega com base no estado (UF)
         let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
         if (cartItems.length === 0) {
           cepInput.classList.add('invalid');
@@ -1366,7 +1362,6 @@
           return;
         }
 
-        // Sincronizar os itens do carrinho com os dados mais recentes do localStorage
         cartItems = cartItems.map(item => {
           const updatedProduct = products.find(p => p.id === item.productId);
           if (updatedProduct) {
@@ -1384,7 +1379,6 @@
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
         console.log('Carrinho sincronizado após busca de endereço:', cartItems);
 
-        // Pegar as taxas de entrega do primeiro item do carrinho
         const firstItem = cartItems[0];
         if (!firstItem || !firstItem.deliveryFees) {
           cepInput.classList.add('invalid');
@@ -1407,11 +1401,9 @@
           option2Fee = deliveryFees.other ? deliveryFees.other.option2 : 0;
         }
 
-        // Exibir as opções de taxas de entrega
         deliveryFee1Element.textContent = formatCurrency(option1Fee);
         deliveryFee2Element.textContent = formatCurrency(option2Fee);
 
-        // Salvar temporariamente as taxas e o estado para uso posterior
         document.getElementById('delivery-option1').setAttribute('data-fee', option1Fee);
         document.getElementById('delivery-option2').setAttribute('data-fee', option2Fee);
         localStorage.setItem('cartAddress', JSON.stringify({
@@ -1424,7 +1416,6 @@
           complement: complementInput.value || ''
         }));
 
-        // Resetar a seleção de taxa de entrega
         document.getElementById('delivery-option1').classList.remove('active');
         document.getElementById('delivery-option2').classList.remove('active');
         deliveryFeeElement.textContent = 'R$ 0,00';
@@ -1432,15 +1423,14 @@
         errorDeliveryOption.textContent = '';
         updateCart();
       } catch (error) {
+        console.error('Erro ao buscar CEP:', error);
+        cepInput.classList.add('invalid');
         if (error.message.includes('Failed to fetch')) {
-          cepInput.classList.add('invalid');
-          errorCepInput.textContent = 'Erro de conexão com o servidor. Verifique sua conexão com a internet ou tente novamente mais tarde.';
-          errorCepInput.classList.add('visible');
+          errorCepInput.textContent = 'Erro de conexão com a API ViaCEP. Verifique sua conexão com a internet ou tente novamente mais tarde.';
         } else {
-          cepInput.classList.add('invalid');
-          errorCepInput.textContent = 'Erro ao buscar o endereço: ' + error.message;
-          errorCepInput.classList.add('visible');
+          errorCepInput.textContent = `Erro ao buscar o endereço: ${error.message}`;
         }
+        errorCepInput.classList.add('visible');
         resetAddressFields();
       }
     }
@@ -1491,7 +1481,6 @@
       errorDeliveryOption.classList.remove('visible');
       errorDeliveryOption.textContent = '';
 
-      // Atualizar o endereço no localStorage com a taxa de entrega selecionada
       const cartAddress = JSON.parse(localStorage.getItem('cartAddress')) || {};
       cartAddress.deliveryFee = deliveryFee;
       localStorage.setItem('cartAddress', JSON.stringify(cartAddress));
@@ -1507,7 +1496,6 @@
       const neighborhood = neighborhoodInput.style.display === 'block' ? neighborhoodInput.value.trim() : neighborhoodElement.textContent;
       const selectedOption = document.querySelector('.delivery-options button.active');
 
-      // Limpar mensagens de erro
       cepInput.classList.remove('invalid');
       errorCepInput.classList.remove('visible');
       errorCepInput.textContent = '';
@@ -1523,7 +1511,6 @@
       errorDeliveryOption.classList.remove('visible');
       errorDeliveryOption.textContent = '';
 
-      // Validações
       if (cartItems.length === 0) {
         alert('Seu carrinho está vazio. Adicione produtos antes de prosseguir.');
         return;
@@ -1570,30 +1557,25 @@
         return;
       }
 
-      // Recuperar o endereço salvo
       const addressData = JSON.parse(localStorage.getItem('cartAddress')) || {};
       addressData.street = street;
       addressData.neighborhood = neighborhood;
       addressData.number = number;
       addressData.complement = complementInput.value || '';
 
-      // Estruturar os dados do pedido para o admin
       const purchaseData = {
         cartItems: cartItems,
         address: addressData
       };
 
-      // Salvar os dados do pedido no localStorage para o admin
       const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      adminOrders.push({ purchaseData }); // Estrutura compatível com admin.html
+      adminOrders.push({ purchaseData });
       localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
       console.log('Pedidos salvos para o admin:', adminOrders);
 
-      // Salvar o pedido pendente para o fluxo de pagamento
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
       console.log('Salvando pendingPurchase:', purchaseData);
 
-      // Verificar se os dados foram salvos corretamente
       const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
       if (!savedPurchaseData || !savedPurchaseData.cartItems || savedPurchaseData.cartItems.length === 0) {
         console.error('Erro ao salvar pendingPurchase:', savedPurchaseData);
@@ -1601,7 +1583,6 @@
         return;
       }
 
-      // Redirecionar para a página de login
       window.location.href = 'login.html';
     }
 
