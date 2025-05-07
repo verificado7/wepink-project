@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const router = express.Router();
+const app = express(); // Use app diretamente em vez de router
 
 // Middleware para CORS
-router.use(cors());
+app.use(cors({ origin: '[invalid url, do not cite]' }));
+app.use(express.json()); // Necessário para parsear o corpo das requisições POST
 
 // Rota para buscar informações de CEP
-router.get('/cep/:cep', async (req, res) => {
+app.get('/cep/:cep', async (req, res) => {
   const cep = req.params.cep.replace(/\D/g, '');
   if (cep.length !== 8) {
     return res.status(400).json({ error: 'CEP inválido. Deve conter 8 dígitos.' });
@@ -27,4 +28,12 @@ router.get('/cep/:cep', async (req, res) => {
   }
 });
 
-module.exports = router;
+// Rota para criar pagamento PIX
+const createPixPayment = require('./create-pix-payment');
+app.post('/create-pix', createPixPayment);
+
+// Iniciar o servidor
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
