@@ -4,532 +4,321 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>wepink :: Pagamento</title>
-  <meta name="description" content="Finalize sua compra na Wepink">
+  <meta name="description" content="Pagamento - Wepink">
   <meta name="copyright" content="WePink">
   <meta name="author" content="WePink">
   <meta name="country" content="BRA">
   <meta name="language" content="pt-BR">
-  <meta name="robots" content="index, follow">
-  <link rel="icon" href="img/we.png" type="image/png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+  <link rel="icon" href="/img/we.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
   <style>
-    * {
+    body {
+      font-family: 'Montserrat', sans-serif;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #f5f5f5 0%, #e0e7ff 100%);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      color: #333;
-      line-height: 1.6;
-      overflow-x: hidden;
+      transition: opacity 0.5s ease;
     }
-
+    body.fade-out {
+      opacity: 0;
+    }
+    header, footer, section { padding: 20px; }
+    .notification-bar {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .notification-bar a {
+      color: white;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .notification-bar a:hover {
+      color: #f0f0f0;
+      text-decoration: underline;
+    }
     .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 24px;
-      background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      transition: background 0.3s ease;
+      padding: 10px 20px;
+      background: linear-gradient(90deg, #ffffff, #f9f9f9);
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 0 0 12px 12px;
     }
-
     .header-bar .logo-text {
       font-weight: 700;
       font-size: 1.5rem;
-      color: #fff;
+      color: #ff2e82;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-      transition: color 0.3s ease;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
-
-    .header-icons {
-      display: flex;
-      gap: 16px;
-    }
-
-    .header-icons button, .menu-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      outline: none;
-    }
-
-    .header-icons svg, .menu-icon svg {
-      width: 24px;
-      height: 24px;
-      stroke: #fff;
-      stroke-width: 2;
-      transition: stroke 0.3s ease, transform 0.3s ease;
-    }
-
-    .header-icons button:hover svg, .menu-icon:hover svg {
-      stroke: #ff2e82;
-      transform: scale(1.1);
-    }
-
-    .header-icons button:focus, .menu-icon:focus {
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
-
+    .header-icons { display: flex; gap: 10px; }
+    .header-icons svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
+    .header-icons svg:hover { stroke: #ff2e82; }
+    .menu-icon { background: none; border: none; cursor: pointer; }
+    .menu-icon svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
+    .menu-icon svg:hover { stroke: #ff2e82; }
     .payment-section {
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 0 16px;
-      flex: 1;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-
-    .payment-section h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ff2e82;
-      margin-bottom: 32px;
+      max-width: 600px;
+      margin: 20px auto;
       text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .order-summary {
-      background: #fff;
-      padding: 24px;
+      background: linear-gradient(145deg, #ffffff, #f9f9f9);
+      padding: 25px;
       border-radius: 16px;
-      margin-bottom: 32px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
-
-    .order-summary:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    .payment-section:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
     }
-
-    .order-summary h3 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #ff2e82;
-      margin-bottom: 24px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .order-item {
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 16px 0;
-      margin-bottom: 16px;
-    }
-
-    .order-item img {
-      width: 70px;
-      height: auto;
-      margin-right: 20px;
-      border-radius: 12px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-      object-fit: cover;
-    }
-
-    .order-item-details {
-      flex: 1;
-    }
-
-    .order-item-details p {
-      margin: 6px 0;
-      font-size: 0.95rem;
-      color: #555;
-    }
-
-    .order-item-details .price {
-      color: #333;
-      font-weight: 600;
-      font-size: 1.05rem;
-    }
-
-    .order-total {
-      margin-top: 16px;
-    }
-
-    .order-total p {
-      font-size: 0.95rem;
-      color: #555;
-      margin: 8px 0;
-      text-align: left;
-    }
-
-    .order-total .total {
+    .payment-section h2 {
+      font-size: 1.3rem;
       font-weight: 700;
-      color: #333;
-      font-size: 1.15rem;
-    }
-
-    .payment-options {
-      display: flex;
-      justify-content: center;
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    .payment-options button {
-      background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: #fff;
-      padding: 14px 32px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 1.05rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-    }
-
-    .payment-options button:hover {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-    }
-
-    .payment-options button.active {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-      border: 2px solid #fff;
-      transform: scale(1.05);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-    }
-
-    .payment-form {
-      display: none;
-      background: #fff;
-      padding: 24px;
-      border-radius: 16px;
-      margin-bottom: 32px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      opacity: 0;
-      transition: all 0.3s ease;
-      height: 0;
-      overflow: hidden;
-    }
-
-    .payment-form.active {
-      display: block;
-      opacity: 1;
-      height: auto;
-      animation: slideIn 0.3s ease-in-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .payment-form h3 {
-      font-size: 1.4rem;
-      font-weight: 600;
       color: #ff2e82;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
-
-    .payment-form label {
-      font-size: 0.9rem;
-      color: #333;
-      margin-bottom: 6px;
-      display: block;
-      font-weight: 500;
-    }
-
-    .payment-form input, .payment-form select {
-      width: 100%;
-      padding: 12px 16px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      background: #f9f9fb;
-      transition: all 0.3s ease;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .payment-form input:focus, .payment-form select:focus {
-      border-color: #ff2e82;
-      background: #fff;
-      box-shadow: 0 0 8px rgba(255, 46, 130, 0.3);
-      outline: none;
-    }
-
-    .payment-form input.invalid {
-      border-color: #ff2e82;
-      background: #fff2f4;
-    }
-
-    .payment-form .error-message {
+    .payment-section .error-message {
       color: #ff2e82;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       margin: -2px 0 8px;
       display: none;
       background: #fff2f4;
       padding: 4px 8px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-
-    .payment-form .error-message.visible {
+    .payment-section .error-message.visible {
       display: block;
     }
-
-    .payment-form button {
+    .payment-options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .payment-options button {
+      background: linear-gradient(90deg, #ffffff, #f9f9f9);
+      color: #ff2e82;
+      padding: 10px 20px;
+      border: 2px solid #ff2e82;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .payment-options button:hover {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: #fff;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .payment-options button.active {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
+      border: 2px solid #ff99cc;
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .payment-details {
+      display: none;
+      text-align: left;
+      margin-top: 20px;
+      padding: 15px;
+      background: linear-gradient(145deg, #f9f9f9, #ffffff);
+      border-radius: 12px;
+      border: 1px solid #eee;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    .payment-details.active {
+      display: block;
+      opacity: 1;
+    }
+    .payment-details input {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      background: #f9f9f9;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .payment-details input:focus {
+      border-color: #ff2e82;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(255,46,130,0.3);
+      outline: none;
+    }
+    .payment-details input.invalid {
+      border-color: #ff2e82;
+      background: #fff2f4;
+    }
+    .payment-details input::placeholder {
+      color: #999;
+      font-weight: normal;
+      font-size: 0.95rem;
+    }
+    .payment-details .error-message {
+      margin: 2px 0;
+    }
+    .payment-details .card-details {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .payment-details .card-details div {
+      flex: 1;
+      min-width: 100px;
+    }
+    .pix-details {
+      text-align: center;
+    }
+    .pix-details img {
+      width: 150px;
+      height: 150px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .pix-details p {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 5px 0;
+      word-break: break-all;
+    }
+    .pix-details button {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .pix-details button:hover {
+      background: linear-gradient(90deg, #e02974, #ff80b3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .payment-details button {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: white;
       padding: 14px 20px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 600;
       font-size: 1rem;
       cursor: pointer;
       width: 100%;
-      margin-top: 16px;
+      margin-top: 15px;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
+      position: relative;
     }
-
-    .payment-form button:hover:not(:disabled) {
+    .payment-details button:hover {
       background: linear-gradient(90deg, #e02974, #ff80b3);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
-
-    .payment-form button:disabled {
+    .payment-details button:disabled {
       background: #ccc;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
     }
-
-    .pix-code-container {
-      margin-top: 24px;
-      padding: 16px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #f9f9fb;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .spinner {
       display: none;
-      animation: fadeIn 0.3s ease;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      border: 3px solid #fff;
+      border-top: 3px solid #ff2e82;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
-
-    .pix-code-container p {
-      font-size: 0.95rem;
-      color: #333;
-      margin: 0 0 12px;
-    }
-
-    .pix-code-container code {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.9rem;
-      color: #ff2e82;
-      word-break: break-all;
-      display: block;
-      background: #fff;
-      padding: 8px;
-      border-radius: 6px;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    .pix-qr-container {
-      margin-top: 24px;
-      padding: 16px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background: #f9f9fb;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      display: none;
-      animation: zoomIn 0.5s ease;
-    }
-
-    .pix-qr-container img {
-      max-width: 250px;
-      height: auto;
-      border-radius: 8px;
-      transition: transform 0.3s ease;
-    }
-
-    .pix-qr-container img:hover {
-      transform: scale(1.05);
-    }
-
-    .copy-button {
-      background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    .copy-button:hover {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .copy-button.copied {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-    }
-
-    .copied-message {
-      display: none;
-      color: #ff2e82;
-      font-size: 0.85rem;
-      margin-top: 8px;
-      animation: fadeInCopied 0.3s ease;
-    }
-
-    .copied-message.visible {
+    .spinner.visible {
       display: block;
     }
-
-    .error-screen {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
-
-    .error-content {
-      background: #fff;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-      text-align: center;
-      max-width: 90%;
-      width: 500px;
-      animation: popIn 0.4s ease-in-out;
-      border-top: 4px solid #dc3545;
+    button.loading {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
-
-    .error-content h3 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #dc3545;
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
-
-    .error-content p {
-      font-size: 1rem;
-      color: #333;
-      margin-bottom: 24px;
-      line-height: 1.8;
-    }
-
-    .error-content button {
-      background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: #fff;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .error-content button:hover {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-    }
-
     footer {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: #fff;
-      padding: 40px 16px;
+      padding: 25px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
-      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-      margin-top: auto;
-      transition: background 0.3s ease;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
     }
-
     footer .footer-logo {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 24px;
-      text-align: center;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
-
-    footer .footer-logo:hover {
-      transform: scale(1.05);
-    }
-
     footer .footer-links {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 28px;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 25px;
     }
-
     footer .footer-links a {
       color: #fff;
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 400;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      transition: color 0.3s;
     }
-
     footer .footer-links a:hover {
-      color: #ff2e82;
-      background: #fff;
-      transform: translateY(-2px);
+      color: #f0f0f0;
+      text-decoration: underline;
     }
-
-    footer .footer-links a:focus {
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
-
     footer .social-links {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin-bottom: 28px;
+      gap: 12px;
+      margin-bottom: 25px;
     }
-
     footer .social-links a {
       background-color: #fff;
       border-radius: 50%;
@@ -539,351 +328,138 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
     footer .social-links a:hover {
       transform: scale(1.1);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-      background: #f0f0f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-
-    footer .social-links a:focus {
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
-
     footer .social-links img {
       width: 24px;
       height: 24px;
-      transition: filter 0.3s ease;
     }
-
-    footer .social-links a:hover img {
-      filter: brightness(0.9);
-    }
-
     footer .payment-methods {
       text-align: center;
-      margin-top: 24px;
+      margin-top: 25px;
     }
-
     footer .payment-methods h4 {
       font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 15px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
-
     footer .payment-methods img {
-      margin: 0 6px;
+      margin: 0 5px;
       height: 30px;
-      border-radius: 4px;
-      background: #fff;
-      padding: 2px;
-      transition: transform 0.3s ease, filter 0.3s ease;
+      filter: brightness(0) invert(1);
     }
-
-    footer .payment-methods img:hover {
-      transform: scale(1.1);
-      filter: brightness(0.9);
-    }
-
     footer .payment-methods img.pix-icon {
       height: 40px;
     }
-
-    footer .footer-info {
-      text-align: center;
-      margin-top: 24px;
-    }
-
     footer .footer-info p {
       font-size: 0.85rem;
-      margin: 6px 0;
-      opacity: 0.9;
+      margin: 5px 0;
     }
-
     footer .footer-info a {
       color: #fff;
-      text-decoration: none;
-      transition: color 0.3s ease, text-decoration 0.3s ease;
+      transition: color 0.3s;
     }
-
     footer .footer-info a:hover {
       color: #f0f0f0;
-      text-decoration: underline;
     }
-
-    footer .footer-info a:focus {
-      outline: 2px solid #fff;
-      outline-offset: 2px;
-    }
-
-    .expiration-date {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .expiration-date > div {
-      flex: 1;
-    }
-
-    .payment-form select {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-      background-repeat: no-repeat;
-      background-position-x: 98%;
-      background-position-y: 50%;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes fadeInCopied {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes zoomIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
     @media (max-width: 600px) {
-      .payment-section {
-        padding: 0 12px;
-        margin: 24px auto;
-      }
-
-      .payment-section h2 {
-        font-size: 1.6rem;
-      }
-
-      .payment-options {
-        flex-direction: column;
-        gap: 16px;
-      }
-
-      .expiration-date {
-        flex-direction: column;
-        gap: 0;
-      }
-
-      .expiration-date > div {
-        width: 100%;
-      }
-
-      footer {
-        padding: 32px 12px;
-      }
-
-      footer .footer-logo {
-        font-size: 1.3rem;
-        margin-bottom: 20px;
-      }
-
-      footer .footer-links {
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-
-      footer .footer-links a {
-        font-size: 0.85rem;
-        padding: 6px 10px;
-      }
-
-      footer .social-links {
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-
-      footer .social-links a {
-        width: 35px;
-        height: 35px;
-      }
-
-      footer .social-links img {
-        width: 20px;
-        height: 20px;
-      }
-
-      footer .payment-methods h4 {
-        font-size: 0.9rem;
-        margin-bottom: 12px;
-      }
-
-      footer .payment-methods img {
-        margin: 0 6px;
-        height: 28px;
-      }
-
-      footer .payment-methods img.pix-icon {
-        height: 38px;
-      }
-
-      footer .footer-info {
-        margin-top: 24px;
-      }
-
-      footer .footer-info p {
-        font-size: 0.8rem;
-      }
+      .header-bar .logo-text { font-size: 1.2rem; }
+      .header-icons svg { width: 20px; height: 20px; }
+      .menu-icon svg { width: 20px; height: 20px; }
+      .payment-section { padding: 15px; }
+      .payment-section h2 { font-size: 1.1rem; }
+      .payment-options { gap: 10px; }
+      .payment-options button { font-size: 0.8rem; padding: 8px 15px; }
+      .payment-details { padding: 10px; }
+      .payment-details input { font-size: 0.85rem; }
+      .payment-details input::placeholder { font-size: 0.85rem; }
+      .payment-details button { font-size: 0.9rem; }
+      .pix-details img { width: 120px; height: 120px; }
+      .pix-details p { font-size: 0.75rem; }
+      .pix-details button { font-size: 0.8rem; padding: 8px 15px; }
+      footer .footer-logo { font-size: 1.2rem; }
+      footer .footer-links a { font-size: 0.8rem; }
+      footer .payment-methods h4 { font-size: 0.9rem; }
+      footer .social-links img { width: 20px; height: 20px; }
+      footer .social-links a { width: 35px; height: 35px; }
     }
   </style>
 </head>
 <body>
-  <header class="header-bar" role="banner">
-    <button class="menu-icon" aria-label="Abrir menu">
+  <!-- Barra de Notificação -->
+  <div class="notification-bar">
+    Garanta agora o seu <strong>we favorito!</strong> <a href="feminino.html">Confira</a>
+  </div>
+
+  <!-- Cabeçalho -->
+  <div class="header-bar">
+    <button class="menu-icon">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
-    <div class="logo-text" role="heading" aria-level="1">wepink</div>
-    <div class="header-icons" role="navigation">
-      <button aria-label="Perfil do usuário">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-        </svg>
-      </button>
-      <button aria-label="Carrinho de compras">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-  <main class="payment-section" role="main">
-    <h2>Finalizar Pagamento</h2>
-    <section class="order-summary" id="order-summary" aria-labelledby="order-summary-title">
-      <h3 id="order-summary-title">Resumo do Pedido</h3>
-      <div id="order-items" role="list"></div>
-      <div class="order-total">
-        <p><strong>Taxa de Entrega:</strong> <span id="delivery-fee">R$ 0,00</span></p>
-        <p class="total"><strong>Total:</strong> <span id="order-total">R$ 0,00</span></p>
-      </div>
-    </section>
-    <div class="payment-options" role="tablist">
-      <button id="pix-button" role="tab" aria-selected="false" aria-controls="pix-form">Pix</button>
-      <button id="card-button" role="tab" aria-selected="false" aria-controls="card-form">Cartão</button>
-    </div>
-    <form id="pix-form" class="payment-form" role="tabpanel" aria-labelledby="pix-button">
-      <h3>Pagamento via Pix</h3>
-      <div class="pix-details" id="pix-details">
-        <div id="pix-inputs">
-          <label for="pix-payer-name">Nome Completo</label>
-          <input type="text" id="pix-payer-name" placeholder="Nome Completo" required aria-label="Nome completo do pagador">
-          <p class="error-message" id="error-pix-payer-name"></p>
-          <label for="pix-payer-cpf">CPF (somente números)</label>
-          <input type="text" id="pix-payer-cpf" placeholder="CPF (somente números)" maxlength="11" pattern="\d{11}" required aria-label="CPF do pagador">
-          <p class="error-message" id="error-pix-payer-cpf"></p>
-          <label for="pix-email-input">E-mail</label>
-          <input type="email" id="pix-email-input" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
-          <p class="error-message" id="error-pix-email-input"></p>
-          <button id="generate-pix-button" disabled aria-label="Gerar código PIX">Gerar Pix</button>
-        </div>
-        <div id="pix-code-manual" class="pix-code-container">
-          <p>Código Pix (Copie e Cole):</p>
-          <code id="pix-code-text" role="textbox" aria-readonly="true"></code>
-          <button class="copy-button" id="copy-pix-code" aria-label="Copiar código PIX">Copiar</button>
-          <p class="copied-message" id="copied-message" role="status">Código Copiado!</p>
-        </div>
-        <div id="pix-qr-manual" class="pix-qr-container">
-          <p>Escaneie o QR Code:</p>
-          <img id="pix-qr-image" src="" alt="QR Code para pagamento via PIX">
-        </div>
-      </div>
-    </form>
-    <form id="card-form" class="payment-form" role="tabpanel" aria-labelledby="card-button">
-      <h3>Pagamento via Cartão</h3>
-      <div class="card-details" id="card-details">
-        <label for="card-name">Nome no Cartão</label>
-        <input type="text" id="card-name" placeholder="Nome no cartão" required aria-label="Nome no cartão">
-        <p class="error-message" id="error-card-name"></p>
-        <label for="card-cpf">CPF (somente números)</label>
-        <input type="text" id="card-cpf" placeholder="Digite o CPF (somente números)" maxlength="11" pattern="\d{11}" required aria-label="CPF do titular do cartão">
-        <p class="error-message" id="error-card-cpf"></p>
-        <label for="card-email">E-mail</label>
-        <input type="email" id="card-email" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
-        <p class="error-message" id="error-card-email"></p>
-        <label for="card-number">Número do Cartão</label>
-        <input type="text" id="card-number" placeholder="Número do Cartão (16 dígitos)" maxlength="19" required aria-label="Número do cartão">
-        <p class="error-message" id="error-card-number"></p>
-        <div class="expiration-date">
-          <div>
-            <label for="exp-month">Mês de Expiração</label>
-            <select id="exp-month" required aria-label="Mês de expiração do cartão">
-              <option value="">Mês</option>
-              <option value="01">01</option>
-              <option value="02">02</option>
-              <option value="03">03</option>
-              <option value="04">04</option>
-              <option value="05">05</option>
-              <option value="06">06</option>
-              <option value="07">07</option>
-              <option value="08">08</option>
-              <option value="09">09</option>
-              <option value="10">10</option>
-              <option value="11">11</option>
-              <option value="12">12</option>
-            </select>
-            <p class="error-message" id="error-exp-month"></p>
-          </div>
-          <div>
-            <label for="exp-year">Ano de Expiração</label>
-            <select id="exp-year" required aria-label="Ano de expiração do cartão">
-              <option value="">Ano</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-              <option value="2029">2029</option>
-              <option value="2030">2030</option>
-              <option value="2031">2031</option>
-              <option value="2032">2032</option>
-              <option value="2033">2033</option>
-              <option value="2034">2034</option>
-              <option value="2035">2035</option>
-            </select>
-            <p class="error-message" id="error-exp-year"></p>
-          </div>
-        </div>
-        <label for="cvv">CVV</label>
-        <input type="text" id="cvv" placeholder="CVV" maxlength="4" pattern="\d{3,4}" title="Digite 3 ou 4 dígitos" required aria-label="CVV do cartão">
-        <p class="error-message" id="error-cvv"></p>
-        <label for="password">Senha</label>
-        <input type="password" id="password" placeholder="Senha" required aria-label="Senha do cartão">
-        <p class="error-message" id="error-password"></p>
-        <button id="confirm-payment-button" disabled aria-label="Confirmar pagamento com cartão">Confirmar Pagamento</button>
-      </div>
-    </form>
-  </main>
-
-  <div class="error-screen" id="error-screen" role="dialog" aria-labelledby="error-title">
-    <div class="error-content">
-      <h3 id="error-title">Erro ao Processar Pagamento</h3>
-      <p id="error-message">Houve um erro ao processar o pagamento. Tente novamente.</p>
-      <button id="try-again" aria-label="Tentar novamente">Tentar Novamente</button>
+    <div class="logo-text">wepink</div>
+    <div class="header-icons">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
     </div>
   </div>
 
-  <footer role="contentinfo">
+  <!-- Seção de Pagamento -->
+  <section class="payment-section">
+    <h2>Finalizar Pagamento</h2>
+    <p id="error-message" class="error-message">Nenhum pedido encontrado. Volte ao carrinho para continuar sua compra.</p>
+    <div class="payment-options">
+      <button id="pix-button" onclick="selectPaymentMethod('pix')"><img src="/img/pix.png" alt="Pix" height="20"> Pix</button>
+      <button id="card-button" onclick="selectPaymentMethod('card')"><i class="fas fa-credit-card"></i> Cartão</button>
+    </div>
+    <div id="pix-details" class="payment-details pix-details">
+      <p id="pix-total"></p>
+      <img id="pix-qr-code" src="https://via.placeholder.com/150" alt="QR Code Pix">
+      <p id="pix-code"></p>
+      <button onclick="confirmPixPayment()">Confirmar Pagamento Pix</button>
+    </div>
+    <div id="card-details" class="payment-details">
+      <input type="text" id="card-name" placeholder="Nome no Cartão" oninput="validateCardForm()" aria-label="Nome no cartão">
+      <p class="error-message" id="error-card-name"></p>
+      <input type="email" id="card-email" placeholder="E-mail" oninput="validateCardForm()" aria-label="E-mail do titular do cartão">
+      <p class="error-message" id="error-card-email"></p>
+      <input type="text" id="card-cpf" placeholder="CPF (somente números)" maxlength="11" oninput="validateCardForm(); cleanCPFInput(this)" aria-label="CPF do titular do cartão">
+      <p class="error-message" id="error-card-cpf"></p>
+      <input type="text" id="card-number" placeholder="Número do Cartão" maxlength="19" oninput="validateCardForm(); formatCardNumber(this)" aria-label="Número do cartão">
+      <p class="error-message" id="error-card-number"></p>
+      <div class="card-details">
+        <div>
+          <input type="text" id="card-exp-month" placeholder="Mês (MM)" maxlength="2" oninput="validateCardForm(); cleanNumberInput(this)" aria-label="Mês de validade do cartão">
+          <p class="error-message" id="error-card-exp-month"></p>
+        </div>
+        <div>
+          <input type="text" id="card-exp-year" placeholder="Ano (AA)" maxlength="2" oninput="validateCardForm(); cleanNumberInput(this)" aria-label="Ano de validade do cartão">
+          <p class="error-message" id="error-card-exp-year"></p>
+        </div>
+        <div>
+          <input type="text" id="card-cvv" placeholder="CVV" maxlength="3" oninput="validateCardForm(); cleanNumberInput(this)" aria-label="Código CVV do cartão">
+          <p class="error-message" id="error-card-cvv"></p>
+        </div>
+      </div>
+      <button id="card-pay-button" onclick="confirmCardPayment()" disabled>Confirmar Pagamento <span class="spinner" id="card-spinner"></span></button>
+    </div>
+  </section>
+
+  <!-- Rodapé -->
+  <footer>
     <div class="footer-logo">wepink</div>
-    <nav class="footer-links" role="navigation" aria-label="Links do rodapé">
+    <div class="footer-links">
       <a href="#">Sobre nós</a>
       <a href="#">Central de ajuda</a>
       <a href="#">Troca e devoluções</a>
@@ -892,23 +468,29 @@
       <a href="#">Trabalhe conosco</a>
       <a href="#">Consulte sua entrega</a>
       <a href="#">Franquias</a>
-    </nav>
-    <div class="social-links" role="navigation" aria-label="Links sociais">
-      <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
-        <img src="img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
+    </div>
+    <div class="social-links">
+      <a href="https://www.instagram.com" target="_blank">
+        <img src="/img/instagram.png" alt="Instagram">
       </a>
-      <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
-        <img src="img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
+      <a href="https://www.facebook.com" target="_blank">
+        <img src="/img/facebook.png" alt="Facebook">
+      </a>
+      <a href="https://www.youtube.com" target="_blank">
+        <img src="/img/youtube.png" alt="YouTube">
+      </a>
+      <a href="https://www.whatsapp.com" target="_blank">
+        <img src="/img/whatsapp.png" alt="WhatsApp">
       </a>
     </div>
     <div class="payment-methods">
       <h4>Formas de pagamento</h4>
-      <img src="img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
-      <img src="img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
-      <img src="img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
-      <img src="img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
-      <img src="img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
-      <img src="img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
+      <img src="/img/visa.png" alt="Visa" height="30">
+      <img src="/img/mastercard.png" alt="Mastercard" height="30">
+      <img src="/img/elo.png" alt="Elo" height="30">
+      <img src="/img/amex.png" alt="Amex" height="30">
+      <img src="/img/boleto.png" alt="Boleto" height="30">
+      <img src="/img/pix.png" alt="Pix" class="pix-icon" height="40">
     </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
@@ -917,10 +499,116 @@
   </footer>
 
   <script>
-    const backendUrl = '/create-pix';
+    let purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+    console.log('Dados de pendingPurchase ao carregar payment.html:', purchaseData);
+
+    window.onload = function() {
+      const errorMessage = document.getElementById('error-message');
+      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
+        errorMessage.classList.add('visible');
+        document.querySelector('.payment-options').style.display = 'none';
+        document.querySelector('#pix-details').style.display = 'none';
+        document.querySelector('#card-details').style.display = 'none';
+        setTimeout(() => window.location.href = 'product.html', 3000);
+      } else {
+        errorMessage.classList.remove('visible');
+        document.querySelector('.payment-options').style.display = 'flex';
+        selectPaymentMethod('pix');
+      }
+    };
+
+    function selectPaymentMethod(method) {
+      const pixButton = document.getElementById('pix-button');
+      const cardButton = document.getElementById('card-button');
+      const pixDetails = document.getElementById('pix-details');
+      const cardDetails = document.getElementById('card-details');
+
+      if (method === 'pix') {
+        pixButton.classList.add('active');
+        cardButton.classList.remove('active');
+        pixDetails.classList.add('active');
+        cardDetails.classList.remove('active');
+        generatePix();
+      } else {
+        pixButton.classList.remove('active');
+        cardButton.classList.add('active');
+        pixDetails.classList.remove('active');
+        cardDetails.classList.add('active');
+      }
+    }
 
     function formatCurrency(value) {
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+      return `R$ ${parseFloat(value || 0).toFixed(2).replace('.', ',')}`;
+    }
+
+    function generatePix() {
+      let subtotal = 0;
+      purchaseData.cartItems.forEach(item => {
+        subtotal += (item.priceNew || 0) * (item.quantity || 1);
+      });
+      const deliveryFee = purchaseData.address?.deliveryFee || 0;
+      const total = subtotal + deliveryFee;
+
+      const pixTotal = document.getElementById('pix-total');
+      const pixCode = document.getElementById('pix-code');
+      pixTotal.textContent = `Total a pagar: ${formatCurrency(total)}`;
+      pixCode.textContent = `Código Pix: qrcode_${Math.floor(Math.random() * 10000000000)}`;
+    }
+
+    function confirmPixPayment() {
+      let subtotal = 0;
+      purchaseData.cartItems.forEach(item => {
+        subtotal += (item.priceNew || 0) * (item.quantity || 1);
+      });
+      const deliveryFee = purchaseData.address?.deliveryFee || 0;
+      const total = subtotal + deliveryFee;
+
+      const pixCode = document.getElementById('pix-code').textContent.replace('Código Pix: ', '');
+      const customerName = purchaseData.name || 'Convidado';
+      const [firstName, ...lastNameParts] = customerName.split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      const pixDetails = {
+        first_name: firstName,
+        last_name: lastName,
+        email: purchaseData.email || 'não informado',
+        identification: {
+          type: 'CPF',
+          number: purchaseData.cpf || 'não informado'
+        },
+        qrCode: pixCode,
+        amount: total
+      };
+
+      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+      const order = {
+        purchaseData: purchaseData,
+        items: purchaseData.cartItems,
+        customerDetails: {
+          name: purchaseData.name,
+          email: purchaseData.email,
+          cpf: purchaseData.cpf
+        },
+        paymentMethod: 'Pix',
+        pixDetails: pixDetails,
+        orderDate: new Date().toISOString(),
+        status: 'Gerado',
+        loginType: purchaseData.loginType || 'Unknown'
+      };
+      adminOrders.push(order);
+      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
+      localStorage.removeItem('pendingPurchase');
+      console.log('Pedido salvo com Pix:', order);
+
+      document.body.classList.add('fade-out');
+      setTimeout(() => window.location.href = 'index.html', 500);
+    }
+
+    function cleanCPFInput(input) {
+      input.value = input.value.replace(/\D/g, '').slice(0, 11);
+    }
+
+    function cleanNumberInput(input) {
+      input.value = input.value.replace(/\D/g, '');
     }
 
     function formatCardNumber(input) {
@@ -932,489 +620,158 @@
       input.value = formatted;
     }
 
-    function formatCPFDisplay(cpf) {
-      if (!cpf) return 'Não informado';
-      let value = cpf.replace(/\D/g, '').slice(0, 11);
-      if (value.length < 11) return 'CPF inválido';
-      let formatted = '';
-      for (let i = 0; i < value.length; i++) {
-        if (i === 3 || i === 6) formatted += '.';
-        if (i === 9) formatted += '-';
-        formatted += value[i];
-      }
-      return formatted;
-    }
-
-    function cleanCPFInput(input) {
-      input.value = input.value.replace(/\D/g, '').slice(0, 11);
-    }
-
-    function showErrorScreen(message) {
-      const errorScreen = document.getElementById('error-screen');
-      const errorMessage = document.getElementById('error-message');
-      errorMessage.textContent = message;
-      errorScreen.style.display = 'flex';
-      document.getElementById('try-again').onclick = () => {
-        errorScreen.style.display = 'none';
-        document.getElementById('pix-inputs').style.display = 'block';
-        document.getElementById('pix-code-manual').style.display = 'none';
-        document.getElementById('pix-qr-manual').style.display = 'none';
-      };
-    }
-
-    function showPaymentForm(type) {
-      const pixForm = document.getElementById('pix-form');
-      const cardForm = document.getElementById('card-form');
-      const pixButton = document.getElementById('pix-button');
-      const cardButton = document.getElementById('card-button');
-
-      pixButton.classList.remove('active');
-      cardButton.classList.remove('active');
-      pixForm.classList.remove('active');
-      cardForm.classList.remove('active');
-
-      if (type === 'card') {
-        cardButton.classList.add('active');
-        cardForm.classList.add('active');
-      } else if (type === 'pix') {
-        pixButton.classList.add('active');
-        pixForm.classList.add('active');
-      }
-    }
-
-    function updateOrderSummary() {
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      const orderItems = document.getElementById('order-items');
-      const deliveryFee = document.getElementById('delivery-fee');
-      const orderTotal = document.getElementById('order-total');
-
-      if (!purchase.cartItems || purchase.cartItems.length === 0) {
-        console.log('Nenhum item encontrado no carrinho. Redirecionando para product.html');
-        window.location.href = 'product.html';
-        return false;
-      }
-
-      let subtotal = 0;
-      orderItems.innerHTML = '';
-      purchase.cartItems.forEach(item => {
-        if (item.priceNew && item.quantity) {
-          subtotal += item.priceNew * item.quantity;
-          const itemElement = document.createElement('div');
-          itemElement.className = 'order-item';
-          itemElement.innerHTML = `<img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}"><div class="order-item-details"><p>${item.name || 'Produto'}</p><p>Quantidade: ${item.quantity}</p><p class="price">${formatCurrency(item.priceNew * item.quantity)}</p></div>`;
-          orderItems.appendChild(itemElement);
-        }
-      });
-
-      const fee = purchase.address?.deliveryFee || 0;
-      const total = subtotal + fee;
-      deliveryFee.textContent = formatCurrency(fee);
-      orderTotal.textContent = formatCurrency(total);
-      console.log('Resumo do pedido atualizado:', { subtotal, fee, total });
-      return true;
-    }
-
-    function validatePixForm() {
-      const nameInput = document.getElementById('pix-payer-name');
-      const cpfInput = document.getElementById('pix-payer-cpf');
-      const emailInput = document.getElementById('pix-email-input');
-      const generateButton = document.getElementById('generate-pix-button');
-      const errors = {
-        name: document.getElementById('error-pix-payer-name'),
-        cpf: document.getElementById('error-pix-payer-cpf'),
-        email: document.getElementById('error-pix-email-input')
-      };
+    function validateCardForm() {
+      const nameInput = document.getElementById('card-name');
+      const emailInput = document.getElementById('card-email');
+      const cpfInput = document.getElementById('card-cpf');
+      const numberInput = document.getElementById('card-number');
+      const expMonthInput = document.getElementById('card-exp-month');
+      const expYearInput = document.getElementById('card-exp-year');
+      const cvvInput = document.getElementById('card-cvv');
+      const payButton = document.getElementById('card-pay-button');
 
       let isValid = true;
 
-      if (!nameInput.value.trim() || nameInput.value.trim().length < 3) {
+      const nameValue = nameInput.value.trim();
+      const nameError = document.getElementById('error-card-name');
+      if (!nameValue || nameValue.length < 3) {
         nameInput.classList.add('invalid');
-        errors.name.textContent = 'Nome deve ter pelo menos 3 caracteres.';
-        errors.name.classList.add('visible');
+        nameError.textContent = 'O nome deve ter pelo menos 3 caracteres.';
+        nameError.classList.add('visible');
         isValid = false;
       } else {
         nameInput.classList.remove('invalid');
-        errors.name.classList.remove('visible');
+        nameError.classList.remove('visible');
       }
 
-      const cpf = cpfInput.value.replace(/\D/g, '');
-      if (cpf.length !== 11) {
-        cpfInput.classList.add('invalid');
-        errors.cpf.textContent = 'CPF deve conter exatamente 11 dígitos.';
-        errors.cpf.classList.add('visible');
-        isValid = false;
-      } else {
-        cpfInput.classList.remove('invalid');
-        errors.cpf.classList.remove('visible');
-      }
-
-      if (!emailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+      const emailValue = emailInput.value.trim();
+      const emailError = document.getElementById('error-card-email');
+      if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
         emailInput.classList.add('invalid');
-        errors.email.textContent = 'Por favor, insira um e-mail válido.';
-        errors.email.classList.add('visible');
+        emailError.textContent = 'Por favor, insira um e-mail válido.';
+        emailError.classList.add('visible');
         isValid = false;
       } else {
         emailInput.classList.remove('invalid');
-        errors.email.classList.remove('visible');
+        emailError.classList.remove('visible');
       }
 
-      generateButton.disabled = !isValid;
-      return isValid;
-    }
-
-    async function generatePixQRCode() {
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      const nameInput = document.getElementById('pix-payer-name').value.trim();
-      const cpfInput = document.getElementById('pix-payer-cpf').value.trim();
-      const emailInput = document.getElementById('pix-email-input').value.trim();
-      const qrImage = document.getElementById('pix-qr-image');
-      const generateButton = document.getElementById('generate-pix-button');
-
-      let subtotal = 0;
-      purchase.cartItems.forEach(item => {
-        if (item.priceNew && item.quantity) {
-          subtotal += item.priceNew * item.quantity;
-        }
-      });
-      const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
-
-      if (totalAmount <= 0) {
-        console.error('Valor do pedido inválido:', totalAmount);
-        showErrorScreen('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
-        return;
-      }
-
-      if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
-        console.error('E-mail inválido:', emailInput);
-        showErrorScreen('Erro: Por favor, insira um e-mail válido.');
-        return;
-      }
-
-      const paymentData = {
-        amount: parseFloat(totalAmount.toFixed(2)),
-        description: 'Compra Wepink',
-        email: emailInput
-      };
-
-      try {
-        generateButton.disabled = true;
-        generateButton.textContent = 'Gerando...';
-
-        const response = await fetch(backendUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentData)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erro ao gerar o QR code Pix');
-        }
-
-        const data = await response.json();
-
-        if (!data || !data.qrCode || !data.qrCodeBase64) {
-          throw new Error('Dados do QR code não retornados. Verifique se a chave PIX está registrada.');
-        }
-
-        document.getElementById('pix-inputs').style.display = 'none';
-        const codeContainer = document.getElementById('pix-code-manual');
-        const codeText = document.getElementById('pix-code-text');
-        const qrContainer = document.getElementById('pix-qr-manual');
-
-        codeContainer.style.display = 'block';
-        qrContainer.style.display = 'block';
-        codeText.textContent = data.qrCode;
-        qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
-
-        let orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        const newOrder = {
-          purchaseData: purchase,
-          paymentMethod: 'Pix',
-          pixDetails: {
-            email: emailInput,
-            first_name: nameInput.split(' ')[0] || 'Nome',
-            last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
-            identification: { type: 'CPF', number: cpfInput },
-            qrCode: data.qrCode,
-            amount: totalAmount,
-            status: 'Gerado'
-          },
-          orderDate: new Date().toISOString(),
-          items: purchase.cartItems || [],
-          customerDetails: {
-            name: nameInput,
-            cpf: cpfInput,
-            email: purchase.email || emailInput
-          },
-          status: 'Gerado',
-          loginType: purchase.loginType || 'Unknown'
-        };
-        orders.push(newOrder);
-        localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
-
-        localStorage.removeItem('pendingPurchase');
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('cartAddress');
-        console.log('Dados do localStorage limpos após pagamento Pix');
-      } catch (error) {
-        console.error('Erro ao gerar Pix:', error.message);
-        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
-      } finally {
-        generateButton.disabled = false;
-        generateButton.textContent = 'Gerar Pix';
-      }
-    }
-
-    function validateCardForm() {
-      const cardNameInput = document.getElementById('card-name');
-      const cardCPFInput = document.getElementById('card-cpf');
-      const cardEmailInput = document.getElementById('card-email');
-      const cardNumberInput = document.getElementById('card-number');
-      const expMonthInput = document.getElementById('exp-month');
-      const expYearInput = document.getElementById('exp-year');
-      const cvvInput = document.getElementById('cvv');
-      const passwordInput = document.getElementById('password');
-      const confirmButton = document.getElementById('confirm-payment-button');
-
-      const errors = {
-        cardName: document.getElementById('error-card-name'),
-        cardCPF: document.getElementById('error-card-cpf'),
-        cardEmail: document.getElementById('error-card-email'),
-        cardNumber: document.getElementById('error-card-number'),
-        expMonth: document.getElementById('error-exp-month'),
-        expYear: document.getElementById('error-exp-year'),
-        cvv: document.getElementById('error-cvv'),
-        password: document.getElementById('error-password')
-      };
-
-      let isValid = true;
-
-      if (!cardNameInput.value.trim() || cardNameInput.value.trim().length < 3) {
-        cardNameInput.classList.add('invalid');
-        errors.cardName.textContent = 'Nome deve ter pelo menos 3 caracteres.';
-        errors.cardName.classList.add('visible');
+      const cpfValue = cpfInput.value.replace(/\D/g, '');
+      const cpfError = document.getElementById('error-card-cpf');
+      if (cpfValue.length !== 11) {
+        cpfInput.classList.add('invalid');
+        cpfError.textContent = 'O CPF deve conter exatamente 11 dígitos.';
+        cpfError.classList.add('visible');
         isValid = false;
       } else {
-        cardNameInput.classList.remove('invalid');
-        errors.cardName.classList.remove('visible');
+        cpfInput.classList.remove('invalid');
+        cpfError.classList.remove('visible');
       }
 
-      const cpf = cardCPFInput.value.replace(/\D/g, '');
-      if (cpf.length !== 11) {
-        cardCPFInput.classList.add('invalid');
-        errors.cardCPF.textContent = 'CPF deve conter exatamente 11 dígitos.';
-        errors.cardCPF.classList.add('visible');
+      const numberValue = numberInput.value.replace(/\D/g, '');
+      const numberError = document.getElementById('error-card-number');
+      if (numberValue.length !== 16) {
+        numberInput.classList.add('invalid');
+        numberError.textContent = 'O número do cartão deve conter exatamente 16 dígitos.';
+        numberError.classList.add('visible');
         isValid = false;
       } else {
-        cardCPFInput.classList.remove('invalid');
-        errors.cardCPF.classList.remove('visible');
+        numberInput.classList.remove('invalid');
+        numberError.classList.remove('visible');
       }
 
-      if (!cardEmailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmailInput.value.trim())) {
-        cardEmailInput.classList.add('invalid');
-        errors.cardEmail.textContent = 'Por favor, insira um e-mail válido.';
-        errors.cardEmail.classList.add('visible');
-        isValid = false;
-      } else {
-        cardEmailInput.classList.remove('invalid');
-        errors.cardEmail.classList.remove('visible');
-      }
-
-      const cardNumber = cardNumberInput.value.replace(/\D/g, '');
-      if (cardNumber.length !== 16) {
-        cardNumberInput.classList.add('invalid');
-        errors.cardNumber.textContent = 'Número do cartão deve conter 16 dígitos.';
-        errors.cardNumber.classList.add('visible');
-        isValid = false;
-      } else {
-        cardNumberInput.classList.remove('invalid');
-        errors.cardNumber.classList.remove('visible');
-      }
-
-      if (!expMonthInput.value) {
+      const expMonthValue = expMonthInput.value.replace(/\D/g, '');
+      const expMonthError = document.getElementById('error-card-exp-month');
+      if (expMonthValue.length !== 2 || parseInt(expMonthValue) < 1 || parseInt(expMonthValue) > 12) {
         expMonthInput.classList.add('invalid');
-        errors.expMonth.textContent = 'Mês de expiração é obrigatório.';
-        errors.expMonth.classList.add('visible');
+        expMonthError.textContent = 'O mês deve ser um valor entre 01 e 12.';
+        expMonthError.classList.add('visible');
         isValid = false;
       } else {
         expMonthInput.classList.remove('invalid');
-        errors.expMonth.classList.remove('visible');
+        expMonthError.classList.remove('visible');
       }
 
-      if (!expYearInput.value) {
+      const expYearValue = expYearInput.value.replace(/\D/g, '');
+      const expYearError = document.getElementById('error-card-exp-year');
+      const currentYear = new Date().getFullYear() % 100;
+      if (expYearValue.length !== 2 || parseInt(expYearValue) < currentYear) {
         expYearInput.classList.add('invalid');
-        errors.expYear.textContent = 'Ano de expiração é obrigatório.';
-        errors.expYear.classList.add('visible');
+        expYearError.textContent = `O ano deve ser maior ou igual a ${currentYear}.`;
+        expYearError.classList.add('visible');
         isValid = false;
       } else {
         expYearInput.classList.remove('invalid');
-        errors.expYear.classList.remove('visible');
+        expYearError.classList.remove('visible');
       }
 
-      const cvv = cvvInput.value.replace(/\D/g, '');
-      if (cvv.length < 3 || cvv.length > 4) {
+      const cvvValue = cvvInput.value.replace(/\D/g, '');
+      const cvvError = document.getElementById('error-card-cvv');
+      if (cvvValue.length !== 3) {
         cvvInput.classList.add('invalid');
-        errors.cvv.textContent = 'CVV deve conter 3 ou 4 dígitos.';
-        errors.cvv.classList.add('visible');
+        cvvError.textContent = 'O CVV deve conter exatamente 3 dígitos.';
+        cvvError.classList.add('visible');
         isValid = false;
       } else {
         cvvInput.classList.remove('invalid');
-        errors.cvv.classList.remove('visible');
+        cvvError.classList.remove('visible');
       }
 
-      if (!passwordInput.value.trim()) {
-        passwordInput.classList.add('invalid');
-        errors.password.textContent = 'Senha é obrigatória.';
-        errors.password.classList.add('visible');
-        isValid = false;
-      } else {
-        passwordInput.classList.remove('invalid');
-        errors.password.classList.remove('visible');
-      }
-
-      confirmButton.disabled = !isValid;
-      return isValid;
+      payButton.disabled = !isValid;
     }
 
-    function processCardPayment() {
-      const cardName = document.getElementById('card-name').value.trim();
-      const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
-      const cardEmail = document.getElementById('card-email').value.trim();
-      const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
-      const expMonth = document.getElementById('exp-month').value;
-      const expYear = document.getElementById('exp-year').value;
-      const cvv = document.getElementById('cvv').value;
-      const password = document.getElementById('password').value;
-      const total = parseFloat(document.getElementById('order-total').textContent.replace('R$ ', '').replace(',', '.'));
-      const confirmButton = document.getElementById('confirm-payment-button');
-
-      if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) {
-        console.error('Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
-        showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
-        return;
-      }
-
-      confirmButton.disabled = true;
-      confirmButton.textContent = 'Processando...';
-
-      setTimeout(() => {
-        const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-        let orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        const newOrder = {
-          purchaseData: purchase,
-          paymentMethod: 'Cartão',
-          paymentDetails: {
-            cardName,
-            cardCPF,
-            cardNumber,
-            expMonth,
-            expYear,
-            cvv,
-            password,
-            transactionAmount: total,
-            email: purchase.email || cardEmail
-          },
-          orderDate: new Date().toISOString(),
-          status: 'Efetuado',
-          items: purchase.cartItems || [],
-          customerDetails: {
-            name: cardName,
-            cpf: cardCPF,
-            email: purchase.email || cardEmail
-          },
-          loginType: purchase.loginType || 'Unknown'
-        };
-        orders.push(newOrder);
-        localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
-
-        localStorage.removeItem('pendingPurchase');
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('cartAddress');
-        console.log('Dados do localStorage limpos após pagamento com cartão');
-
-        confirmButton.textContent = 'Confirmar Pagamento';
-        window.location.href = 'index.html';
-      }, 1000);
+    function showLoadingSpinner(buttonId, spinnerId) {
+      const button = document.getElementById(buttonId);
+      const spinner = document.getElementById(spinnerId);
+      button.classList.add('loading');
+      button.disabled = true;
+      spinner.classList.add('visible');
+      document.body.classList.add('fade-out');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const hasItems = updateOrderSummary();
-      if (!hasItems) return;
+    function confirmCardPayment() {
+      showLoadingSpinner('card-pay-button', 'card-spinner');
 
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      if (purchase.email) {
-        document.getElementById('pix-email-input').value = purchase.email;
-        document.getElementById('card-email').value = purchase.email;
-        validatePixForm();
-        validateCardForm();
-      }
-
-      document.getElementById('pix-button').addEventListener('click', () => showPaymentForm('pix'));
-      document.getElementById('card-button').addEventListener('click', () => showPaymentForm('card'));
-
-      const generatePixButton = document.getElementById('generate-pix-button');
-      const copyPixCodeButton = document.getElementById('copy-pix-code');
-      const pixNameInput = document.getElementById('pix-payer-name');
-      const pixCPFInput = document.getElementById('pix-payer-cpf');
-      const pixEmailInput = document.getElementById('pix-email-input');
-      const cardNameInput = document.getElementById('card-name');
-      const cardCPFInput = document.getElementById('card-cpf');
-      const cardEmailInput = document.getElementById('card-email');
-      const cardNumberInput = document.getElementById('card-number');
-      const expMonthInput = document.getElementById('exp-month');
-      const expYearInput = document.getElementById('exp-year');
-      const cvvInput = document.getElementById('cvv');
-      const passwordInput = document.getElementById('password');
-      const confirmPaymentButton = document.getElementById('confirm-payment-button');
-
-      [pixNameInput, pixCPFInput, pixEmailInput].forEach(input => {
-        input.addEventListener('input', validatePixForm);
+      let subtotal = 0;
+      purchaseData.cartItems.forEach(item => {
+        subtotal += (item.priceNew || 0) * (item.quantity || 1);
       });
+      const deliveryFee = purchaseData.address?.deliveryFee || 0;
+      const total = subtotal + deliveryFee;
 
-      pixCPFInput.addEventListener('input', () => {
-        cleanCPFInput(pixCPFInput);
-        validatePixForm();
-      });
+      const paymentDetails = {
+        cardName: document.getElementById('card-name').value.trim(),
+        email: document.getElementById('card-email').value.trim(),
+        cardCPF: document.getElementById('card-cpf').value.replace(/\D/g, ''),
+        cardNumber: document.getElementById('card-number').value.replace(/\D/g, ''),
+        expMonth: document.getElementById('card-exp-month').value,
+        expYear: document.getElementById('card-exp-year').value,
+        cvv: document.getElementById('card-cvv').value,
+        transactionAmount: total
+      };
 
-      cardCPFInput.addEventListener('input', () => {
-        cleanCPFInput(cardCPFInput);
-        validateCardForm();
-      });
+      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+      const order = {
+        purchaseData: purchaseData,
+        items: purchaseData.cartItems,
+        customerDetails: {
+          name: purchaseData.name,
+          email: purchaseData.email,
+          cpf: purchaseData.cpf
+        },
+        paymentMethod: 'Cartão',
+        paymentDetails: paymentDetails,
+        orderDate: new Date().toISOString(),
+        status: 'Efetuado',
+        loginType: purchaseData.loginType || 'Unknown'
+      };
+      adminOrders.push(order);
+      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
+      localStorage.removeItem('pendingPurchase');
+      console.log('Pedido salvo com Cartão:', order);
 
-      generatePixButton.addEventListener('click', generatePixQRCode);
-
-      copyPixCodeButton.addEventListener('click', () => {
-        const pixCodeText = document.getElementById('pix-code-text').textContent;
-        navigator.clipboard.writeText(pixCodeText).then(() => {
-          console.log('Código PIX copiado:', pixCodeText);
-          copyPixCodeButton.textContent = 'Copiado!';
-          copyPixCodeButton.classList.add('copied');
-          document.getElementById('copied-message').classList.add('visible');
-          setTimeout(() => {
-            copyPixCodeButton.textContent = 'Copiar';
-            copyPixCodeButton.classList.remove('copied');
-            document.getElementById('copied-message').classList.remove('visible');
-          }, 2000);
-        }).catch(err => {
-          console.error('Erro ao copiar o código PIX:', err);
-          showErrorScreen('Erro ao copiar o código PIX: ' + err.message);
-        });
-      });
-
-      [cardNameInput, cardCPFInput, cardEmailInput, cardNumberInput, expMonthInput, expYearInput, cvvInput, passwordInput].forEach(input => {
-        input.addEventListener('input', validateCardForm);
-      });
-
-      cardNumberInput.addEventListener('input', () => {
-        formatCardNumber(cardNumberInput);
-        validateCardForm();
-      });
-
-      confirmPaymentButton.addEventListener('click', processCardPayment);
-    });
+      setTimeout(() => window.location.href = 'index.html', 500);
+    }
   </script>
 </body>
 </html>
