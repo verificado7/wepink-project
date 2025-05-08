@@ -991,7 +991,7 @@
       if (!purchase.cartItems || purchase.cartItems.length === 0) {
         console.log('Nenhum item encontrado no carrinho. Redirecionando para product.html');
         window.location.href = 'product.html';
-        return;
+        return false;
       }
 
       let subtotal = 0;
@@ -1011,6 +1011,7 @@
       deliveryFee.textContent = formatCurrency(fee);
       orderTotal.textContent = formatCurrency(total);
       console.log('Resumo do pedido atualizado:', { subtotal, fee, total });
+      return true;
     }
 
     function validatePixForm() {
@@ -1058,6 +1059,7 @@
       }
 
       generateButton.disabled = !isValid;
+      return isValid;
     }
 
     async function generatePixQRCode() {
@@ -1125,7 +1127,7 @@
         codeText.textContent = data.qrCode;
         qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
 
-        const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+        let orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
         const newOrder = {
           purchaseData: purchase,
           paymentMethod: 'Pix',
@@ -1273,6 +1275,7 @@
       }
 
       confirmButton.disabled = !isValid;
+      return isValid;
     }
 
     function processCardPayment() {
@@ -1298,7 +1301,7 @@
 
       setTimeout(() => {
         const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-        const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+        let orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
         const newOrder = {
           purchaseData: purchase,
           paymentMethod: 'Cartão',
@@ -1338,7 +1341,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      updateOrderSummary();
+      const hasItems = updateOrderSummary();
+      if (!hasItems) return;
 
       const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       if (purchase.email) {
