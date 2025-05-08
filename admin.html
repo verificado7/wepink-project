@@ -732,7 +732,7 @@
       document.getElementById('error-password').classList.remove('visible');
     }
 
-    // Dados iniciais dos produtos (sincronizados com payment.html)
+    // Dados iniciais dos produtos (sincronizados com product.html e index.html)
     let initialProducts = [
       {
         id: "onetouch",
@@ -1468,6 +1468,10 @@
         console.log('Mudança detectada no localStorage para adminOrders:', event.newValue);
         updateOrderList();
         updateSummary();
+      }
+      if (event.key === 'wepink_products') {
+        console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
+        products = JSON.parse(event.newValue) || initialProducts;
       }
     });
   </script>
