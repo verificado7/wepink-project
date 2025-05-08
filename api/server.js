@@ -22,7 +22,7 @@ app.get('/cep/:cep', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`[invalid url, do not cite]);
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     const data = await response.json();
     if (data.erro) {
       return res.status(404).json({ error: 'CEP não encontrado.' });
@@ -36,15 +36,20 @@ app.get('/cep/:cep', async (req, res) => {
 
 // Rota para criar pagamento PIX
 const createPixPayment = require('./create-pix-payment');
-app.post('/create-pix', createPixPayment);
+app.post('/create-pix', (req, res) => {
+  console.log('Rota /create-pix chamada');
+  createPixPayment(req, res);
+});
 
 // Rota de teste
 app.get('/test', (req, res) => {
+  console.log('Rota /test chamada');
   res.status(200).json({ message: 'Teste bem-sucedido!' });
 });
 
 // Rota padrão
 app.get('/', (req, res) => {
+  console.log('Rota raiz chamada');
   res.status(200).json({ message: 'Servidor está funcionando!' });
 });
 
