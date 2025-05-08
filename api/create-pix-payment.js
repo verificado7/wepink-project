@@ -3,16 +3,19 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
   // Configurar cabeçalhos CORS
-  res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
+  res.setHeader('Access-Control-Allow-Origin', '[invalid url, do not cite]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Responder a requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
+    console.log('Recebida requisição OPTIONS');
     return res.status(200).end();
   }
 
   if (req.method === 'POST') {
+    console.log('Recebida requisição POST para /create-pix');
+
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
     // Validar parâmetros obrigatórios
@@ -21,8 +24,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Parâmetros obrigatórios ausentes' });
     }
 
+    // Verificar se o Access Token está configurado
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      console.error('Access Token do Mercado Pago não configurado.');
+      return res.status(500).json({ error: 'Access Token do Mercado Pago não configurado.' });
+    }
+
     try {
-      const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+      console.log('Enviando requisição para o Mercado Pago...');
+      const response = await axios.post('[invalid url, do not cite] {
         transaction_amount: parseFloat(amount),
         payment_method_id: 'pix',
         description: 'Pagamento Wepink - Perfumaria',
@@ -35,7 +45,7 @@ module.exports = async (req, res) => {
             number: payerCpf
           }
         },
-        notification_url: 'https://wepink-backend.onrender.com/webhook'
+        notification_url: '[invalid url, do not cite]
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -50,6 +60,11 @@ module.exports = async (req, res) => {
       if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data) {
         throw new Error('QR Code não encontrado. Verifique a configuração da chave Pix.');
       }
+
+      console.log('QR Code gerado com sucesso:', {
+        qrCode: response.data.point_of_interaction.transaction_data.qr_code,
+        transactionId: response.data.id
+      });
 
       res.status(200).json({
         qrCode: response.data.point_of_interaction.transaction_data.qr_code,
