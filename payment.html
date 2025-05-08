@@ -10,19 +10,27 @@
   <meta name="country" content="BRA">
   <meta name="language" content="pt-BR">
   <link rel="icon" href="/img/we.png" type="image/png">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Montserrat', sans-serif;
       margin: 0;
       padding: 0;
       background: linear-gradient(135deg, #f5f5f5 0%, #e0e7ff 100%);
+      min-height: 100vh;
       transition: opacity 0.5s ease;
     }
     body.fade-out {
       opacity: 0;
     }
-    header, footer, section { padding: 20px; }
+    header, footer, section {
+      padding: 20px;
+    }
     .notification-bar {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: white;
@@ -60,12 +68,36 @@
       transform: translateX(-50%);
       text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
-    .header-icons { display: flex; gap: 10px; }
-    .header-icons svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
-    .header-icons svg:hover { stroke: #ff2e82; }
-    .menu-icon { background: none; border: none; cursor: pointer; }
-    .menu-icon svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
-    .menu-icon svg:hover { stroke: #ff2e82; }
+    .header-icons {
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+    .header-icons svg {
+      width: 24px;
+      height: 24px;
+      stroke: #333;
+      stroke-width: 2;
+      transition: stroke 0.3s;
+    }
+    .header-icons svg:hover {
+      stroke: #ff2e82;
+    }
+    .menu-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .menu-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: #333;
+      stroke-width: 2;
+      transition: stroke 0.3s;
+    }
+    .menu-icon svg:hover {
+      stroke: #ff2e82;
+    }
     .payment-section {
       max-width: 600px;
       margin: 20px auto;
@@ -81,7 +113,7 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.2);
     }
     .payment-section h2 {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: #ff2e82;
       margin-bottom: 20px;
@@ -92,7 +124,7 @@
     .payment-section .error-message {
       color: #ff2e82;
       font-size: 0.8rem;
-      margin: -2px 0 8px;
+      margin: 5px 0;
       display: none;
       background: #fff2f4;
       padding: 4px 8px;
@@ -182,9 +214,6 @@
       font-weight: normal;
       font-size: 0.95rem;
     }
-    .payment-details .error-message {
-      margin: 2px 0;
-    }
     .payment-details .card-details {
       display: flex;
       gap: 10px;
@@ -210,27 +239,7 @@
       margin: 5px 0;
       word-break: break-all;
     }
-    .pix-details button {
-      background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-top: 10px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .pix-details button:hover {
-      background: linear-gradient(90deg, #e02974, #ff80b3);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-    .payment-details button {
+    .pix-details button, .payment-details button {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: white;
       padding: 14px 20px;
@@ -247,7 +256,7 @@
       letter-spacing: 1px;
       position: relative;
     }
-    .payment-details button:hover {
+    .pix-details button:hover, .payment-details button:hover {
       background: linear-gradient(90deg, #e02974, #ff80b3);
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0,0,0,0.2);
@@ -285,39 +294,55 @@
     footer {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: #fff;
-      padding: 25px;
+      padding: 40px 20px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+      margin-top: auto;
+      transition: background 0.3s ease;
     }
     footer .footer-logo {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 15px;
+      margin-bottom: 24px;
+      text-align: center;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+    footer .footer-logo:hover {
+      transform: scale(1.05);
     }
     footer .footer-links {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
     }
     footer .footer-links a {
       color: #fff;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 400;
-      transition: color 0.3s;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      text-transform: capitalize;
     }
     footer .footer-links a:hover {
-      color: #f0f0f0;
-      text-decoration: underline;
+      color: #ff2e82;
+      background: #fff;
+      transform: translateY(-2px);
+    }
+    footer .footer-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     footer .social-links {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 25px;
+      gap: 16px;
+      margin-bottom: 28px;
     }
     footer .social-links a {
       background-color: #fff;
@@ -328,66 +353,101 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
     }
     footer .social-links a:hover {
       transform: scale(1.1);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      background: #f0f0f0;
+    }
+    footer .social-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     footer .social-links img {
       width: 24px;
       height: 24px;
+      transition: filter 0.3s ease;
+    }
+    footer .social-links a:hover img {
+      filter: brightness(0.9);
     }
     footer .payment-methods {
       text-align: center;
-      margin-top: 25px;
+      margin-top: 24px;
     }
     footer .payment-methods h4 {
       font-size: 1rem;
-      margin-bottom: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
     footer .payment-methods img {
-      margin: 0 5px;
+      margin: 0 6px;
       height: 30px;
-      filter: brightness(0) invert(1);
+      border-radius: 4px;
+      background: #fff;
+      padding: 2px;
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+    footer .payment-methods img:hover {
+      transform: scale(1.1);
+      filter: brightness(0.9);
     }
     footer .payment-methods img.pix-icon {
       height: 40px;
     }
+    footer .footer-info {
+      text-align: center;
+      margin-top: 24px;
+    }
     footer .footer-info p {
       font-size: 0.85rem;
-      margin: 5px 0;
+      margin: 6px 0;
+      opacity: 0.9;
     }
     footer .footer-info a {
       color: #fff;
-      transition: color 0.3s;
+      text-decoration: none;
+      transition: color 0.3s ease, text-decoration 0.3s ease;
     }
     footer .footer-info a:hover {
       color: #f0f0f0;
+      text-decoration: underline;
+    }
+    footer .footer-info a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     @media (max-width: 600px) {
       .header-bar .logo-text { font-size: 1.2rem; }
       .header-icons svg { width: 20px; height: 20px; }
       .menu-icon svg { width: 20px; height: 20px; }
       .payment-section { padding: 15px; }
-      .payment-section h2 { font-size: 1.1rem; }
+      .payment-section h2 { font-size: 1.2rem; }
       .payment-options { gap: 10px; }
       .payment-options button { font-size: 0.8rem; padding: 8px 15px; }
       .payment-details { padding: 10px; }
       .payment-details input { font-size: 0.85rem; }
       .payment-details input::placeholder { font-size: 0.85rem; }
-      .payment-details button { font-size: 0.9rem; }
+      .payment-details button { font-size: 0.9rem; padding: 10px 15px; }
       .pix-details img { width: 120px; height: 120px; }
       .pix-details p { font-size: 0.75rem; }
-      .pix-details button { font-size: 0.8rem; padding: 8px 15px; }
-      footer .footer-logo { font-size: 1.2rem; }
-      footer .footer-links a { font-size: 0.8rem; }
-      footer .payment-methods h4 { font-size: 0.9rem; }
-      footer .social-links img { width: 20px; height: 20px; }
+      footer { padding: 32px 12px; }
+      footer .footer-logo { font-size: 1.3rem; margin-bottom: 20px; }
+      footer .footer-links { gap: 12px; margin-bottom: 24px; }
+      footer .footer-links a { font-size: 0.85rem; padding: 6px 10px; }
+      footer .social-links { gap: 12px; margin-bottom: 24px; }
       footer .social-links a { width: 35px; height: 35px; }
+      footer .social-links img { width: 20px; height: 20px; }
+      footer .payment-methods h4 { font-size: 0.9rem; margin-bottom: 12px; }
+      footer .payment-methods img { height: 28px; }
+      footer .payment-methods img.pix-icon { height: 38px; }
+      footer .footer-info { margin-top: 24px; }
+      footer .footer-info p { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -420,12 +480,12 @@
     <h2>Finalizar Pagamento</h2>
     <p id="error-message" class="error-message">Nenhum pedido encontrado. Volte ao carrinho para continuar sua compra.</p>
     <div class="payment-options">
-      <button id="pix-button" onclick="selectPaymentMethod('pix')"><img src="/img/pix.png" alt="Pix" height="20"> Pix</button>
+      <button id="pix-button" onclick="selectPaymentMethod('pix')"><i class="fas fa-qrcode"></i> Pix</button>
       <button id="card-button" onclick="selectPaymentMethod('card')"><i class="fas fa-credit-card"></i> Cartão</button>
     </div>
     <div id="pix-details" class="payment-details pix-details">
       <p id="pix-total"></p>
-      <img id="pix-qr-code" src="https://via.placeholder.com/150" alt="QR Code Pix">
+      <img id="pix-qr-code" alt="QR Code Pix">
       <p id="pix-code"></p>
       <button onclick="confirmPixPayment()">Confirmar Pagamento Pix</button>
     </div>
@@ -459,7 +519,7 @@
   <!-- Rodapé -->
   <footer>
     <div class="footer-logo">wepink</div>
-    <div class="footer-links">
+    <nav class="footer-links" role="navigation" aria-label="Links do rodapé">
       <a href="#">Sobre nós</a>
       <a href="#">Central de ajuda</a>
       <a href="#">Troca e devoluções</a>
@@ -468,29 +528,29 @@
       <a href="#">Trabalhe conosco</a>
       <a href="#">Consulte sua entrega</a>
       <a href="#">Franquias</a>
-    </div>
-    <div class="social-links">
-      <a href="https://www.instagram.com" target="_blank">
-        <img src="/img/instagram.png" alt="Instagram">
+    </nav>
+    <div class="social-links" role="navigation" aria-label="Links sociais">
+      <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
+        <img src="/img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
       </a>
-      <a href="https://www.facebook.com" target="_blank">
-        <img src="/img/facebook.png" alt="Facebook">
+      <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
+        <img src="/img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
       </a>
-      <a href="https://www.youtube.com" target="_blank">
-        <img src="/img/youtube.png" alt="YouTube">
+      <a href="https://www.youtube.com" target="_blank" aria-label="YouTube">
+        <img src="/img/youtube.png" alt="Ícone do YouTube" onerror="this.src='https://via.placeholder.com/24?text=YT';">
       </a>
-      <a href="https://www.whatsapp.com" target="_blank">
-        <img src="/img/whatsapp.png" alt="WhatsApp">
+      <a href="https://www.whatsapp.com" target="_blank" aria-label="WhatsApp">
+        <img src="/img/whatsapp.png" alt="Ícone do WhatsApp" onerror="this.src='https://via.placeholder.com/24?text=WA';">
       </a>
     </div>
     <div class="payment-methods">
       <h4>Formas de pagamento</h4>
-      <img src="/img/visa.png" alt="Visa" height="30">
-      <img src="/img/mastercard.png" alt="Mastercard" height="30">
-      <img src="/img/elo.png" alt="Elo" height="30">
-      <img src="/img/amex.png" alt="Amex" height="30">
-      <img src="/img/boleto.png" alt="Boleto" height="30">
-      <img src="/img/pix.png" alt="Pix" class="pix-icon" height="40">
+      <img src="/img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
+      <img src="/img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
+      <img src="/img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
+      <img src="/img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
+      <img src="/img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
+      <img src="/img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
     </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
@@ -501,6 +561,8 @@
   <script>
     let purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
     console.log('Dados de pendingPurchase ao carregar payment.html:', purchaseData);
+
+    const ACCESS_TOKEN = 'YOUR_ACCESS_TOKEN'; // Substitua pelo seu access_token do Mercado Pago
 
     window.onload = function() {
       const errorMessage = document.getElementById('error-message');
@@ -541,7 +603,7 @@
       return `R$ ${parseFloat(value || 0).toFixed(2).replace('.', ',')}`;
     }
 
-    function generatePix() {
+    async function generatePix() {
       let subtotal = 0;
       purchaseData.cartItems.forEach(item => {
         subtotal += (item.priceNew || 0) * (item.quantity || 1);
@@ -551,33 +613,79 @@
 
       const pixTotal = document.getElementById('pix-total');
       const pixCode = document.getElementById('pix-code');
+      const qrCodeImg = document.getElementById('pix-qr-code');
+
       pixTotal.textContent = `Total a pagar: ${formatCurrency(total)}`;
-      pixCode.textContent = `Código Pix: qrcode_${Math.floor(Math.random() * 10000000000)}`;
+
+      // Dados do pagador a partir do purchaseData
+      const payer = {
+        email: purchaseData.email || 'cliente@wepink.com',
+        first_name: purchaseData.name ? purchaseData.name.split(' ')[0] : 'Cliente',
+        last_name: purchaseData.name ? purchaseData.name.split(' ').slice(1).join(' ') : 'WePink',
+        identification: {
+          type: 'CPF',
+          number: purchaseData.cpf || '12345678901'
+        },
+        address: {
+          zip_code: purchaseData.address?.cep || '01001000',
+          street_name: purchaseData.address?.street || 'Rua Desconhecida',
+          street_number: purchaseData.address?.number || '123',
+          neighborhood: purchaseData.address?.neighborhood || 'Bairro Desconhecido',
+          city: purchaseData.address?.city || 'São Paulo',
+          federal_unit: purchaseData.address?.state || 'SP'
+        }
+      };
+
+      // Dados do pagamento
+      const paymentData = {
+        transaction_amount: total,
+        description: purchaseData.cartItems.map(item => item.name).join(', '),
+        payment_method_id: 'pix',
+        payer: payer
+      };
+
+      try {
+        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+            'X-Idempotency-Key': `wepink_${Date.now()}_${Math.random().toString(36).substring(2)}`
+          },
+          body: JSON.stringify(paymentData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro na API do Mercado Pago: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Resposta da API do Mercado Pago:', data);
+
+        if (data.status === 'pending' && data.point_of_interaction?.transaction_data) {
+          const transactionData = data.point_of_interaction.transaction_data;
+          qrCodeImg.src = `data:image/png;base64,${transactionData.qr_code_base64}`;
+          pixCode.textContent = `Código Pix: ${transactionData.qr_code}`;
+          qrCodeImg.dataset.pixData = JSON.stringify(data); // Armazenar os dados do pagamento para uso posterior
+        } else {
+          throw new Error('Dados do QR Code não encontrados na resposta da API.');
+        }
+      } catch (error) {
+        console.error('Erro ao gerar o Pix:', error);
+        pixCode.textContent = 'Erro ao gerar o Pix. Tente novamente mais tarde.';
+        qrCodeImg.src = 'https://via.placeholder.com/150?text=Erro+ao+Gerar+QR+Code';
+      }
     }
 
     function confirmPixPayment() {
-      let subtotal = 0;
-      purchaseData.cartItems.forEach(item => {
-        subtotal += (item.priceNew || 0) * (item.quantity || 1);
-      });
-      const deliveryFee = purchaseData.address?.deliveryFee || 0;
-      const total = subtotal + deliveryFee;
+      const qrCodeImg = document.getElementById('pix-qr-code');
+      const pixData = qrCodeImg.dataset.pixData ? JSON.parse(qrCodeImg.dataset.pixData) : null;
 
-      const pixCode = document.getElementById('pix-code').textContent.replace('Código Pix: ', '');
-      const customerName = purchaseData.name || 'Convidado';
-      const [firstName, ...lastNameParts] = customerName.split(' ');
-      const lastName = lastNameParts.join(' ') || '';
-      const pixDetails = {
-        first_name: firstName,
-        last_name: lastName,
-        email: purchaseData.email || 'não informado',
-        identification: {
-          type: 'CPF',
-          number: purchaseData.cpf || 'não informado'
-        },
-        qrCode: pixCode,
-        amount: total
-      };
+      if (!pixData) {
+        alert('Erro: Dados do Pix não encontrados. Tente novamente.');
+        return;
+      }
 
       const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
       const order = {
@@ -589,7 +697,14 @@
           cpf: purchaseData.cpf
         },
         paymentMethod: 'Pix',
-        pixDetails: pixDetails,
+        pixDetails: {
+          first_name: pixData.payer.first_name,
+          last_name: pixData.payer.last_name,
+          email: pixData.payer.email,
+          identification: pixData.payer.identification,
+          qrCode: pixData.point_of_interaction.transaction_data.qr_code,
+          amount: pixData.transaction_amount
+        },
         orderDate: new Date().toISOString(),
         status: 'Gerado',
         loginType: purchaseData.loginType || 'Unknown'
