@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
   // Configurar cabeçalhos CORS
-  res.setHeader('Access-Control-Allow-Origin', '[invalid url, do not cite]);
+  res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
   }
 
   if (req.method === 'POST') {
-    console.log('Recebida requisição POST para /create-pix');
+    console.log('Iniciando processamento da requisição POST para /create-pix');
 
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
 
     try {
       console.log('Enviando requisição para o Mercado Pago...');
-      const response = await axios.post('[invalid url, do not cite] {
+      const response = await axios.post('https://api.mercadopago.com/v1/payments', {
         transaction_amount: parseFloat(amount),
         payment_method_id: 'pix',
         description: 'Pagamento Wepink - Perfumaria',
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
             number: payerCpf
           }
         },
-        notification_url: '[invalid url, do not cite]
+        notification_url: 'https://wepink-backend.onrender.com/webhook'
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
         }
       });
 
-      console.log('Resposta do Mercado Pago:', response.data);
+      console.log('Resposta do Mercado Pago:', JSON.stringify(response.data, null, 2));
 
       // Verificar se os dados do QR Code estão presentes
       if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data) {
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
         transactionId: response.data.id
       });
     } catch (error) {
-      console.error('Erro ao gerar Pix:', error.response ? error.response.data : error.message);
+      console.error('Erro ao gerar Pix:', error.response ? JSON.stringify(error.response.data, null, 2) : error.message);
       res.status(error.response?.status || 500).json({
         error: 'Falha ao processar pagamento com Mercado Pago',
         details: error.response ? error.response.data : error.message
