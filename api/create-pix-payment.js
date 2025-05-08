@@ -2,19 +2,8 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
-  // Configurar cabeçalhos CORS
-  res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // Responder a requisições OPTIONS (preflight)
-  if (req.method === 'OPTIONS') {
-    console.log('Recebida requisição OPTIONS');
-    return res.status(200).end();
-  }
-
   if (req.method === 'POST') {
-    console.log('Iniciando processamento da requisição POST para /create-pix');
+    console.log('Recebida requisição POST para /create-pix');
 
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
