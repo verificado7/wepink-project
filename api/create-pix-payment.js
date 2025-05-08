@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
+  res.setHeader('Access-Control-Allow-Origin', '[invalid url, do not cite]);
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-      const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+      const response = await axios.post('[invalid url, do not cite] {
         transaction_amount: parseFloat(amount),
         payment_method_id: 'pix',
         description: 'Pagamento Wepink - Perfumaria',
@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
             number: payerCpf
           }
         },
-        notification_url: 'https://wepink-backend.onrender.com/webhook'
+        notification_url: '[invalid url, do not cite]
       }, {
         headers: {
           'Content-Type': 'application/json',
