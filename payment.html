@@ -11,7 +11,7 @@
   <meta name="language" content="pt-BR">
   <meta name="robots" content="index, follow">
   <link rel="icon" href="img/we.png" type="image/png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
   <style>
     * {
       margin: 0;
@@ -19,7 +19,7 @@
       box-sizing: border-box;
     }
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #f5f5f5 0%, #e0e7ff 100%);
       display: flex;
       flex-direction: column;
@@ -97,7 +97,7 @@
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
     .order-summary {
-      background: linear-gradient(145deg, #ffffff, #f9f9f9);
+      background: #fff;
       padding: 24px;
       border-radius: 16px;
       margin-bottom: 32px;
@@ -193,7 +193,7 @@
     }
     .payment-form {
       display: none;
-      background: linear-gradient(145deg, #ffffff, #f9f9f9);
+      background: #fff;
       padding: 24px;
       border-radius: 16px;
       margin-bottom: 32px;
@@ -289,22 +289,6 @@
       transform: none;
       box-shadow: none;
     }
-    .pix-details {
-      text-align: center;
-    }
-    .pix-details img {
-      width: 150px;
-      height: 150px;
-      margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .pix-details p {
-      font-size: 0.9rem;
-      color: #666;
-      margin: 5px 0;
-      word-break: break-all;
-    }
     .pix-code-container {
       margin-top: 24px;
       padding: 16px;
@@ -381,6 +365,49 @@
     }
     .copied-message.visible {
       display: block;
+    }
+    .success-message {
+      display: none;
+      background: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .success-message.active {
+      display: block;
+    }
+    .success-message h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #ff2e82;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .success-message p {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 24px;
+    }
+    .success-message button {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: #fff;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .success-message button:hover {
+      background: linear-gradient(90deg, #e02974, #ff80b3);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     }
     .error-screen {
       display: none;
@@ -702,6 +729,11 @@
       <button id="pix-button" role="tab" aria-selected="false" aria-controls="pix-form">Pix</button>
       <button id="card-button" role="tab" aria-selected="false" aria-controls="card-form">Cartão</button>
     </div>
+    <div id="success-message" class="success-message">
+      <h3>Pagamento Confirmado!</h3>
+      <p>Seu pagamento foi processado com sucesso. Você será redirecionado para a página inicial em breve.</p>
+      <button id="return-home" aria-label="Voltar para a página inicial">Voltar Agora</button>
+    </div>
     <form id="pix-form" class="payment-form" role="tabpanel" aria-labelledby="pix-button">
       <h3>Pagamento via Pix</h3>
       <div class="pix-details" id="pix-details">
@@ -870,16 +902,40 @@
       };
     }
 
+    function showSuccessMessage() {
+      const successMessage = document.getElementById('success-message');
+      const pixForm = document.getElementById('pix-form');
+      const cardForm = document.getElementById('card-form');
+      const paymentOptions = document.querySelector('.payment-options');
+
+      pixForm.style.display = 'none';
+      cardForm.style.display = 'none';
+      paymentOptions.style.display = 'none';
+      successMessage.classList.add('active');
+
+      document.getElementById('return-home').onclick = () => {
+        document.body.classList.add('fade-out');
+        setTimeout(() => window.location.href = 'index.html', 500);
+      };
+
+      setTimeout(() => {
+        document.body.classList.add('fade-out');
+        window.location.href = 'index.html';
+      }, 3000);
+    }
+
     function showPaymentForm(type) {
       const pixForm = document.getElementById('pix-form');
       const cardForm = document.getElementById('card-form');
       const pixButton = document.getElementById('pix-button');
       const cardButton = document.getElementById('card-button');
+      const successMessage = document.getElementById('success-message');
 
       pixButton.classList.remove('active');
       cardButton.classList.remove('active');
       pixForm.classList.remove('active');
       cardForm.classList.remove('active');
+      successMessage.classList.remove('active');
 
       if (type === 'card') {
         cardButton.classList.add('active');
@@ -1088,34 +1144,24 @@
           adminOrders.push(newOrder);
           localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
           console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
+
+          showSuccessMessage();
         } else {
           throw new Error('Dados do QR Code não encontrados na resposta da API.');
         }
       } catch (error) {
         console.error('Erro ao gerar Pix:', error.message);
-        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
+        let errorMsg = 'Erro ao gerar Pix: ' + error.message;
+        if (error.message.includes('invalid_token') || error.message.includes('unauthorized')) {
+          errorMsg = 'Erro: Token de acesso inválido. Verifique o ACCESS_TOKEN e tente novamente.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMsg = 'Erro: Não foi possível conectar à API do Mercado Pago. Certifique-se de estar em um ambiente HTTPS e tente novamente.';
+        }
+        showErrorScreen(errorMsg);
       } finally {
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
       }
-    }
-
-    function confirmPixPayment() {
-      const qrImage = document.getElementById('pix-qr-image');
-      const pixData = qrImage.dataset.pixData ? JSON.parse(qrImage.dataset.pixData) : null;
-
-      if (!pixData) {
-        showErrorScreen('Erro: Dados do Pix não encontrados. Tente novamente.');
-        return;
-      }
-
-      localStorage.removeItem('pendingPurchase');
-      localStorage.removeItem('cartItems');
-      localStorage.removeItem('cartAddress');
-      console.log('Dados do localStorage limpos após confirmar pagamento Pix');
-
-      document.body.classList.add('fade-out');
-      setTimeout(() => window.location.href = 'index.html', 500);
     }
 
     function validateCardForm() {
@@ -1286,8 +1332,7 @@
         console.log('Dados do localStorage limpos após pagamento com cartão');
 
         confirmButton.textContent = 'Confirmar Pagamento';
-        document.body.classList.add('fade-out');
-        setTimeout(() => window.location.href = 'index.html', 500);
+        showSuccessMessage();
       }, 1000);
     }
 
