@@ -1,36 +1,39 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+app.get('/payment.html', (req, res) => {
+  console.log('Servindo payment.html');
+  res.sendFile(path.join(__dirname, 'payment.html'));
+});
+
 app.post('/create-pix', async (req, res) => {
   try {
     const { amount, description, email } = req.body;
 
-    // Validar os campos recebidos
     if (!amount || amount <= 0) {
-      throw new Error('O valor da transação (amount) é obrigatório e deve ser maior que zero.');
+      throw new Error('O valor da transação é obrigatório e deve ser maior que zero.');
     }
     if (!description) {
-      throw new Error('A descrição (description) é obrigatória.');
+      throw new Error('A descrição é obrigatória.');
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw new Error('O e-mail (email) é obrigatório e deve ser válido.');
+      throw new Error('O e-mail é obrigatório e deve ser válido.');
     }
 
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
-    const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+    const response = await axios.post('[invalid url, do not cite] {
       transaction_amount: amount,
       description: description,
       payment_method_id: 'pix',
-      payer: {
-        email: email // Garantir que o email seja incluído no objeto payer
-      }
+      payer: { email: email }
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
@@ -49,7 +52,7 @@ app.post('/create-pix', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile('payment.html', { root: __dirname });
+  res.sendFile(path.join(__dirname, 'payment.html'));
 });
 
 const PORT = process.env.PORT || 3000;
