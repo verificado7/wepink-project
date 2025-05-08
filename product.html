@@ -1138,7 +1138,6 @@
     // Função para atualizar os detalhes do produto
     let quantity = 1;
     function updateProductDetails() {
-      // Sincronizar o produto com os dados mais recentes do localStorage
       const updatedProduct = products.find(p => p.id === product.id) || product;
       product = updatedProduct;
 
@@ -1153,7 +1152,6 @@
       productNotes.innerHTML = product.notes;
       quantityDisplay.textContent = quantity;
 
-      // Atualizar o carrinho para refletir possíveis mudanças no produto
       updateCart();
     }
 
@@ -1165,12 +1163,8 @@
 
     // Função para alternar abas
     function showTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
-      });
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
     }
@@ -1179,7 +1173,6 @@
     function addToCart(event) {
       event.preventDefault();
       let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-      // Atualizar o produto com os dados mais recentes do localStorage
       const updatedProduct = products.find(p => p.id === product.id) || product;
       const existingItem = cartItems.find(item => item.productId === product.id);
 
@@ -1211,12 +1204,10 @@
       let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
       cartItemsContainer.innerHTML = '';
 
-      // Calcular a quantidade total de itens no carrinho
       const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
       cartCountElement.textContent = totalItems;
       cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
 
-      // Sincronizar os itens do carrinho com os dados mais recentes do localStorage
       cartItems = cartItems.map(item => {
         const updatedProduct = products.find(p => p.id === item.productId);
         if (updatedProduct) {
@@ -1262,7 +1253,6 @@
         cartItemsContainer.appendChild(cartItem);
       });
 
-      // Atualizar o total com a taxa de entrega (se disponível)
       const deliveryFee = parseFloat(deliveryFeeElement.textContent.replace('R$ ', '').replace(',', '.')) || 0;
       cartTotalElement.textContent = formatCurrency(subtotal + deliveryFee);
     }
@@ -1304,9 +1294,7 @@
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
           method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          }
+          headers: { 'Accept': 'application/json' }
         });
 
         if (!response.ok) {
@@ -1425,11 +1413,9 @@
       } catch (error) {
         console.error('Erro ao buscar CEP:', error);
         cepInput.classList.add('invalid');
-        if (error.message.includes('Failed to fetch')) {
-          errorCepInput.textContent = 'Erro de conexão com a API ViaCEP. Verifique sua conexão com a internet ou tente novamente mais tarde.';
-        } else {
-          errorCepInput.textContent = `Erro ao buscar o endereço: ${error.message}`;
-        }
+        errorCepInput.textContent = error.message.includes('Failed to fetch') 
+          ? 'Erro de conexão com a API ViaCEP. Verifique sua conexão com a internet ou tente novamente.'
+          : `Erro ao buscar o endereço: ${error.message}`;
         errorCepInput.classList.add('visible');
         resetAddressFields();
       }
@@ -1567,11 +1553,6 @@
         cartItems: cartItems,
         address: addressData
       };
-
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      adminOrders.push({ purchaseData });
-      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
-      console.log('Pedidos salvos para o admin:', adminOrders);
 
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
       console.log('Salvando pendingPurchase:', purchaseData);
