@@ -1,65 +1,38 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
 const app = express();
 
-// Configurar CORS
-app.use(cors({
-  origin: '[invalid url, do not cite],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Middleware para parsear JSON
+app.use(cors());
 app.use(express.json());
 
-// Middleware para logar todas as requisições recebidas
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Requisição recebida: ${req.method} ${req.url}`);
-  console.log('Cabeçalhos:', req.headers);
-  console.log('Corpo:', req.body);
-  next();
-});
-
-// Rota para buscar informações de CEP
-app.get('/cep/:cep', async (req, res) => {
-  const cep = req.params.cep.replace(/\D/g, '');
-  if (cep.length !== 8) {
-    return res.status(400).json({ error: 'CEP inválido. Deve conter 8 dígitos.' });
-  }
-
+app.post('/create-pix', async (req, res) => {
   try {
-    const response = await fetch(`[invalid url, do not cite]);
-    const data = await response.json();
-    if (data.erro) {
-      return res.status(404).json({ error: 'CEP não encontrado.' });
-    }
-    res.json(data);
+    const { amount, description, email } = req.body;
+
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+
+    const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+      transaction_amount: amount,
+      description: description,
+      payment_method_id: 'pix',
+      payer: { email: email }
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey
+      }
+    });
+
+    const qrCode = response.data.point_of_interaction.transaction_data.qr_code;
+    const qrCodeBase64 = response.data.point_of_interaction.transaction_data.qr_code_base64;
+    res.json({ qrCode, qrCodeBase64 });
   } catch (error) {
-    console.error('Erro ao buscar CEP:', error);
-    res.status(500).json({ error: 'Erro ao buscar CEP. Tente novamente mais tarde.' });
+    console.error('Erro ao criar Pix:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Falha ao gerar QR code Pix: ' + (error.response?.data?.message || error.message) });
   }
 });
 
-// Rota para criar pagamento PIX
-const createPixPayment = require('./create-pix-payment');
-app.post('/create-pix', createPixPayment);
-
-// Rota de teste
-app.get('/test', (req, res) => {
-  console.log('Rota /test chamada');
-  res.status(200).json({ message: 'Teste bem-sucedido!' });
-});
-
-// Rota padrão
-app.get('/', (req, res) => {
-  console.log('Rota raiz chamada');
-  res.status(200).json({ message: 'Servidor está funcionando!' });
-});
-
-// Iniciar o servidor
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
