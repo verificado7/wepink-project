@@ -3,24 +3,22 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const app = express();
 
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Middleware para logar todas as requisições recebidas
+// Middleware para logar requisições
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Requisição recebida: ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] Requisição: ${req.method} ${req.url}`);
   console.log('Cabeçalhos:', req.headers);
   console.log('Corpo:', req.body);
   next();
 });
 
-// Rota para buscar informações de CEP
+// Rota para consulta de CEP
 app.get('/cep/:cep', async (req, res) => {
   const cep = req.params.cep.replace(/\D/g, '');
   if (cep.length !== 8) {
     return res.status(400).json({ error: 'CEP inválido. Deve conter 8 dígitos.' });
   }
-
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     const data = await response.json();
@@ -30,11 +28,11 @@ app.get('/cep/:cep', async (req, res) => {
     res.json(data);
   } catch (error) {
     console.error('Erro ao buscar CEP:', error);
-    res.status(500).json({ error: 'Erro ao buscar CEP. Tente novamente mais tarde.' });
+    res.status(500).json({ error: 'Erro ao buscar CEP.' });
   }
 });
 
-// Rota para criar pagamento PIX
+// Rota para criar pagamento Pix
 const createPixPayment = require('./create-pix-payment');
 app.post('/create-pix', createPixPayment);
 
