@@ -1,18 +1,7 @@
 const express = require('express');
-const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
-
-// Configuração de CORS robusta
-app.use(cors({
-  origin: 'https://wepink-project.onrender.com',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Middleware para requisições OPTIONS (preflight)
-app.options('*', cors());
 
 // Middleware para parsear JSON
 app.use(express.json());
@@ -48,6 +37,9 @@ app.get('/cep/:cep', async (req, res) => {
 // Rota para criar pagamento PIX
 const createPixPayment = require('./create-pix-payment');
 app.post('/create-pix', createPixPayment);
+
+// Rota para verificar status do pagamento
+app.get('/payment-status/:id', createPixPayment);
 
 // Iniciar o servidor
 const port = process.env.PORT || 3000;
