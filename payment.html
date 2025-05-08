@@ -990,7 +990,6 @@
         return;
       }
 
-      // Validar o e-mail antes de enviar
       if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
         console.error('E-mail inválido:', emailInput);
         showErrorScreen('Erro: Por favor, insira um e-mail válido.');
@@ -1202,7 +1201,7 @@
         console.log('Pagamento via cartão processado:', { cardName, cardCPF, cardNumber, expMonth, expYear, cvv, password, total });
 
         confirmButton.textContent = 'Confirmar Pagamento';
-        window.location.href = 'confirmation.html';
+        window.location.href = '/confirmation.html';
       }, 1000);
     }
 
