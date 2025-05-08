@@ -586,39 +586,55 @@
     footer {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: #fff;
-      padding: 25px;
+      padding: 40px 20px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+      margin-top: auto;
+      transition: background 0.3s ease;
     }
     footer .footer-logo {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 15px;
+      margin-bottom: 24px;
+      text-align: center;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+    footer .footer-logo:hover {
+      transform: scale(1.05);
     }
     footer .footer-links {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
     }
     footer .footer-links a {
       color: #fff;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 400;
-      transition: color 0.3s;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      text-transform: capitalize;
     }
     footer .footer-links a:hover {
-      color: #f0f0f0;
-      text-decoration: underline;
+      color: #ff2e82;
+      background: #fff;
+      transform: translateY(-2px);
+    }
+    footer .footer-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     footer .social-links {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 25px;
+      gap: 16px;
+      margin-bottom: 28px;
     }
     footer .social-links a {
       background-color: #fff;
@@ -629,31 +645,49 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
     }
     footer .social-links a:hover {
       transform: scale(1.1);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      background: #f0f0f0;
+    }
+    footer .social-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     footer .social-links img {
       width: 24px;
       height: 24px;
+      transition: filter 0.3s ease;
+    }
+    footer .social-links a:hover img {
+      filter: brightness(0.9);
     }
     footer .payment-methods {
       text-align: center;
-      margin-top: 25px;
+      margin-top: 24px;
     }
     footer .payment-methods h4 {
       font-size: 1rem;
-      margin-bottom: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
     footer .payment-methods img {
-      margin: 0 5px;
+      margin: 0 6px;
       height: 30px;
-      filter: brightness(0) invert(1);
+      border-radius: 4px;
+      background: #fff;
+      padding: 2px;
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+    footer .payment-methods img:hover {
+      transform: scale(1.1);
+      filter: brightness(0.9);
     }
     footer .payment-methods img.pix-icon {
       height: 40px;
@@ -662,8 +696,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 20px;
+      margin-top: 24px;
       cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    footer .scroll-to-top:hover {
+      transform: translateY(-2px);
     }
     footer .scroll-to-top .circle {
       background-color: #fff;
@@ -674,11 +712,12 @@
       align-items: center;
       justify-content: center;
       margin-right: 10px;
-      transition: background 0.3s;
+      transition: background 0.3s ease, transform 0.3s ease;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     footer .scroll-to-top .circle:hover {
       background-color: #f0f0f0;
+      transform: scale(1.1);
     }
     footer .scroll-to-top svg {
       width: 16px;
@@ -692,17 +731,32 @@
       color: #fff;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      transition: color 0.3s ease;
+    }
+    footer .scroll-to-top:hover p {
+      color: #f0f0f0;
+    }
+    footer .footer-info {
+      text-align: center;
+      margin-top: 24px;
     }
     footer .footer-info p {
       font-size: 0.85rem;
-      margin: 5px 0;
+      margin: 6px 0;
+      opacity: 0.9;
     }
     footer .footer-info a {
       color: #fff;
-      transition: color 0.3s;
+      text-decoration: none;
+      transition: color 0.3s ease, text-decoration 0.3s ease;
     }
     footer .footer-info a:hover {
       color: #f0f0f0;
+      text-decoration: underline;
+    }
+    footer .footer-info a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
     @media (max-width: 600px) {
       .header-bar .logo-text { font-size: 1.2rem; }
@@ -743,12 +797,19 @@
       .cart-total p { font-size: 0.85rem; }
       .cart-total .total { font-size: 1rem; }
       .cart-actions button { font-size: 0.9rem; padding: 10px 15px; }
-      footer .footer-logo { font-size: 1.2rem; }
-      footer .footer-links a { font-size: 0.8rem; }
-      footer .payment-methods h4 { font-size: 0.9rem; }
-      footer .social-links img { width: 20px; height: 20px; }
+      footer { padding: 32px 12px; }
+      footer .footer-logo { font-size: 1.3rem; margin-bottom: 20px; }
+      footer .footer-links { gap: 12px; margin-bottom: 24px; }
+      footer .footer-links a { font-size: 0.85rem; padding: 6px 10px; }
+      footer .social-links { gap: 12px; margin-bottom: 24px; }
       footer .social-links a { width: 35px; height: 35px; }
+      footer .social-links img { width: 20px; height: 20px; }
+      footer .payment-methods h4 { font-size: 0.9rem; margin-bottom: 12px; }
+      footer .payment-methods img { margin: 0 6px; height: 28px; }
+      footer .payment-methods img.pix-icon { height: 38px; }
       footer .scroll-to-top p { font-size: 0.7rem; }
+      footer .footer-info { margin-top: 24px; }
+      footer .footer-info p { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -882,46 +943,46 @@
   <!-- Rodapé -->
   <footer>
     <div class="footer-logo">wepink</div>
-    <div class="footer-links">
-      <a href="#">sobre nós</a>
-      <a href="#">central de ajuda</a>
-      <a href="#">troca e devoluções</a>
-      <a href="#">whatsapp</a>
-      <a href="#">regulamento live wepink 19</a>
-      <a href="#">trabalhe conosco</a>
-      <a href="#">consulte sua entrega</a>
-      <a href="#">franquias</a>
-    </div>
-    <div class="social-links">
-      <a href="https://www.instagram.com" target="_blank">
-        <img src="img/instagram.png" alt="Instagram">
+    <nav class="footer-links" role="navigation" aria-label="Links do rodapé">
+      <a href="#">Sobre nós</a>
+      <a href="#">Central de ajuda</a>
+      <a href="#">Troca e devoluções</a>
+      <a href="#">WhatsApp</a>
+      <a href="#">Regulamento Live Wepink 19</a>
+      <a href="#">Trabalhe conosco</a>
+      <a href="#">Consulte sua entrega</a>
+      <a href="#">Franquias</a>
+    </nav>
+    <div class="social-links" role="navigation" aria-label="Links sociais">
+      <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
+        <img src="img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
       </a>
-      <a href="https://www.facebook.com" target="_blank">
-        <img src="img/facebook.png" alt="Facebook">
+      <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
+        <img src="img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
       </a>
-      <a href="https://www.youtube.com" target="_blank">
-        <img src="img/youtube.png" alt="YouTube">
+      <a href="https://www.youtube.com" target="_blank" aria-label="YouTube">
+        <img src="img/youtube.png" alt="Ícone do YouTube" onerror="this.src='https://via.placeholder.com/24?text=YT';">
       </a>
-      <a href="https://www.whatsapp.com" target="_blank">
-        <img src="img/whatsapp.png" alt="WhatsApp">
+      <a href="https://www.whatsapp.com" target="_blank" aria-label="WhatsApp">
+        <img src="img/whatsapp.png" alt="Ícone do WhatsApp" onerror="this.src='https://via.placeholder.com/24?text=WA';">
       </a>
     </div>
     <div class="payment-methods">
       <h4>Formas de pagamento</h4>
-      <img src="img/visa.png" alt="Visa" height="30">
-      <img src="img/mastercard.png" alt="Mastercard" height="30">
-      <img src="img/elo.png" alt="Elo" height="30">
-      <img src="img/amex.png" alt="Amex" height="30">
-      <img src="img/boleto.png" alt="Boleto" height="30">
-      <img src="img/pix.png" alt="Pix" class="pix-icon" height="40">
+      <img src="img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
+      <img src="img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
+      <img src="img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
+      <img src="img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
+      <img src="img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
+      <img src="img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
     </div>
-    <div class="scroll-to-top">
+    <div class="scroll-to-top" role="button" aria-label="Voltar ao topo da página">
       <div class="circle">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
         </svg>
       </div>
-      <p>voltar ao topo</p>
+      <p>Voltar ao topo</p>
     </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
@@ -1543,15 +1604,15 @@
         return;
       }
 
-      const addressData = JSON.parse(localStorage.getItem('cartAddress')) || {};
-      addressData.street = street;
-      addressData.neighborhood = neighborhood;
-      addressData.number = number;
-      addressData.complement = complementInput.value || '';
+      const cartAddress = JSON.parse(localStorage.getItem('cartAddress')) || {};
+      cartAddress.street = street;
+      cartAddress.neighborhood = neighborhood;
+      cartAddress.number = number;
+      cartAddress.complement = complementInput.value || '';
 
       const purchaseData = {
         cartItems: cartItems,
-        address: addressData
+        address: cartAddress
       };
 
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
@@ -1567,30 +1628,14 @@
       window.location.href = 'login.html';
     }
 
-    // Escutar mudanças no localStorage para atualizar os produtos dinamicamente
-    window.addEventListener('storage', function(event) {
-      if (event.key === 'wepink_products') {
-        console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
-        try {
-          products = JSON.parse(event.newValue) || defaultProducts;
-          updateProductDetails();
-        } catch (error) {
-          console.error('Erro ao processar mudança no localStorage:', error);
-          products = defaultProducts;
-          localStorage.setItem('wepink_products', JSON.stringify(products));
-          updateProductDetails();
-        }
-      }
+    // Função para rolar ao topo
+    document.querySelector('.scroll-to-top').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Inicializar a página
     updateProductDetails();
     updateCart();
-
-    // Função para rolar ao topo
-    document.querySelector('.scroll-to-top').addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
   </script>
 </body>
 </html>
