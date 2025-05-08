@@ -4,8 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 module.exports = async (req, res) => {
   // Configurar cabeçalhos CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Responder a requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
@@ -15,7 +15,9 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
+    // Validar parâmetros obrigatórios
     if (!amount || !payerEmail || !payerCpf || !payerName) {
+      console.error('Parâmetros ausentes:', { amount, payerEmail, payerCpf, payerName });
       return res.status(400).json({ error: 'Parâmetros obrigatórios ausentes' });
     }
 
@@ -42,8 +44,11 @@ module.exports = async (req, res) => {
         }
       });
 
+      console.log('Resposta do Mercado Pago:', response.data);
+
+      // Verificar se os dados do QR Code estão presentes
       if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data) {
-        throw new Error('QR Code não encontrado.');
+        throw new Error('QR Code não encontrado. Verifique a configuração da chave Pix.');
       }
 
       res.status(200).json({
@@ -54,11 +59,11 @@ module.exports = async (req, res) => {
     } catch (error) {
       console.error('Erro ao gerar Pix:', error.response ? error.response.data : error.message);
       res.status(error.response?.status || 500).json({
-        error: 'Falha ao processar pagamento',
+        error: 'Falha ao processar pagamento com Mercado Pago',
         details: error.response ? error.response.data : error.message
       });
     }
   } else {
-    res.status(405).json({ error: 'Método não permitido. Use POST.' });
+    res.status(405).json({ error: 'Método não permitido. Use POST para /create-pix' });
   }
 };
