@@ -2,23 +2,23 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
-  // Permitir CORS
+  // Configurar cabeçalhos CORS
   res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Lidar com requisições OPTIONS (pré-flight para CORS)
+  // Responder a requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Rota para criar pagamento (/create-pix)
   if (req.method === 'POST') {
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
+    // Validar parâmetros obrigatórios
     if (!amount || !payerEmail || !payerCpf || !payerName) {
       console.error('Dados incompletos:', { amount, payerEmail, payerCpf, payerName });
-      return res.status(400).json({ error: 'Parâmetros ausentes: amount, payerEmail, payerCpf e payerName são obrigatórios' });
+      return res.status(400).json({ error: 'Parâmetros ausentes' });
     }
 
     try {
@@ -39,36 +39,31 @@ module.exports = async (req, res) => {
       }, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN || 'APP_USR-3305927250346517-050721-3a333f9b3713a09776360a06d461-22052021'}`,
+          'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
           'X-Idempotency-Key': uuidv4()
         }
       });
 
-      console.log('Resposta completa do Mercado Pago:', response.data);
+      console.log('Resposta do Mercado Pago:', response.data);
 
-      if (!response.data.id) {
-        throw new Error('ID do pagamento não encontrado na resposta do Mercado Pago.');
-      }
-      if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data || !response.data.point_of_interaction.transaction_data.qr_code) {
-        throw new Error('QR Code não encontrado. Verifique se a chave Pix está registrada na conta do Mercado Pago.');
+      // Verificar se o QR Code foi retornado
+      if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data) {
+        throw new Error('QR Code não encontrado. Verifique a configuração da chave Pix.');
       }
 
       res.status(200).json({
-        transactionId: response.data.id,
         qrCode: response.data.point_of_interaction.transaction_data.qr_code,
-        qrCodeBase64: response.data.point_of_interaction.transaction_data.qr_code_base64 || ''
+        qrCodeBase64: response.data.point_of_interaction.transaction_data.qr_code_base64 || '',
+        transactionId: response.data.id
       });
     } catch (error) {
-      console.error('Erro ao conectar com o Mercado Pago:', error.response ? error.response.data : error.message);
-      res.status(500).json({
-        error: 'Erro ao processar o pagamento no Mercado Pago.',
+      console.error('Erro ao gerar Pix:', error.response ? error.response.data : error.message);
+      res.status(error.response?.status || 500).json({
+        error: 'Erro ao processar o pagamento no Mercado Pago',
         details: error.response ? error.response.data : error.message
       });
     }
-  }
-
-  // Método não suportado
-  else {
+  } else {
     res.status(405).json({ error: 'Método não permitido. Use POST para /create-pix' });
   }
 };
