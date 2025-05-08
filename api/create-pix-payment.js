@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 // Configurar as credenciais do Mercado Pago
 mercadopago.configure({
-  access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN || 'Bearer APP_USR-3305927250346517-050721-3a333f9b37f313a0997763360a06d461-220520212'
+  access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN || 'APP_USR-3305927250346517-050721-3a333f9b37f313a0997763360a06d461-220520212'
 });
 
 // Função para criar um pagamento Pix
