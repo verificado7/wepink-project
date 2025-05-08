@@ -1,84 +1,74 @@
-const mercadopago = require('mercadopago');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
-// Configurar as credenciais do Mercado Pago
-mercadopago.configure({
-  access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN || 'APP_USR-3305927250346517-050721-3a333f9b37f313a0997763360a06d461-220520212'
-});
-
-// Função para criar um pagamento Pix
 module.exports = async (req, res) => {
-  try {
-    console.log('Recebendo requisição para gerar PIX:', req.body);
+  // Permitir CORS
+  res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Lidar com requisições OPTIONS (pré-flight para CORS)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Rota para criar pagamento (/create-pix)
+  if (req.method === 'POST') {
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
-    // Validar dados recebidos
     if (!amount || !payerEmail || !payerCpf || !payerName) {
       console.error('Dados incompletos:', { amount, payerEmail, payerCpf, payerName });
-      return res.status(400).json({ error: 'Dados incompletos. Forneça amount, payerEmail, payerCpf e payerName.' });
+      return res.status(400).json({ error: 'Parâmetros ausentes: amount, payerEmail, payerCpf e payerName são obrigatórios' });
     }
 
-    // Verificar se o Access Token está configurado
-    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      console.error('Access Token do Mercado Pago não configurado.');
-      return res.status(500).json({ error: 'Access Token do Mercado Pago não configurado.' });
-    }
-
-    // Criar o objeto de pagamento
-    const paymentData = {
-      transaction_amount: parseFloat(amount),
-      description: 'Pagamento Wepink - Perfumaria',
-      payment_method_id: 'pix',
-      payer: {
-        email: payerEmail,
-        identification: {
-          type: 'CPF',
-          number: payerCpf
+    try {
+      const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+        transaction_amount: parseFloat(amount),
+        payment_method_id: 'pix',
+        description: 'Pagamento Wepink - Perfumaria',
+        payer: {
+          email: payerEmail,
+          first_name: payerName.split(' ')[0] || 'Nome',
+          last_name: payerName.split(' ').slice(1).join(' ') || 'Sobrenome',
+          identification: {
+            type: 'CPF',
+            number: payerCpf
+          }
         },
-        first_name: payerName.split(' ')[0] || 'Nome',
-        last_name: payerName.split(' ').slice(1).join(' ') || 'Sobrenome'
+        notification_url: 'https://wepink-backend.onrender.com/webhook'
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN || 'APP_USR-3305927250346517-050721-3a333f9b3713a09776360a06d461-22052021'}`,
+          'X-Idempotency-Key': uuidv4()
+        }
+      });
+
+      console.log('Resposta completa do Mercado Pago:', response.data);
+
+      if (!response.data.id) {
+        throw new Error('ID do pagamento não encontrado na resposta do Mercado Pago.');
       }
-    };
+      if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data || !response.data.point_of_interaction.transaction_data.qr_code) {
+        throw new Error('QR Code não encontrado. Verifique se a chave Pix está registrada na conta do Mercado Pago.');
+      }
 
-    // Gerar uma chave de idempotência única
-    const idempotencyKey = uuidv4();
-    console.log('Chave de idempotência gerada:', idempotencyKey);
-
-    // Fazer a requisição para criar o pagamento
-    console.log('Enviando requisição ao Mercado Pago:', paymentData);
-    const response = await mercadopago.payment.create(paymentData, {
-      idempotencyKey: idempotencyKey
-    });
-
-    console.log('Resposta completa do Mercado Pago:', response);
-
-    // Verificar se os dados do PIX foram retornados
-    if (!response.body || !response.body.point_of_interaction || !response.body.point_of_interaction.transaction_data) {
-      console.error('Resposta do Mercado Pago incompleta:', response.body);
-      return res.status(500).json({ error: 'Resposta do Mercado Pago incompleta. Verifique a configuração da chave PIX.' });
+      res.status(200).json({
+        transactionId: response.data.id,
+        qrCode: response.data.point_of_interaction.transaction_data.qr_code,
+        qrCodeBase64: response.data.point_of_interaction.transaction_data.qr_code_base64 || ''
+      });
+    } catch (error) {
+      console.error('Erro ao conectar com o Mercado Pago:', error.response ? error.response.data : error.message);
+      res.status(500).json({
+        error: 'Erro ao processar o pagamento no Mercado Pago.',
+        details: error.response ? error.response.data : error.message
+      });
     }
+  }
 
-    // Retornar o QR code e informações do Pix
-    const pixData = {
-      qrCode: response.body.point_of_interaction.transaction_data.qr_code,
-      qrCodeBase64: response.body.point_of_interaction.transaction_data.qr_code_base64,
-      transactionId: response.body.id
-    };
-    console.log('PIX gerado com sucesso:', pixData);
-    res.status(200).json(pixData);
-  } catch (error) {
-    console.error('Erro ao gerar Pix:', {
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause,
-      response: error.response ? {
-        status: error.response.status,
-        body: error.response.body
-      } : null
-    });
-    if (error.response && error.response.body && error.response.body.code === 'PA_UNAUTHORIZED_RESULT_FROM_POLICIES') {
-      return res.status(403).json({ error: 'Autorização negada pelo Mercado Pago. Verifique as permissões da conta e do Access Token.' });
-    }
-    res.status(500).json({ error: `Erro ao gerar Pix: ${error.message}` });
+  // Método não suportado
+  else {
+    res.status(405).json({ error: 'Método não permitido. Use POST para /create-pix' });
   }
 };
