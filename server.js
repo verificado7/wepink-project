@@ -29,7 +29,7 @@ app.post('/create-pix', async (req, res) => {
 
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
-    const response = await axios.post('[invalid url, do not cite] {
+    const response = await axios.post('https://api.mercadopago.com/v1/payments', {
       transaction_amount: amount,
       description: description,
       payment_method_id: 'pix',
