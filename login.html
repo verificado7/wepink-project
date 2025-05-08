@@ -222,6 +222,13 @@
       color: #e02974;
       text-decoration: underline;
     }
+    .guest-details {
+      display: none;
+      margin-top: 20px;
+    }
+    .guest-details.active {
+      display: block;
+    }
     .spinner {
       display: none;
       position: absolute;
@@ -381,22 +388,33 @@
   <section class="login-section">
     <h2>Entrar na Conta</h2>
     <p id="error-message" class="error-message">Nenhum pedido encontrado. Volte ao carrinho para continuar sua compra.</p>
-    <input type="email" id="email" placeholder="E-mail" required oninput="validateLoginForm()">
-    <p class="error-message" id="error-email"></p>
-    <div class="password-wrapper">
-      <input type="password" id="password" placeholder="Senha" required oninput="validateLoginForm()">
-      <span class="toggle-password" onclick="togglePassword()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      </span>
+    <div id="login-form">
+      <input type="email" id="email" placeholder="E-mail" required oninput="validateLoginForm()">
+      <p class="error-message" id="error-email"></p>
+      <div class="password-wrapper">
+        <input type="password" id="password" placeholder="Senha" required oninput="validateLoginForm()">
+        <span class="toggle-password" onclick="togglePassword()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </span>
+      </div>
+      <p class="error-message" id="error-password"></p>
+      <a href="#" class="forgot-password">Esqueci minha senha</a>
     </div>
-    <p class="error-message" id="error-password"></p>
-    <a href="#" class="forgot-password">Esqueci minha senha</a>
+    <div id="guest-details" class="guest-details">
+      <input type="text" id="guest-name" placeholder="Nome Completo" required oninput="validateGuestForm()">
+      <p class="error-message" id="error-guest-name"></p>
+      <input type="email" id="guest-email" placeholder="E-mail" required oninput="validateGuestForm()">
+      <p class="error-message" id="error-guest-email"></p>
+      <input type="text" id="guest-cpf" placeholder="CPF (somente números)" maxlength="11" pattern="\d{11}" required oninput="validateGuestForm(); cleanCPFInput(this)">
+      <p class="error-message" id="error-guest-cpf"></p>
+    </div>
     <div class="action-buttons">
       <button id="login-button" onclick="simulateLogin()" disabled>Entrar <span class="spinner" id="login-spinner"></span></button>
-      <button id="guest-button" class="guest-button" onclick="proceedAsGuest()">Continuar como Convidado <span class="spinner" id="guest-spinner"></span></button>
+      <button id="guest-button" class="guest-button" onclick="toggleGuestDetails()">Continuar como Convidado <span class="spinner" id="guest-spinner"></span></button>
+      <button id="guest-proceed-button" class="guest-button" style="display: none;" onclick="proceedAsGuest()" disabled>Prosseguir <span class="spinner" id="guest-proceed-spinner"></span></button>
     </div>
     <a href="#" class="signup-link">Não tem uma conta? Cadastre-se</a>
   </section>
@@ -462,6 +480,11 @@
       }
     }
 
+    // Função para limpar CPF (somente números)
+    function cleanCPFInput(input) {
+      input.value = input.value.replace(/\D/g, '').slice(0, 11);
+    }
+
     // Função para validar o formulário de login
     function validateLoginForm() {
       const emailInput = document.getElementById('email');
@@ -497,6 +520,54 @@
       loginButton.disabled = !isValid;
     }
 
+    // Função para validar o formulário de convidado
+    function validateGuestForm() {
+      const nameInput = document.getElementById('guest-name');
+      const emailInput = document.getElementById('guest-email');
+      const cpfInput = document.getElementById('guest-cpf');
+      const proceedButton = document.getElementById('guest-proceed-button');
+
+      let isValid = true;
+
+      const nameValue = nameInput.value.trim();
+      const nameError = document.getElementById('error-guest-name');
+      if (!nameValue || nameValue.length < 3) {
+        nameInput.classList.add('invalid');
+        nameError.textContent = 'Nome deve ter pelo menos 3 caracteres.';
+        nameError.classList.add('visible');
+        isValid = false;
+      } else {
+        nameInput.classList.remove('invalid');
+        nameError.classList.remove('visible');
+      }
+
+      const emailValue = emailInput.value.trim();
+      const emailError = document.getElementById('error-guest-email');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        emailInput.classList.add('invalid');
+        emailError.textContent = 'E-mail inválido.';
+        emailError.classList.add('visible');
+        isValid = false;
+      } else {
+        emailInput.classList.remove('invalid');
+        emailError.classList.remove('visible');
+      }
+
+      const cpfValue = cpfInput.value.replace(/\D/g, '');
+      const cpfError = document.getElementById('error-guest-cpf');
+      if (cpfValue.length !== 11) {
+        cpfInput.classList.add('invalid');
+        cpfError.textContent = 'CPF deve conter exatamente 11 dígitos.';
+        cpfError.classList.add('visible');
+        isValid = false;
+      } else {
+        cpfInput.classList.remove('invalid');
+        cpfError.classList.remove('visible');
+      }
+
+      proceedButton.disabled = !isValid;
+    }
+
     // Função para mostrar o spinner e iniciar transição de fade-out
     function showLoadingSpinner(buttonId, spinnerId) {
       const button = document.getElementById(buttonId);
@@ -505,6 +576,32 @@
       button.disabled = true;
       spinner.classList.add('visible');
       document.body.classList.add('fade-out');
+    }
+
+    // Função para alternar a exibição dos campos de convidado
+    function toggleGuestDetails() {
+      const guestDetails = document.getElementById('guest-details');
+      const loginForm = document.getElementById('login-form');
+      const guestButton = document.getElementById('guest-button');
+      const guestProceedButton = document.getElementById('guest-proceed-button');
+      const forgotPassword = document.querySelector('.forgot-password');
+      const signupLink = document.querySelector('.signup-link');
+
+      if (guestDetails.classList.contains('active')) {
+        guestDetails.classList.remove('active');
+        loginForm.style.display = 'block';
+        guestButton.textContent = 'Continuar como Convidado';
+        guestProceedButton.style.display = 'none';
+        forgotPassword.style.display = 'block';
+        signupLink.style.display = 'inline-block';
+      } else {
+        guestDetails.classList.add('active');
+        loginForm.style.display = 'none';
+        guestButton.textContent = 'Voltar ao Login';
+        guestProceedButton.style.display = 'block';
+        forgotPassword.style.display = 'none';
+        signupLink.style.display = 'none';
+      }
     }
 
     // Verificar se há dados de pedido pendente ao carregar a página
@@ -551,18 +648,33 @@
         return;
       }
 
-      // Atualizar pendingPurchase com o e-mail do usuário
-      purchaseData.email = email;
+      // Simular obtenção de dados do usuário (nome e CPF) - substituir por autenticação real em produção
+      const simulatedUserData = {
+        name: 'Usuário Logado',
+        cpf: '98765432100',
+        email: email
+      };
+
+      // Atualizar pendingPurchase com os dados do usuário
+      purchaseData.name = simulatedUserData.name;
+      purchaseData.cpf = simulatedUserData.cpf;
+      purchaseData.email = simulatedUserData.email;
       purchaseData.loginType = 'User';
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-      console.log('pendingPurchase atualizado com e-mail:', purchaseData);
+      console.log('pendingPurchase atualizado com dados do usuário logado:', purchaseData);
 
       setTimeout(() => window.location.href = 'payment.html', 500);
     }
 
     // Função para prosseguir como convidado
     function proceedAsGuest() {
-      showLoadingSpinner('guest-button', 'guest-spinner');
+      const name = document.getElementById('guest-name').value.trim();
+      const email = document.getElementById('guest-email').value.trim();
+      const cpf = document.getElementById('guest-cpf').value.trim();
+
+      if (!name || !email || !cpf) return;
+
+      showLoadingSpinner('guest-proceed-button', 'guest-proceed-spinner');
 
       const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       console.log('Dados de pendingPurchase ao prosseguir como convidado:', purchaseData);
@@ -575,10 +687,13 @@
         return;
       }
 
-      // Marcar como convidado em pendingPurchase
+      // Atualizar pendingPurchase com os dados do convidado
+      purchaseData.name = name;
+      purchaseData.email = email;
+      purchaseData.cpf = cpf;
       purchaseData.loginType = 'Guest';
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-      console.log('pendingPurchase atualizado como convidado:', purchaseData);
+      console.log('pendingPurchase atualizado com dados do convidado:', purchaseData);
 
       setTimeout(() => window.location.href = 'payment.html', 500);
     }
