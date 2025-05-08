@@ -22,7 +22,7 @@ app.get('/cep/:cep', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`[invalid url, do not cite]);
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     const data = await response.json();
     if (data.erro) {
       return res.status(404).json({ error: 'CEP não encontrado.' });
