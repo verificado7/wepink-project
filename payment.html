@@ -789,7 +789,7 @@
           <input type="text" id="pix-payer-name" placeholder="Nome Completo" required aria-label="Nome completo do pagador">
           <p class="error-message" id="error-pix-payer-name"></p>
           <label for="pix-payer-cpf">CPF (somente números)</label>
-          <input type="text" id="pix-payer-cpf" placeholder="CPF (somente números)" maxlength="11" required aria-label="CPF do pagador">
+          <input type="text" id="pix-payer-cpf" placeholder="CPF (somente números)" maxlength="11" pattern="\d{11}" required aria-label="CPF do pagador">
           <p class="error-message" id="error-pix-payer-cpf"></p>
           <label for="pix-email-input">E-mail</label>
           <input type="email" id="pix-email-input" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
@@ -815,7 +815,7 @@
         <input type="text" id="card-name" placeholder="Nome no cartão" required aria-label="Nome no cartão">
         <p class="error-message" id="error-card-name"></p>
         <label for="card-cpf">CPF (somente números)</label>
-        <input type="text" id="card-cpf" placeholder="Digite o CPF (somente números)" maxlength="11" required aria-label="CPF do titular do cartão">
+        <input type="text" id="card-cpf" placeholder="Digite o CPF (somente números)" maxlength="11" pattern="\d{11}" required aria-label="CPF do titular do cartão">
         <p class="error-message" id="error-card-cpf"></p>
         <label for="card-email">E-mail</label>
         <input type="email" id="card-email" placeholder="Seu e-mail" required aria-label="E-mail do pagador">
@@ -932,15 +932,21 @@
       input.value = formatted;
     }
 
-    function formatCPF(input) {
-      let value = input.value.replace(/\D/g, '').slice(0, 11);
+    function formatCPFDisplay(cpf) {
+      if (!cpf) return 'Não informado';
+      let value = cpf.replace(/\D/g, '').slice(0, 11);
+      if (value.length < 11) return 'CPF inválido';
       let formatted = '';
       for (let i = 0; i < value.length; i++) {
         if (i === 3 || i === 6) formatted += '.';
         if (i === 9) formatted += '-';
         formatted += value[i];
       }
-      input.value = formatted;
+      return formatted;
+    }
+
+    function cleanCPFInput(input) {
+      input.value = input.value.replace(/\D/g, '').slice(0, 11);
     }
 
     function showErrorScreen(message) {
@@ -1033,7 +1039,7 @@
       const cpf = cpfInput.value.replace(/\D/g, '');
       if (cpf.length !== 11) {
         cpfInput.classList.add('invalid');
-        errors.cpf.textContent = 'CPF deve conter 11 dígitos.';
+        errors.cpf.textContent = 'CPF deve conter exatamente 11 dígitos.';
         errors.cpf.classList.add('visible');
         isValid = false;
       } else {
@@ -1146,7 +1152,6 @@
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
 
-        // Limpar dados do localStorage
         localStorage.removeItem('pendingPurchase');
         localStorage.removeItem('cartItems');
         localStorage.removeItem('cartAddress');
@@ -1197,7 +1202,7 @@
       const cpf = cardCPFInput.value.replace(/\D/g, '');
       if (cpf.length !== 11) {
         cardCPFInput.classList.add('invalid');
-        errors.cardCPF.textContent = 'CPF deve conter 11 dígitos.';
+        errors.cardCPF.textContent = 'CPF deve conter exatamente 11 dígitos.';
         errors.cardCPF.classList.add('visible');
         isValid = false;
       } else {
@@ -1322,14 +1327,13 @@
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
 
-        // Limpar dados do localStorage
         localStorage.removeItem('pendingPurchase');
         localStorage.removeItem('cartItems');
         localStorage.removeItem('cartAddress');
         console.log('Dados do localStorage limpos após pagamento com cartão');
 
         confirmButton.textContent = 'Confirmar Pagamento';
-        window.location.href = 'index.html'; // Substituir por '/confirmation.html' se disponível
+        window.location.href = 'index.html';
       }, 1000);
     }
 
@@ -1367,8 +1371,13 @@
       });
 
       pixCPFInput.addEventListener('input', () => {
-        formatCPF(pixCPFInput);
+        cleanCPFInput(pixCPFInput);
         validatePixForm();
+      });
+
+      cardCPFInput.addEventListener('input', () => {
+        cleanCPFInput(cardCPFInput);
+        validateCardForm();
       });
 
       generatePixButton.addEventListener('click', generatePixQRCode);
@@ -1393,11 +1402,6 @@
 
       [cardNameInput, cardCPFInput, cardEmailInput, cardNumberInput, expMonthInput, expYearInput, cvvInput, passwordInput].forEach(input => {
         input.addEventListener('input', validateCardForm);
-      });
-
-      cardCPFInput.addEventListener('input', () => {
-        formatCPF(cardCPFInput);
-        validateCardForm();
       });
 
       cardNumberInput.addEventListener('input', () => {
