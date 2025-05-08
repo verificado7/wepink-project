@@ -4,19 +4,35 @@ const cors = require('cors');
 const path = require('path');
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static('.')); // Serve arquivos estáticos da raiz
 
+// Rota para servir payment.html
 app.get('/payment.html', (req, res) => {
   console.log('Servindo payment.html');
   res.sendFile(path.join(__dirname, 'payment.html'));
 });
 
+// Rota para servir confirmation.html
+app.get('/confirmation.html', (req, res) => {
+  console.log('Servindo confirmation.html');
+  res.sendFile(path.join(__dirname, 'confirmation.html'));
+});
+
+// Rota para servir admin.html
+app.get('/admin.html', (req, res) => {
+  console.log('Servindo admin.html');
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Endpoint para criar QR code Pix
 app.post('/create-pix', async (req, res) => {
   try {
     const { amount, description, email } = req.body;
 
+    // Validações
     if (!amount || amount <= 0) {
       throw new Error('O valor da transação é obrigatório e deve ser maior que zero.');
     }
@@ -51,9 +67,11 @@ app.post('/create-pix', async (req, res) => {
   }
 });
 
+// Rota padrão para a raiz
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'payment.html'));
 });
 
+// Iniciar o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
