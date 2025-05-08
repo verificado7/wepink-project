@@ -490,12 +490,24 @@
       }
 
       .table th, .table td {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         padding: 8px;
       }
 
+      .table th:nth-child(2), .table td:nth-child(2) { /* Cliente */
+        min-width: 100px;
+      }
+
+      .table th:nth-child(3), .table td:nth-child(3) { /* E-mail */
+        min-width: 120px;
+      }
+
+      .table th:nth-child(4), .table td:nth-child(4) { /* CPF */
+        min-width: 100px;
+      }
+
       .order-items p, .address-details p, .payment-details p {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
       }
 
       .modal-content {
@@ -603,7 +615,9 @@
         <thead>
           <tr>
             <th>Nº do Pedido</th>
-            <th>Cliente (E-mail)</th>
+            <th>Cliente</th>
+            <th>E-mail</th>
+            <th>CPF</th>
             <th>Produtos</th>
             <th>Endereço</th>
             <th>Total</th>
@@ -932,6 +946,7 @@
     function formatCPF(cpf) {
       if (!cpf) return 'Não informado';
       let value = cpf.replace(/\D/g, '').slice(0, 11);
+      if (value.length < 11) return 'CPF inválido';
       let formatted = '';
       for (let i = 0; i < value.length; i++) {
         if (i === 3 || i === 6) formatted += '.';
@@ -974,7 +989,7 @@
       }
     }
 
-    // Função para salvar pedidos (incluindo detalhes de pagamento)
+    // Função para salvar pedidos
     function saveOrders(orders) {
       try {
         localStorage.setItem('adminOrders', JSON.stringify(orders));
@@ -1087,13 +1102,14 @@
       const filterMethod = document.getElementById('filter-method').value;
       orderList.innerHTML = '';
 
+      console.log('Carregando adminOrders:', adminOrders);
+
       if (adminOrders.length === 0) {
-        orderList.innerHTML = '<tr><td colspan="9">Nenhum pedido registrado.</td></tr>';
+        orderList.innerHTML = '<tr><td colspan="11">Nenhum pedido registrado.</td></tr>';
         console.log('Nenhum pedido encontrado em adminOrders.');
         return;
       }
 
-      console.log('Atualizando lista de pedidos:', adminOrders);
       adminOrders.forEach((order, index) => {
         if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
           console.warn(`Pedido #${index + 1} não possui itens válidos.`, order);
@@ -1166,7 +1182,9 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>#${index + 1}</td>
-          <td><a href="mailto:${clientEmail}">${clientName} (${clientEmail})</a></td>
+          <td>${clientName}</td>
+          <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
+          <td>${formatCPF(clientCPF)}</td>
           <td>
             <div class="order-items">
               ${itemsHtml}
@@ -1191,6 +1209,16 @@
           </td>
         `;
         orderList.appendChild(row);
+
+        console.log(`Pedido #${index + 1} processado:`, {
+          clientName,
+          clientEmail,
+          clientCPF,
+          method,
+          status,
+          total: formatCurrency(totalWithDelivery),
+          loginType: order.loginType || 'Unknown'
+        });
       });
     }
 
@@ -1246,7 +1274,7 @@
         document.getElementById('product-delivery-option2').value = '';
         document.getElementById('product-image-file').value = '';
         document.getElementById('product-image-preview').style.display = 'none';
-        clearProductErrors('product');
+        clearProductErrors();
       } else if (modalId === 'add-client-modal') {
         document.getElementById('client-name').value = '';
         document.getElementById('client-email').value = '';
@@ -1258,7 +1286,7 @@
     }
 
     // Função para limpar mensagens de erro do modal de produto
-    function clearProductErrors(prefix) {
+    function clearProductErrors() {
       const fields = [
         'product-name', 'product-description', 'product-full-description',
         'product-notes', 'product-price-total', 'product-price-new',
@@ -1321,7 +1349,7 @@
       const imageFile = document.getElementById('product-image-file').files[0];
 
       let isValid = true;
-      clearProductErrors('product');
+      clearProductErrors();
 
       if (!name || name.length < 3) {
         document.getElementById('product-name').classList.add('invalid');
