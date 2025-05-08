@@ -470,7 +470,6 @@
 
       let isValid = true;
 
-      // Validação do E-mail
       const emailValue = emailInput.value.trim();
       const emailError = document.getElementById('error-email');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
@@ -483,7 +482,6 @@
         emailError.classList.remove('visible');
       }
 
-      // Validação da Senha
       const passwordValue = passwordInput.value.trim();
       const passwordError = document.getElementById('error-password');
       if (passwordValue.length < 4) {
@@ -496,7 +494,6 @@
         passwordError.classList.remove('visible');
       }
 
-      // Habilitar ou desabilitar o botão "Entrar"
       loginButton.disabled = !isValid;
     }
 
@@ -523,9 +520,7 @@
         document.querySelector('.password-wrapper').style.display = 'none';
         document.querySelector('.forgot-password').style.display = 'none';
         document.querySelector('.signup-link').style.display = 'none';
-        setTimeout(() => {
-          window.location.href = 'product.html';
-        }, 3000);
+        setTimeout(() => window.location.href = 'product.html', 3000);
       } else {
         errorMessage.classList.remove('visible');
         document.querySelector('.action-buttons').style.display = 'flex';
@@ -536,93 +531,56 @@
       }
     };
 
-    // Função para simular o login e redirecionar para a página payment.html
+    // Função para simular o login e redirecionar para payment.html
     function simulateLogin() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      if (!email || !password) {
-        return;
-      }
+      if (!email || !password) return;
 
       showLoadingSpinner('login-button', 'login-spinner');
 
-      const purchaseDataAfterLogin = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Dados de pendingPurchase após login:', purchaseDataAfterLogin);
+      const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Dados de pendingPurchase após login:', purchaseData);
 
-      if (!purchaseDataAfterLogin.cartItems || purchaseDataAfterLogin.cartItems.length === 0) {
+      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
         const errorMessage = document.getElementById('error-message');
         errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
         errorMessage.classList.add('visible');
-        setTimeout(() => {
-          window.location.href = 'product.html';
-        }, 2000);
+        setTimeout(() => window.location.href = 'product.html', 2000);
         return;
       }
 
-      // Atualizar o adminOrders com os dados do login
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      const orderIndex = adminOrders.findIndex(order => order.purchaseData === purchaseDataAfterLogin);
-      if (orderIndex !== -1) {
-        adminOrders[orderIndex] = {
-          ...adminOrders[orderIndex],
-          userEmail: email,
-          userPassword: password, // Armazenar a senha (não recomendado em produção; apenas para simulação)
-          loginType: 'User'
-        };
-      } else {
-        adminOrders.push({
-          purchaseData: purchaseDataAfterLogin,
-          userEmail: email,
-          userPassword: password,
-          loginType: 'User'
-        });
-      }
-      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
-      console.log('adminOrders atualizado com login:', adminOrders);
+      // Atualizar pendingPurchase com o e-mail do usuário
+      purchaseData.email = email;
+      purchaseData.loginType = 'User';
+      localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
+      console.log('pendingPurchase atualizado com e-mail:', purchaseData);
 
-      setTimeout(() => {
-        window.location.href = 'payment.html';
-      }, 500);
+      setTimeout(() => window.location.href = 'payment.html', 500);
     }
 
     // Função para prosseguir como convidado
     function proceedAsGuest() {
       showLoadingSpinner('guest-button', 'guest-spinner');
 
-      const purchaseDataAfterGuest = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Dados de pendingPurchase ao prosseguir como convidado:', purchaseDataAfterGuest);
+      const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Dados de pendingPurchase ao prosseguir como convidado:', purchaseData);
 
-      if (!purchaseDataAfterGuest.cartItems || purchaseDataAfterGuest.cartItems.length === 0) {
+      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
         const errorMessage = document.getElementById('error-message');
         errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
         errorMessage.classList.add('visible');
-        setTimeout(() => {
-          window.location.href = 'product.html';
-        }, 2000);
+        setTimeout(() => window.location.href = 'product.html', 2000);
         return;
       }
 
-      // Atualizar o adminOrders com o status de convidado
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      const orderIndex = adminOrders.findIndex(order => order.purchaseData === purchaseDataAfterGuest);
-      if (orderIndex !== -1) {
-        adminOrders[orderIndex] = {
-          ...adminOrders[orderIndex],
-          loginType: 'Guest'
-        };
-      } else {
-        adminOrders.push({
-          purchaseData: purchaseDataAfterGuest,
-          loginType: 'Guest'
-        });
-      }
-      localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
-      console.log('adminOrders atualizado como convidado:', adminOrders);
+      // Marcar como convidado em pendingPurchase
+      purchaseData.loginType = 'Guest';
+      localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
+      console.log('pendingPurchase atualizado como convidado:', purchaseData);
 
-      setTimeout(() => {
-        window.location.href = 'payment.html';
-      }, 500);
+      setTimeout(() => window.location.href = 'payment.html', 500);
     }
   </script>
 </body>
