@@ -71,8 +71,14 @@ module.exports = async (req, res) => {
       message: error.message,
       stack: error.stack,
       cause: error.cause,
-      response: error.response ? error.response.body : null
+      response: error.response ? {
+        status: error.response.status,
+        body: error.response.body
+      } : null
     });
+    if (error.response && error.response.body && error.response.body.code === 'PA_UNAUTHORIZED_RESULT_FROM_POLICIES') {
+      return res.status(403).json({ error: 'Autorização negada pelo Mercado Pago. Verifique as permissões da conta e do Access Token.' });
+    }
     res.status(500).json({ error: `Erro ao gerar Pix: ${error.message}` });
   }
 };
