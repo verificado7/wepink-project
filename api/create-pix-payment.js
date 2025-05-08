@@ -2,12 +2,12 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res) => {
-  // Configurar cabeçalhos CORS
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', 'https://wepink-project.onrender.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Responder a requisições OPTIONS (preflight)
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -15,10 +15,10 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const { amount, payerEmail, payerCpf, payerName } = req.body;
 
-    // Validar parâmetros obrigatórios
+    // Validate required parameters
     if (!amount || !payerEmail || !payerCpf || !payerName) {
-      console.error('Dados incompletos:', { amount, payerEmail, payerCpf, payerName });
-      return res.status(400).json({ error: 'Parâmetros ausentes' });
+      console.error('Missing parameters:', { amount, payerEmail, payerCpf, payerName });
+      return res.status(400).json({ error: 'Missing required parameters' });
     }
 
     try {
@@ -44,11 +44,11 @@ module.exports = async (req, res) => {
         }
       });
 
-      console.log('Resposta do Mercado Pago:', response.data);
+      console.log('Mercado Pago response:', response.data);
 
-      // Verificar se o QR Code foi retornado
+      // Check if QR Code data is present
       if (!response.data.point_of_interaction || !response.data.point_of_interaction.transaction_data) {
-        throw new Error('QR Code não encontrado. Verifique a configuração da chave Pix.');
+        throw new Error('QR Code not found. Verify Pix key configuration.');
       }
 
       res.status(200).json({
@@ -57,13 +57,13 @@ module.exports = async (req, res) => {
         transactionId: response.data.id
       });
     } catch (error) {
-      console.error('Erro ao gerar Pix:', error.response ? error.response.data : error.message);
+      console.error('Error generating Pix:', error.response ? error.response.data : error.message);
       res.status(error.response?.status || 500).json({
-        error: 'Erro ao processar o pagamento no Mercado Pago',
+        error: 'Failed to process payment with Mercado Pago',
         details: error.response ? error.response.data : error.message
       });
     }
   } else {
-    res.status(405).json({ error: 'Método não permitido. Use POST para /create-pix' });
+    res.status(405).json({ error: 'Method not allowed. Use POST for /create-pix' });
   }
 };
