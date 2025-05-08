@@ -1069,7 +1069,7 @@
         qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
 
         const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        orders.push({
+        const newOrder = {
           purchaseData: purchase,
           paymentMethod: 'Pix',
           pixDetails: {
@@ -1087,10 +1087,12 @@
             name: nameInput,
             cpf: cpfInput,
             email: emailInput
-          }
-        });
+          },
+          status: 'Gerado'
+        };
+        orders.push(newOrder);
         localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Código PIX gerado com sucesso:', data);
+        console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
       } catch (error) {
         console.error('Erro ao gerar Pix:', error.message);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
@@ -1221,7 +1223,7 @@
       setTimeout(() => {
         const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
         const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        orders.push({
+        const newOrder = {
           purchaseData: purchase,
           paymentMethod: 'Cartão',
           paymentDetails: {
@@ -1243,9 +1245,10 @@
             cpf: cardCPF,
             email: purchase.email || 'Não informado'
           }
-        });
+        };
+        orders.push(newOrder);
         localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Pagamento via cartão processado:', { cardName, cardCPF, cardNumber, expMonth, expYear, cvv, password, total });
+        console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
 
         confirmButton.textContent = 'Confirmar Pagamento';
         window.location.href = '/confirmation.html';
