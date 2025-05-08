@@ -1,7 +1,15 @@
 const express = require('express');
+const cors = require('cors');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: '[invalid url, do not cite],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware para parsear JSON
 app.use(express.json());
@@ -22,7 +30,7 @@ app.get('/cep/:cep', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const response = await fetch(`[invalid url, do not cite]);
     const data = await response.json();
     if (data.erro) {
       return res.status(404).json({ error: 'CEP não encontrado.' });
@@ -36,10 +44,7 @@ app.get('/cep/:cep', async (req, res) => {
 
 // Rota para criar pagamento PIX
 const createPixPayment = require('./create-pix-payment');
-app.post('/create-pix', (req, res) => {
-  console.log('Rota /create-pix chamada');
-  createPixPayment(req, res);
-});
+app.post('/create-pix', createPixPayment);
 
 // Rota de teste
 app.get('/test', (req, res) => {
