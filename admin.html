@@ -930,6 +930,7 @@
 
     // Função para formatar CPF
     function formatCPF(cpf) {
+      if (!cpf) return 'Não informado';
       let value = cpf.replace(/\D/g, '').slice(0, 11);
       let formatted = '';
       for (let i = 0; i < value.length; i++) {
@@ -942,6 +943,7 @@
 
     // Função para formatar número do cartão
     function formatCardNumber(cardNumber) {
+      if (!cardNumber) return 'Não informado';
       let value = cardNumber.replace(/\D/g, '').slice(0, 16);
       let formatted = '';
       for (let i = 0; i < value.length; i++) {
@@ -1055,7 +1057,7 @@
         totalSales += totalWithDelivery;
 
         const method = order.paymentMethod || 'Desconhecido';
-        const status = order.pixDetails?.status || order.status || 'Pendente';
+        const status = order.status || 'Pendente';
 
         if (method === 'Pix') {
           totalPixSales += totalWithDelivery;
@@ -1099,14 +1101,14 @@
         }
 
         const method = order.paymentMethod || 'Desconhecido';
-        const status = order.pixDetails?.status || order.status || 'Pendente';
+        const status = order.status || 'Pendente';
 
         // Aplicar filtros
         if (filterStatus !== 'all' && status !== filterStatus) return;
         if (filterMethod !== 'all' && method !== filterMethod) return;
 
         let subtotal = 0;
-        const itemsHtml = order.purchaseData.cartItems.map(item => {
+        const itemsHtml = order.items.map(item => {
           const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
           subtotal += itemTotal;
           return `
@@ -1127,40 +1129,35 @@
           <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
         `;
 
-        const clientEmail = order.pixDetails?.email || order.paymentDetails?.email || order.userEmail || 'Não informado';
-        let clientName = order.paymentDetails?.cardName || order.pixDetails?.name || 'Convidado';
-        if (order.pixDetails?.name) {
-          const payerName = order.pixDetails.name.split(' ');
-          clientName = `${payerName[0] || ''} ${payerName.slice(1).join(' ') || ''}`.trim();
-        } else if (order.pixDetails?.first_name && order.pixDetails?.last_name) {
-          clientName = `${order.pixDetails.first_name} ${order.pixDetails.last_name}`.trim();
-        }
+        // Priorizar customerDetails para informações do cliente
+        const customer = order.customerDetails || {};
+        const clientName = customer.name || (order.paymentDetails?.cardName) || (order.pixDetails ? `${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}`.trim() : 'Convidado');
+        const clientEmail = customer.email || order.paymentDetails?.email || order.pixDetails?.email || 'Não informado';
+        const clientCPF = customer.cpf || order.paymentDetails?.cardCPF || order.pixDetails?.identification?.number || 'Não informado';
 
         let paymentDetailsHtml = '';
         if (method === 'Cartão' && order.paymentDetails) {
-          const formattedCPF = formatCPF(order.paymentDetails.cardCPF || '');
+          const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
           const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
           paymentDetailsHtml = `
-            <p>Método: Cartão</p>
-            <p>Nome: ${order.paymentDetails.cardName || 'Não informado'}</p>
-            <p>E-mail: ${clientEmail}</p>
-            <p>CPF: ${formattedCPF || 'Não informado'}</p>
-            <p>Número do Cartão: ${formattedCardNumber || 'Não informado'}</p>
-            <p>Validade: ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
-            <p>CVV: ${order.paymentDetails.cvv || 'Não informado'}</p>
-            <p>Senha: ${order.paymentDetails.password || 'Não informado'}</p>
-            <p>Valor: ${formatCurrency(order.paymentDetails.transactionAmount || 0)}</p>
+            <p><strong>Método:</strong> Cartão</p>
+            <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
+            <p><strong>E-mail:</strong> ${clientEmail}</p>
+            <p><strong>CPF:</strong> ${formattedCPF}</p>
+            <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
+            <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
+            <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
+            <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
           `;
         } else if (method === 'Pix' && order.pixDetails) {
-          const formattedCPF = formatCPF(order.pixDetails.identification?.number || '');
+          const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
           paymentDetailsHtml = `
-            <p>Método: Pix</p>
-            <p>Nome: ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
-            <p>E-mail: ${order.pixDetails.email || 'Não informado'}</p>
-            <p>CPF: ${formattedCPF || 'Não informado'}</p>
-            <p>ID Pagamento: ${order.pixDetails.paymentId || 'Não informado'}</p>
-            <p>Código Pix: <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
-            <p>Valor: ${formatCurrency(order.pixDetails.amount || 0)}</p>
+            <p><strong>Método:</strong> Pix</p>
+            <p><strong>Nome:</strong> ${clientName}</p>
+            <p><strong>E-mail:</strong> ${clientEmail}</p>
+            <p><strong>CPF:</strong> ${formattedCPF}</p>
+            <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
+            <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
           `;
         } else {
           paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
@@ -1204,7 +1201,7 @@
       if (!order) return;
 
       document.getElementById('edit-order-index').value = index;
-      document.getElementById('edit-order-status').value = order.pixDetails?.status || order.status || 'Pendente';
+      document.getElementById('edit-order-status').value = order.status || 'Pendente';
       openModal('edit-order-modal');
     }
 
@@ -1215,11 +1212,7 @@
       const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
 
       if (adminOrders[index]) {
-        if (adminOrders[index].paymentMethod === 'Pix' && adminOrders[index].pixDetails) {
-          adminOrders[index].pixDetails.status = newStatus;
-        } else {
-          adminOrders[index].status = newStatus;
-        }
+        adminOrders[index].status = newStatus;
         saveOrders(adminOrders);
         closeModal('edit-order-modal');
       }
