@@ -1114,7 +1114,7 @@
   const filterLoginType = document.getElementById('filter-login-type').value;
   orderList.innerHTML = '';
 
-  console.log('Passo 4: Carregando adminOrders:', adminOrders);
+  console.log('Passo 4: Carregando adminOrders no admin.html:', adminOrders);
 
   if (adminOrders.length === 0) {
     orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
@@ -1132,9 +1132,10 @@
     const status = order.status || 'Pendente';
     const loginType = order.loginType || 'Unknown';
 
-    if (filterStatus !== 'all' && status !== filterStatus) return;
-    if (filterMethod !== 'all' && method !== filterMethod) return;
-    if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
+    // Remova os filtros temporariamente para depuração
+    // if (filterStatus !== 'all' && status !== filterStatus) return;
+    // if (filterMethod !== 'all' && method !== filterMethod) return;
+    // if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
 
     let subtotal = 0;
     const itemsHtml = order.items.map(item => {
