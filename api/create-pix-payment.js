@@ -3,7 +3,28 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const app = express();
+
+// Middleware para parsing de JSON
 app.use(express.json());
+
+// Configuração do CORS para permitir chamadas de diferentes origens
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Servir arquivos estáticos (como o frontend)
+app.use(express.static('public'));
+
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/test', (req, res) => {
+  res.status(200).json({ message: 'Servidor está funcionando!' });
+});
 
 // Caminho para o arquivo de pedidos
 const ordersFilePath = path.join(__dirname, 'orders.json');
@@ -74,6 +95,7 @@ function validateOrder(order) {
 // Função para criar QR Code Pix
 async function createPix(amount, description, payerEmail) {
   try {
+    console.log('Criando Pix com os dados:', { amount, description, payerEmail });
     const response = await axios.post('https://api.mercadopago.com/v1/payments', {
       transaction_amount: amount,
       description: description,
@@ -88,8 +110,15 @@ async function createPix(amount, description, payerEmail) {
       }
     });
 
+    console.log('Resposta do Mercado Pago:', response.data);
+
     const qrCode = response.data.point_of_interaction.transaction_data.qr_code;
     const qrCodeBase64 = response.data.point_of_interaction.transaction_data.qr_code_base64;
+
+    if (!qrCode || !qrCodeBase64) {
+      throw new Error('QR Code ou QR Code Base64 não retornados pelo Mercado Pago.');
+    }
+
     return { qrCode, qrCodeBase64 };
   } catch (error) {
     console.error('Erro ao criar Pix:', error.response?.data || error.message);
@@ -101,7 +130,9 @@ async function createPix(amount, description, payerEmail) {
 // Rota para gerar o QR Code Pix
 app.post('/create-pix', async (req, res) => {
   try {
+    console.log('Requisição recebida em /create-pix:', req.body);
     const { amount, description, email } = req.body;
+
     if (!amount || !description || !email) {
       return res.status(400).json({ error: 'Parâmetros obrigatórios não fornecidos: amount, description, email.' });
     }
@@ -115,6 +146,7 @@ app.post('/create-pix', async (req, res) => {
     const pix = await createPix(amount, description, email);
     res.status(200).json(pix);
   } catch (error) {
+    console.error('Erro na rota /create-pix:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -122,6 +154,7 @@ app.post('/create-pix', async (req, res) => {
 // Rota para salvar pedidos
 app.post('/save-order', (req, res) => {
   try {
+    console.log('Requisição recebida em /save-order:', req.body);
     const orderData = req.body;
     if (Array.isArray(orderData)) {
       // Caso o admin.html envie uma lista de pedidos (atualização em massa)
@@ -144,30 +177,17 @@ app.post('/save-order', (req, res) => {
     console.log('Pedido(s) salvo(s) no backend:', orders);
     res.status(200).json({ message: 'Pedido(s) salvo(s) com sucesso' });
   } catch (error) {
-    console.error('Erro ao salvar pedido:', error);
+    console.error('Erro na rota /save-order:', error.message);
     res.status(500).json({ error: 'Erro ao salvar pedido: ' + error.message });
   }
 });
 
 // Rota para recuperar pedidos
 app.get('/get-orders', (req, res) => {
+  console.log('Requisição recebida em /get-orders');
   console.log('Pedidos recuperados do backend:', orders);
   res.status(200).json(orders);
 });
-
-// Configuração do CORS para permitir chamadas de diferentes origens
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// Servir arquivos estáticos (como o frontend)
-app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
