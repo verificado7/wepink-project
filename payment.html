@@ -423,6 +423,23 @@
       display: block;
     }
 
+    .success-message {
+      display: none;
+      color: #28a745;
+      font-size: 1rem;
+      margin-top: 16px;
+      text-align: center;
+      background: #e6f4ea;
+      padding: 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .success-message.visible {
+      display: block;
+    }
+
     .error-screen {
       display: none;
       position: fixed;
@@ -938,6 +955,7 @@
           <p>Escaneie o QR Code:</p>
           <img id="pix-qr-image" src="" alt="QR Code para pagamento via PIX">
         </div>
+        <p class="success-message" id="pix-success-message">Pix gerado com sucesso! Você será redirecionado em breve.</p>
       </div>
     </form>
     <form id="card-form" class="payment-form" role="tabpanel" aria-labelledby="card-button">
@@ -1057,7 +1075,7 @@
   <script>
     const backendUrl = 'https://wepink-backend.onrender.com/create-pix'; // URL do backend para gerar Pix
     const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // URL para salvar pedidos
-    const isTestEnvironment = true; // Mude para false em produção
+    const isTestEnvironment = false; // Estamos em produção (live_mode: true)
     let timeoutId;
 
     // Função para formatar valores monetários
@@ -1102,6 +1120,7 @@
         document.getElementById('pix-inputs').style.display = 'block';
         document.getElementById('pix-code-manual').style.display = 'none';
         document.getElementById('pix-qr-manual').style.display = 'none';
+        document.getElementById('pix-success-message').style.display = 'none';
         clearTimeout(timeoutId);
       };
     }
@@ -1127,6 +1146,7 @@
         document.getElementById('pix-inputs').style.display = 'block';
         document.getElementById('pix-code-manual').style.display = 'none';
         document.getElementById('pix-qr-manual').style.display = 'none';
+        document.getElementById('pix-success-message').style.display = 'none';
       }
     }
 
@@ -1216,11 +1236,6 @@
         errors.email.textContent = 'Por favor, insira um e-mail válido (ex.: teste@gmail.com).';
         errors.email.classList.add('visible');
         isValid = false;
-      } else if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
-        emailInput.classList.add('invalid');
-        errors.email.textContent = 'Em ambiente de teste, use um e-mail como test_user_[números]@testuser.com.';
-        errors.email.classList.add('visible');
-        isValid = false;
       } else {
         emailInput.classList.remove('invalid');
         errors.email.classList.remove('visible');
@@ -1279,11 +1294,6 @@
       if (!isValidEmail(email)) {
         cardEmailInput.classList.add('invalid');
         errors.cardEmail.textContent = 'Por favor, insira um e-mail válido (ex.: teste@gmail.com).';
-        errors.cardEmail.classList.add('visible');
-        isValid = false;
-      } else if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
-        cardEmailInput.classList.add('invalid');
-        errors.cardEmail.textContent = 'Em ambiente de teste, use um e-mail como test_user_[números]@testuser.com.';
         errors.cardEmail.classList.add('visible');
         isValid = false;
       } else {
@@ -1354,6 +1364,7 @@
       const emailInput = document.getElementById('pix-email-input');
       const qrImage = document.getElementById('pix-qr-image');
       const generateButton = document.getElementById('generate-pix-button');
+      const successMessage = document.getElementById('pix-success-message');
 
       const name = nameInput.value.trim();
       const cpf = cpfInput.value.replace(/\D/g, '');
@@ -1376,12 +1387,6 @@
       if (!isValidEmail(email)) {
         console.error('Passo 3: E-mail inválido:', email);
         showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
-        return;
-      }
-
-      if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
-        console.error('Passo 3: E-mail inválido para ambiente de teste:', email);
-        showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
         return;
       }
 
@@ -1449,6 +1454,7 @@
       qrContainer.style.display = 'block';
       codeText.textContent = qrCodeData.qrCode;
       qrImage.src = `data:image/png;base64,${qrCodeData.qrCodeBase64}`;
+      successMessage.classList.add('visible');
 
       const newOrder = {
         purchaseData: purchase,
@@ -1510,9 +1516,11 @@
       localStorage.removeItem('cartAddress');
       console.log('Passo 3: Dados locais limpos após Pix');
 
-      // Redirecionar para a página de confirmação
-      document.body.classList.add('fade-out');
-      setTimeout(() => window.location.href = '/confirmation.html', 500);
+      // Redirecionar para a página de confirmação após 5 segundos
+      setTimeout(() => {
+        document.body.classList.add('fade-out');
+        setTimeout(() => window.location.href = '/confirmation.html', 500);
+      }, 5000);
     }
 
     // Função para processar o pagamento com cartão
@@ -1533,12 +1541,6 @@
       if (cardNumber.length !== 16 || !isValidCPF(cardCPF) || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !isValidEmail(cardEmail)) {
         console.error('Passo 3: Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
         showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
-        return;
-      }
-
-      if (isTestEnvironment && (!cardEmail.startsWith('test_user_') || !cardEmail.endsWith('@testuser.com'))) {
-        console.error('Passo 3: E-mail inválido para ambiente de teste:', cardEmail);
-        showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
         return;
       }
 
