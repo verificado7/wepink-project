@@ -1,6 +1,8 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 
 // Middlewares
@@ -30,8 +32,24 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Armazenar pedidos em memória
+// Configuração do Render Disk
+const ordersFilePath = path.join('/data', 'orders.json');
+
+// Carregar pedidos do arquivo
 let orders = [];
+if (fs.existsSync(ordersFilePath)) {
+  try {
+    const data = fs.readFileSync(ordersFilePath, 'utf8');
+    orders = JSON.parse(data);
+    console.log('Passo 7: Pedidos carregados do arquivo:', orders);
+  } catch (error) {
+    console.error('Passo 7: Erro ao carregar pedidos do arquivo:', error.message);
+    orders = [];
+  }
+} else {
+  console.log('Passo 7: Arquivo orders.json não encontrado. Criando novo arquivo.');
+  fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
+}
 
 // Função para validar o pedido antes de salvar
 function validateOrder(order) {
@@ -76,7 +94,73 @@ function validateOrder(order) {
   }
 }
 
-// Endpoint para criar QR code Pix (simplificado para teste)
+// Função para criar QR Code Pix
+async function createPix(amount, description, payerEmail) {
+  try {
+    // Verificar se o token do Mercado Pago está definido
+    if (!process.env.MP_ACCESS_TOKEN) {
+      throw new Error('Token de acesso do Mercado Pago (MP_ACCESS_TOKEN) não está definido. Configure a variável de ambiente.');
+    }
+
+    // Converter o valor para o formato esperado pelo Mercado Pago (float, não em centavos)
+    const transactionAmount = parseFloat(amount.toFixed(2));
+    console.log('Passo 7: Valor para o Mercado Pago:', transactionAmount);
+
+    // Estruturar os dados do pagador
+    const payer = {
+      email: payerEmail,
+      first_name: payerEmail.split('@')[0].split('.')[0] || 'Cliente',
+      last_name: 'Wepink',
+      identification: {
+        type: 'CPF',
+        number: '12345678901' // CPF fictício para teste; pode ser ajustado dinamicamente se disponível
+      }
+    };
+
+    // Gerar um valor único para o X-Idempotency-Key
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    console.log('Passo 7: Dados para o Mercado Pago:', {
+      transaction_amount: transactionAmount,
+      description,
+      payer,
+      idempotencyKey
+    });
+
+    const response = await axios.post('https://api.mercadopago.com/v1/payments', {
+      transaction_amount: transactionAmount,
+      description: description,
+      payment_method_id: 'pix',
+      payer: payer,
+      notification_url: 'https://wepink-backend.onrender.com/webhook' // URL para notificações (opcional)
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey
+      },
+      timeout: 10000 // Timeout de 10 segundos
+    });
+
+    console.log('Passo 7: Resposta completa do Mercado Pago:', JSON.stringify(response.data, null, 2));
+
+    const qrCode = response.data.point_of_interaction?.transaction_data?.qr_code;
+    const qrCodeBase64 = response.data.point_of_interaction?.transaction_data?.qr_code_base64;
+
+    if (!qrCode || !qrCodeBase64) {
+      throw new Error('QR Code ou QR Code Base64 não retornados pelo Mercado Pago. Resposta: ' + JSON.stringify(response.data));
+    }
+
+    console.log('Passo 7: QR Code gerado com sucesso:', { qrCode, qrCodeBase64 });
+    return { qrCode, qrCodeBase64 };
+  } catch (error) {
+    console.error('Passo 7: Erro ao criar Pix:', error.response?.data || error.message);
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error('Passo 7: Detalhes do erro do Mercado Pago:', error.response?.data || error);
+    throw new Error(`Falha ao gerar QR code Pix: ${errorMessage}`);
+  }
+}
+
+// Endpoint para criar QR code Pix
 app.post('/create-pix', async (req, res) => {
   try {
     console.log('Passo 7: Requisição recebida em /create-pix:', req.body);
@@ -84,23 +168,23 @@ app.post('/create-pix', async (req, res) => {
 
     // Validações
     if (!amount || amount <= 0) {
+      console.error('Passo 7: Valor da transação inválido:', amount);
       return res.status(400).json({ error: 'O valor da transação é obrigatório e deve ser maior que zero.' });
     }
     if (!description) {
+      console.error('Passo 7: Descrição não fornecida');
       return res.status(400).json({ error: 'A descrição é obrigatória.' });
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      console.error('Passo 7: E-mail inválido:', email);
       return res.status(400).json({ error: 'O e-mail é obrigatório e deve ser válido.' });
     }
 
-    // Resposta fictícia para teste
-    res.status(200).json({
-      qrCode: 'QR Code Fictício para Teste',
-      qrCodeBase64: ''
-    });
+    const pix = await createPix(amount, description, email);
+    res.status(200).json(pix);
   } catch (error) {
     console.error('Passo 7: Erro na rota /create-pix:', error.message);
-    res.status(200).json({
+    res.status(500).json({
       qrCode: 'Erro na geração do Pix: ' + error.message,
       qrCodeBase64: ''
     });
@@ -139,7 +223,10 @@ app.post('/save-order', (req, res) => {
       orders.push(orderData);
     }
 
-    console.log('Passo 7: Pedido(s) salvo(s) no backend (em memória):', orders);
+    // Salvar no arquivo
+    fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
+    console.log('Passo 7: Pedido(s) salvo(s) no arquivo:', orders);
+
     res.status(200).json({ message: 'Pedido(s) salvo(s) com sucesso', orders });
   } catch (error) {
     console.error('Passo 7: Erro na rota /save-order:', error.message);
@@ -150,7 +237,7 @@ app.post('/save-order', (req, res) => {
 // Rota para recuperar pedidos
 app.get('/get-orders', (req, res) => {
   console.log('Passo 7: Requisição recebida em /get-orders');
-  console.log('Passo 7: Pedidos recuperados do backend:', orders);
+  console.log('Passo 7: Pedidos recuperados do arquivo:', orders);
   if (!Array.isArray(orders)) {
     console.error('Passo 7: Lista de pedidos não é um array. Retornando array vazio.');
     return res.status(200).json([]);
