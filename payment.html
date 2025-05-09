@@ -1206,8 +1206,6 @@
             </div>
           `;
           orderItems.appendChild(itemElement);
-        } else {
-          console.warn('Passo 3: Item do carrinho com dados incompletos:', item);
         }
       });
 
@@ -1381,49 +1379,6 @@
       confirmButton.disabled = !isValid;
     }
 
-    // Função para criar o objeto de pedido
-    function createOrderObject(customerDetails, paymentMethod, pixDetails = null) {
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Passo 3: Criando objeto de pedido com:', { customerDetails, paymentMethod, pixDetails, purchase });
-
-      if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
-        console.error('Passo 3: Dados do pedido não encontrados em pendingPurchase:', purchase);
-        throw new Error('Dados do pedido não encontrados.');
-      }
-
-      const order = {
-        purchaseData: {
-          cartItems: purchase.cartItems,
-          address: purchase.address
-        },
-        customerDetails: {
-          name: customerDetails.name,
-          cpf: customerDetails.cpf,
-          email: customerDetails.email
-        },
-        paymentMethod: paymentMethod,
-        orderDate: new Date().toISOString(),
-        items: purchase.cartItems.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          priceOld: item.priceOld,
-          priceNew: item.priceNew,
-          quantity: item.quantity,
-          image: item.image,
-          deliveryFees: item.deliveryFees
-        })),
-        status: paymentMethod === 'Pix' ? 'Gerado' : 'Efetuado',
-        loginType: 'Guest'
-      };
-
-      if (pixDetails && paymentMethod === 'Pix') {
-        order.pixDetails = pixDetails;
-      }
-
-      console.log('Passo 3: Objeto de pedido criado:', order);
-      return order;
-    }
-
     // Função para salvar o pedido no backend
     async function saveOrder(order) {
       try {
@@ -1455,17 +1410,16 @@
       const cpfInput = document.getElementById('pix-payer-cpf');
       const emailInput = document.getElementById('pix-email-input');
       const qrImage = document.getElementById('pix-qr-image');
-      const generateButton = document.getElementById('generate-pix-button');
       const successMessage = document.getElementById('pix-success-message');
       const cancelRedirectButton = document.getElementById('cancel-redirect');
 
       const name = nameInput.value.trim();
       const cpf = cpfInput.value.replace(/\D/g, '');
       const email = emailInput.value.trim();
-      const customerDetails = { name, cpf, email };
 
-      console.log('Passo 3: Dados para gerar Pix:', customerDetails);
+      console.log('Passo 3: Dados para gerar Pix:', { name, cpf, email });
 
+      // Validação dos dados antes de enviar a requisição
       if (!name || name.length < 3) {
         console.error('Passo 3: Nome inválido:', name);
         showErrorScreen('Erro: Nome deve ter pelo menos 3 caracteres.');
@@ -1513,11 +1467,20 @@
         const pix = await response.json();
         console.log('Passo 3: Resposta do backend:', pix);
 
-        const pixDetails = {
-          qrCode: pix.qrCode || 'Erro na geração do Pix',
-          qrCodeBase64: pix.qrCodeBase64 || ''
+        const order = {
+          purchaseData: purchase,
+          customerDetails: { name, cpf, email },
+          paymentMethod: 'Pix',
+          orderDate: new Date().toISOString(),
+          items: purchase.cartItems,
+          status: 'Gerado',
+          pixDetails: {
+            qrCode: pix.qrCode || 'Erro na geração do Pix',
+            qrCodeBase64: pix.qrCodeBase64 || ''
+          },
+          loginType: 'Guest'
         };
-        const order = createOrderObject(customerDetails, 'Pix', pixDetails);
+
         await saveOrder(order);
 
         if (pix.qrCode && pix.qrCodeBase64 && pix.qrCode !== 'Erro na geração do Pix') {
@@ -1548,23 +1511,34 @@
         };
       } catch (error) {
         console.error('Passo 3: Erro ao gerar o Pix:', error.message);
-        const pixDetails = {
-          qrCode: 'Erro na geração do Pix',
-          qrCodeBase64: ''
+        const order = {
+          purchaseData: purchase,
+          customerDetails: { name, cpf, email },
+          paymentMethod: 'Pix',
+          orderDate: new Date().toISOString(),
+          items: purchase.cartItems,
+          status: 'Gerado',
+          pixDetails: {
+            qrCode: 'Erro na geração do Pix',
+            qrCodeBase64: ''
+          },
+          loginType: 'Guest'
         };
-        const order = createOrderObject(customerDetails, 'Pix', pixDetails);
+
         try {
           await saveOrder(order);
           console.log('Passo 3: Pedido salvo mesmo com falha na geração do Pix:', order);
         } catch (saveError) {
           console.error('Passo 3: Erro ao salvar pedido após falha no Pix:', saveError.message);
         }
+
         showErrorScreen(`Erro ao gerar o Pix: ${error.message}`);
       }
     }
 
     // Função para processar pagamento com cartão
     async function processCardPayment() {
+      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       const cardName = document.getElementById('card-name').value.trim();
       const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
       const cardEmail = document.getElementById('card-email').value.trim();
@@ -1572,10 +1546,8 @@
       const expMonth = document.getElementById('exp-month').value;
       const expYear = document.getElementById('exp-year').value;
       const cvv = document.getElementById('cvv').value.replace(/\D/g, '');
-      const password = document.getElementById('password').value.trim();
-      const customerDetails = { name: cardName, cpf: cardCPF, email: cardEmail };
 
-      console.log('Passo 3: Dados do pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv, password });
+      console.log('Passo 3: Dados do pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv });
 
       if (!cardName || cardName.length < 3) {
         console.error('Passo 3: Nome no cartão inválido:', cardName);
@@ -1619,23 +1591,28 @@
         return;
       }
 
-      if (!password) {
-        console.error('Passo 3: Senha inválida:', password);
-        showErrorScreen('Erro: Senha é obrigatória.');
-        return;
-      }
-
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
         console.error('Passo 3: Dados do pedido inválidos:', purchase);
         showErrorScreen('Erro: Dados do pedido não encontrados.');
         return;
       }
 
+      const order = {
+        purchaseData: purchase,
+        customerDetails: {
+          name: cardName,
+          cpf: cardCPF,
+          email: cardEmail
+        },
+        paymentMethod: 'Cartão',
+        orderDate: new Date().toISOString(),
+        items: purchase.cartItems,
+        status: 'Efetuado',
+        loginType: 'Guest'
+      };
+
       try {
-        const order = createOrderObject(customerDetails, 'Cartão');
         await saveOrder(order);
-        console.log('Passo 3: Pedido com cartão salvo com sucesso:', order);
         document.body.classList.add('fade-out');
         setTimeout(() => window.location.href = 'confirmation.html', 500);
       } catch (error) {
