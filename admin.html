@@ -1114,17 +1114,17 @@
   const filterLoginType = document.getElementById('filter-login-type').value;
   orderList.innerHTML = '';
 
-  console.log('Carregando adminOrders:', adminOrders);
+  console.log('Passo 4: Carregando adminOrders:', adminOrders);
 
   if (adminOrders.length === 0) {
     orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
-    console.log('Nenhum pedido encontrado em adminOrders.');
+    console.log('Passo 4: Nenhum pedido encontrado em adminOrders.');
     return;
   }
 
   adminOrders.forEach((order, index) => {
     if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
-      console.warn(`Pedido #${index + 1} não possui itens válidos.`, order);
+      console.warn(`Passo 4: Pedido #${index + 1} não possui itens válidos.`, order);
       return;
     }
 
@@ -1149,7 +1149,7 @@
     const totalWithDelivery = subtotal + deliveryFee;
 
     const address = order.purchaseData.address || {};
-    console.log(`Endereço do pedido #${index + 1}:`, address);
+    console.log(`Passo 4: Endereço do pedido #${index + 1}:`, address);
     const fullAddress = `
       <p>CEP: ${address.cep || 'Não informado'}</p>
       <p>Rua: ${address.street || 'Não informado'}</p>
@@ -1165,7 +1165,7 @@
     const clientCPF = customer.cpf || 'Não informado';
 
     if (!clientName || !clientEmail || !clientCPF) {
-      console.warn(`Dados do cliente incompletos no pedido #${index + 1}:`, customer);
+      console.warn(`Passo 4: Dados do cliente incompletos no pedido #${index + 1}:`, customer);
     }
 
     let paymentDetailsHtml = '';
@@ -1231,7 +1231,7 @@
     `;
     orderList.appendChild(row);
 
-    console.log(`Pedido #${index + 1} processado:`, {
+    console.log(`Passo 4: Pedido #${index + 1} processado:`, {
       clientName,
       clientEmail,
       clientCPF,
