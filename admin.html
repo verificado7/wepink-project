@@ -730,8 +730,8 @@
   <script>
     // Senha fixa para acesso ao painel
     const ADMIN_PASSWORD = "admin123";
-    const getOrdersUrl = 'https://wepink-backend.onrender.com/get-orders'; // Substitua pela URL real do seu backend no Render
-    const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // Endpoint para salvar pedidos
+    const getOrdersUrl = 'https://wepink-backend.onrender.com/get-orders'; // URL do backend para buscar pedidos
+    const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // URL do backend para salvar pedidos
 
     // Função para verificar a senha do administrador
     function checkPassword() {
@@ -966,12 +966,41 @@
       return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     }
 
+    // Função para formatar endereço
+    function formatAddress(address) {
+      if (!address || typeof address !== 'object') return 'Não informado';
+      const { street, number, complement, neighborhood, city, state, cep } = address;
+      return [
+        street || '',
+        number ? `, ${number}` : '',
+        complement ? `, ${complement}` : '',
+        neighborhood ? `, ${neighborhood}` : '',
+        city && state ? `, ${city} - ${state}` : '',
+        cep ? `, CEP: ${cep}` : ''
+      ].filter(part => part).join('');
+    }
+
+    // Função para calcular o subtotal dos itens
+    function calculateSubtotal(items) {
+      if (!items || !Array.isArray(items)) return 0;
+      return items.reduce((sum, item) => {
+        const price = item.priceNew || 0;
+        const quantity = item.quantity || 0;
+        return sum + (price * quantity);
+      }, 0);
+    }
+
     // Função para atualizar a lista de pedidos
     async function updateOrderList() {
       try {
+        console.log('Passo 5: Buscando pedidos do backend via', getOrdersUrl);
         const response = await fetch(getOrdersUrl);
-        if (!response.ok) throw new Error('Erro ao buscar pedidos');
+        if (!response.ok) {
+          throw new Error(`Erro ao buscar pedidos: ${response.status} ${response.statusText}`);
+        }
         const orders = await response.json();
+        console.log('Passo 5: Pedidos recebidos do backend:', orders);
+
         const filterStatus = document.getElementById('filter-status').value;
         const filterMethod = document.getElementById('filter-method').value;
         const filterLoginType = document.getElementById('filter-login-type').value;
@@ -986,28 +1015,40 @@
         const orderList = document.getElementById('order-list');
         orderList.innerHTML = '';
         filteredOrders.forEach((order, index) => {
+          // Calcular subtotal, taxa de entrega e total
+          const subtotal = calculateSubtotal(order.items);
+          const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+          const total = subtotal + deliveryFee;
+
+          // Gerar número do pedido (usando timestamp ou índice como fallback)
+          const orderNumber = order.orderNumber || `PED-${Date.now()}-${index + 1}`;
+
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${order.orderNumber || 'N/A'}</td>
+            <td>${orderNumber}</td>
             <td>${formatDate(order.orderDate)}</td>
-            <td>${order.items.length}</td>
-            <td class="order-items">${order.items.map(item => `<p>${item.name} (x${item.quantity})</p>`).join('')}</td>
-            <td>${formatCurrency(order.subtotal)}</td>
-            <td>${formatCurrency(order.deliveryFee)}</td>
-            <td>${formatCurrency(order.total)}</td>
-            <td class="address-details"><p>${order.address || 'Não informado'}</p></td>
-            <td>${order.clientName || 'Não informado'}</td>
-            <td>${order.email || 'Não informado'}</td>
-            <td>${formatCPF(order.cpf)}</td>
+            <td>${order.items?.length || 0}</td>
+            <td class="order-items">${order.items?.map(item => `<p>${item.name || 'Produto não especificado'} (x${item.quantity || 0})</p>`).join('') || 'Não informado'}</td>
+            <td>${formatCurrency(subtotal)}</td>
+            <td>${formatCurrency(deliveryFee)}</td>
+            <td>${formatCurrency(total)}</td>
+            <td class="address-details"><p>${formatAddress(order.purchaseData?.address)}</p></td>
+            <td>${order.customerDetails?.name || 'Não informado'}</td>
+            <td>${order.customerDetails?.email || 'Não informado'}</td>
+            <td>${formatCPF(order.customerDetails?.cpf)}</td>
             <td>${order.loginType || 'Não informado'}</td>
-            <td class="payment-details"><p>${order.paymentMethod}</p><code>${order.paymentId || 'N/A'}</code></td>
-            <td>${order.status}</td>
+            <td class="payment-details">
+              <p>${order.paymentMethod || 'Não informado'}</p>
+              ${order.paymentMethod === 'Pix' && order.pixDetails?.qrCode ? `<code>${order.pixDetails.qrCode}</code>` : '<code>N/A</code>'}
+            </td>
+            <td>${order.status || 'Não informado'}</td>
             <td><button onclick="editOrder(${index})">Editar</button></td>
           `;
           orderList.appendChild(row);
         });
       } catch (error) {
-        console.error('Erro ao atualizar lista de pedidos:', error);
+        console.error('Passo 5: Erro ao atualizar lista de pedidos:', error);
+        alert('Erro ao carregar os pedidos. Verifique a conexão com o backend.');
       }
     }
 
@@ -1017,14 +1058,30 @@
         const response = await fetch(getOrdersUrl);
         if (!response.ok) throw new Error('Erro ao buscar pedidos');
         const orders = await response.json();
+        console.log('Passo 5: Pedidos para resumo financeiro:', orders);
 
-        const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const totalSales = orders.reduce((sum, order) => {
+          const subtotal = calculateSubtotal(order.items);
+          const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+          return sum + (subtotal + deliveryFee);
+        }, 0);
+
         const totalPixSales = orders
           .filter(order => order.paymentMethod === 'Pix')
-          .reduce((sum, order) => sum + (order.total || 0), 0);
+          .reduce((sum, order) => {
+            const subtotal = calculateSubtotal(order.items);
+            const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+            return sum + (subtotal + deliveryFee);
+          }, 0);
+
         const totalCardSales = orders
           .filter(order => order.paymentMethod === 'Cartão')
-          .reduce((sum, order) => sum + (order.total || 0), 0);
+          .reduce((sum, order) => {
+            const subtotal = calculateSubtotal(order.items);
+            const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+            return sum + (subtotal + deliveryFee);
+          }, 0);
+
         const pendingOrders = orders.filter(order => order.status === 'Pendente').length;
         const completedOrders = orders.filter(order => order.status === 'Efetuado').length;
 
@@ -1034,7 +1091,7 @@
         document.getElementById('pending-orders').textContent = pendingOrders;
         document.getElementById('completed-orders').textContent = completedOrders;
       } catch (error) {
-        console.error('Erro ao atualizar resumo:', error);
+        console.error('Passo 5: Erro ao atualizar resumo:', error);
       }
     }
 
@@ -1218,7 +1275,7 @@
         const saveResponse = await fetch(saveOrderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orders[index])
+          body: JSON.stringify(orders)
         });
         if (!saveResponse.ok) throw new Error('Erro ao salvar alterações');
 
