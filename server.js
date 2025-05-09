@@ -2,7 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 const app = express();
 
 // Middlewares
@@ -32,35 +31,8 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Caminho para o arquivo de pedidos no Render Disk
-const ordersFilePath = path.join('/data', 'orders.json');
-
-// Carregar pedidos do arquivo ao iniciar
+// Armazenar pedidos em memória
 let orders = [];
-if (fs.existsSync(ordersFilePath)) {
-  try {
-    const data = fs.readFileSync(ordersFilePath, 'utf8');
-    orders = JSON.parse(data);
-    console.log('Passo 7: Pedidos carregados do arquivo:', orders);
-  } catch (error) {
-    console.error('Passo 7: Erro ao carregar pedidos do arquivo:', error.message);
-    orders = [];
-  }
-} else {
-  console.log('Passo 7: Arquivo orders.json não encontrado. Criando novo arquivo.');
-  fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
-}
-
-// Função para salvar pedidos no arquivo
-function saveOrders() {
-  try {
-    fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
-    console.log('Passo 7: Pedidos salvos no arquivo:', orders);
-  } catch (error) {
-    console.error('Passo 7: Erro ao salvar pedidos no arquivo:', error.message);
-    throw new Error('Erro ao salvar pedidos no arquivo: ' + error.message);
-  }
-}
 
 // Função para validar o pedido antes de salvar
 function validateOrder(order) {
@@ -233,8 +205,7 @@ app.post('/save-order', (req, res) => {
       orders.push(orderData);
     }
 
-    saveOrders();
-    console.log('Passo 7: Pedido(s) salvo(s) no backend:', orders);
+    console.log('Passo 7: Pedido(s) salvo(s) no backend (em memória):', orders);
     res.status(200).json({ message: 'Pedido(s) salvo(s) com sucesso', orders });
   } catch (error) {
     console.error('Passo 7: Erro na rota /save-order:', error.message);
@@ -257,6 +228,11 @@ app.get('/get-orders', (req, res) => {
 app.get('/', (req, res) => {
   console.log('Passo 7: Servindo payment.html na rota raiz');
   res.sendFile(path.join(__dirname, 'payment.html'));
+});
+
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/test', (req, res) => {
+  res.status(200).json({ message: 'Servidor está funcionando!' });
 });
 
 // Iniciar o servidor
