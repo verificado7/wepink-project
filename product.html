@@ -1817,99 +1817,98 @@
 
     // Função para prosseguir para o pagamento
     function proceedToPayment() {
-      const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-      const cep = cepInput.value.trim();
-      const number = numberInput.value.trim();
-      const street = streetInput.style.display === 'block' ? streetInput.value.trim() : streetElement.textContent;
-      const neighborhood = neighborhoodInput.style.display === 'block' ? neighborhoodInput.value.trim() : neighborhoodElement.textContent;
-      const selectedOption = document.querySelector('.delivery-options button.active');
+  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+  const cep = cepInput.value.trim();
+  const number = numberInput.value.trim();
+  const street = streetInput.style.display === 'block' ? streetInput.value.trim() : streetElement.textContent;
+  const neighborhood = neighborhoodInput.style.display === 'block' ? neighborhoodInput.value.trim() : neighborhoodElement.textContent;
+  const selectedOption = document.querySelector('.delivery-options button.active');
 
-      cepInput.classList.remove('invalid');
-      errorCepInput.classList.remove('visible');
-      errorCepInput.textContent = '';
-      streetInput.classList.remove('invalid');
-      errorStreetInput.classList.remove('visible');
-      errorStreetInput.textContent = '';
-      neighborhoodInput.classList.remove('invalid');
-      errorNeighborhoodInput.classList.remove('visible');
-      errorNeighborhoodInput.textContent = '';
-      numberInput.classList.remove('invalid');
-      errorNumberInput.classList.remove('visible');
-      errorNumberInput.textContent = '';
-      errorDeliveryOption.classList.remove('visible');
-      errorDeliveryOption.textContent = '';
+  cepInput.classList.remove('invalid');
+  errorCepInput.classList.remove('visible');
+  errorCepInput.textContent = '';
+  streetInput.classList.remove('invalid');
+  errorStreetInput.classList.remove('visible');
+  errorStreetInput.textContent = '';
+  neighborhoodInput.classList.remove('invalid');
+  errorNeighborhoodInput.classList.remove('visible');
+  errorNeighborhoodInput.textContent = '';
+  numberInput.classList.remove('invalid');
+  errorNumberInput.classList.remove('visible');
+  errorNumberInput.textContent = '';
+  errorDeliveryOption.classList.remove('visible');
+  errorDeliveryOption.textContent = '';
 
-      if (cartItems.length === 0) {
-        alert('Seu carrinho está vazio. Adicione produtos antes de prosseguir.');
-        return;
-      }
+  if (cartItems.length === 0) {
+    alert('Seu carrinho está vazio. Adicione produtos antes de prosseguir.');
+    return;
+  }
 
-      if (!cep || cep.length !== 8) {
-        cepInput.classList.add('invalid');
-        errorCepInput.textContent = 'Por favor, informe um CEP válido com 8 dígitos e clique em "Calcular".';
-        errorCepInput.classList.add('visible');
-        return;
-      }
+  if (!cep || cep.length !== 8) {
+    cepInput.classList.add('invalid');
+    errorCepInput.textContent = 'Por favor, informe um CEP válido com 8 dígitos e clique em "Calcular".';
+    errorCepInput.classList.add('visible');
+    return;
+  }
 
-      if (!addressDetails.classList.contains('visible')) {
-        cepInput.classList.add('invalid');
-        errorCepInput.textContent = 'Por favor, clique em "Calcular" para buscar o endereço antes de prosseguir.';
-        errorCepInput.classList.add('visible');
-        return;
-      }
+  if (!addressDetails.classList.contains('visible')) {
+    cepInput.classList.add('invalid');
+    errorCepInput.textContent = 'Por favor, clique em "Calcular" para buscar o endereço antes de prosseguir.';
+    errorCepInput.classList.add('visible');
+    return;
+  }
 
-      if (!street || street === '-') {
-        streetInput.classList.add('invalid');
-        errorStreetInput.textContent = 'Por favor, informe a rua.';
-        errorStreetInput.classList.add('visible');
-        return;
-      }
+  if (!street || street === '-') {
+    streetInput.classList.add('invalid');
+    errorStreetInput.textContent = 'Por favor, informe a rua.';
+    errorStreetInput.classList.add('visible');
+    return;
+  }
 
-      if (!neighborhood || neighborhood === '-') {
-        neighborhoodInput.classList.add('invalid');
-        errorNeighborhoodInput.textContent = 'Por favor, informe o bairro.';
-        errorNeighborhoodInput.classList.add('visible');
-        return;
-      }
+  if (!neighborhood || neighborhood === '-') {
+    neighborhoodInput.classList.add('invalid');
+    errorNeighborhoodInput.textContent = 'Por favor, informe o bairro.';
+    errorNeighborhoodInput.classList.add('visible');
+    return;
+  }
 
-      if (!number) {
-        numberInput.classList.add('invalid');
-        errorNumberInput.textContent = 'Por favor, informe o número do endereço.';
-        errorNumberInput.classList.add('visible');
-        return;
-      }
+  if (!number) {
+    numberInput.classList.add('invalid');
+    errorNumberInput.textContent = 'Por favor, informe o número do endereço.';
+    errorNumberInput.classList.add('visible');
+    return;
+  }
 
-      if (!selectedOption) {
-        errorDeliveryOption.textContent = 'Por favor, selecione uma opção de entrega.';
-        errorDeliveryOption.classList.add('visible');
-        return;
-      }
+  if (!selectedOption) {
+    errorDeliveryOption.textContent = 'Por favor, selecione uma opção de entrega.';
+    errorDeliveryOption.classList.add('visible');
+    return;
+  }
 
-      const cartAddress = JSON.parse(localStorage.getItem('cartAddress')) || {};
-      cartAddress.street = street;
-      cartAddress.neighborhood = neighborhood;
-      cartAddress.number = number;
-      cartAddress.complement = complementInput.value || '';
+  const cartAddress = JSON.parse(localStorage.getItem('cartAddress')) || {};
+  cartAddress.street = street;
+  cartAddress.neighborhood = neighborhood;
+  cartAddress.number = number;
+  cartAddress.complement = complementInput.value || '';
 
-      const purchaseData = {
-        cartItems: cartItems,
-        address: cartAddress
-      };
+  const purchaseData = {
+    cartItems: cartItems,
+    address: cartAddress
+  };
 
-      localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-      console.log('Salvando pendingPurchase:', purchaseData);
+  localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
+  console.log('Dados salvos em pendingPurchase no product.html:', purchaseData);
 
-      const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
-      if (!savedPurchaseData || !savedPurchaseData.cartItems || savedPurchaseData.cartItems.length === 0) {
-        console.error('Erro ao salvar pendingPurchase:', savedPurchaseData);
-        alert('Erro ao salvar os dados do pedido. Tente novamente.');
-        return;
-      }
+  const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
+  if (!savedPurchaseData || !savedPurchaseData.cartItems || savedPurchaseData.cartItems.length === 0) {
+    console.error('Erro ao salvar pendingPurchase:', savedPurchaseData);
+    alert('Erro ao salvar os dados do pedido. Tente novamente.');
+    return;
+  }
 
-      // Adicionar transição fade-out
-      document.body.classList.add('fade-out');
-      setTimeout(() => window.location.href = 'login.html', 500);
-    }
+  document.body.classList.add('fade-out');
+  setTimeout(() => window.location.href = 'login.html', 500);
+}
 
     // Função para rolar ao topo
     document.querySelector('.scroll-to-top').addEventListener('click', () => {
