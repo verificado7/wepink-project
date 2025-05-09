@@ -1497,19 +1497,15 @@
 
         await saveOrder(order);
 
-        if (pix.qrCode && pix.qrCodeBase64 && pix.qrCode !== 'Erro na geração do Pix') {
-          console.log('Passo 3: QR Code gerado com sucesso:', pix.qrCode);
-          document.getElementById('pix-code-text').textContent = pix.qrCode;
+        console.log('Passo 3: QR Code gerado com sucesso:', pix.qrCode);
+        document.getElementById('pix-code-text').textContent = pix.qrCode;
+        if (pix.qrCodeBase64) {
           qrImage.src = `data:image/png;base64,${pix.qrCodeBase64}`;
-          document.getElementById('pix-code-manual').style.display = 'block';
           document.getElementById('pix-qr-manual').style.display = 'block';
         } else {
-          console.error('Passo 3: Falha na geração do QR Code:', pix.qrCode);
-          document.getElementById('pix-code-text').textContent = pix.qrCode || 'Erro na geração do Pix';
-          document.getElementById('pix-code-manual').style.display = 'block';
           document.getElementById('pix-qr-manual').style.display = 'none';
         }
-
+        document.getElementById('pix-code-manual').style.display = 'block';
         document.getElementById('pix-inputs').style.display = 'none';
         successMessage.classList.add('visible');
 
