@@ -18,8 +18,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Servir arquivos estáticos (como o frontend)
-app.use(express.static('public'));
+// Servir arquivos estáticos da raiz do projeto
+app.use(express.static('.'));
+
+// Rota para servir payment.html
+app.get('/payment.html', (req, res) => {
+  console.log('Passo 6: Servindo payment.html');
+  res.sendFile(path.join(__dirname, 'payment.html'));
+});
+
+// Rota para servir confirmation.html
+app.get('/confirmation.html', (req, res) => {
+  console.log('Passo 6: Servindo confirmation.html');
+  res.sendFile(path.join(__dirname, 'confirmation.html'));
+});
+
+// Rota para servir admin.html
+app.get('/admin.html', (req, res) => {
+  console.log('Passo 6: Servindo admin.html');
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Rota padrão para a raiz
+app.get('/', (req, res) => {
+  console.log('Passo 6: Servindo payment.html na rota raiz');
+  res.sendFile(path.join(__dirname, 'payment.html'));
+});
 
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/test', (req, res) => {
