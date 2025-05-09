@@ -1057,6 +1057,7 @@
   <script>
     const backendUrl = 'https://wepink-backend.onrender.com/create-pix'; // Substitua pela URL real do seu backend no Render
     const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // Endpoint para salvar pedidos
+    const isTestEnvironment = true; // Mude para false em produção
     let timeoutId;
 
     // Função para formatar valores monetários
@@ -1198,7 +1199,8 @@
         errors.cpf.classList.remove('visible');
       }
 
-      if (!emailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+      const email = emailInput.value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         emailInput.classList.add('invalid');
         errors.email.textContent = 'Por favor, insira um e-mail válido (ex.: teste@gmail.com).';
         errors.email.classList.add('visible');
@@ -1351,6 +1353,15 @@
         console.error('Passo 3: E-mail inválido:', email);
         showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
         return;
+      }
+
+      // Validação adicional para ambiente de teste do Mercado Pago
+      if (isTestEnvironment) {
+        if (!email.startsWith('test_user_') || !email.endsWith('@testuser.com')) {
+          console.error('Passo 3: E-mail inválido para ambiente de teste:', email);
+          showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
+          return;
+        }
       }
 
       let subtotal = 0;
