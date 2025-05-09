@@ -895,17 +895,17 @@
       const storedProducts = JSON.parse(localStorage.getItem('wepink_products'));
       if (storedProducts && Array.isArray(storedProducts) && storedProducts.length > 0) {
         products = storedProducts;
-        console.log('Produtos carregados do localStorage:', products);
+        console.log('Passo 4: Produtos carregados do localStorage:', products);
       } else {
         products = initialProducts;
         localStorage.setItem('wepink_products', JSON.stringify(products));
-        console.log('Produtos inicializados com initialProducts:', products);
+        console.log('Passo 4: Produtos inicializados com initialProducts:', products);
       }
     } catch (error) {
-      console.error('Erro ao carregar produtos do localStorage:', error);
+      console.error('Passo 4: Erro ao carregar produtos do localStorage:', error);
       products = initialProducts;
       localStorage.setItem('wepink_products', JSON.stringify(products));
-      console.log('Produtos inicializados com initialProducts após erro:', products);
+      console.log('Passo 4: Produtos inicializados com initialProducts após erro:', products);
     }
 
     // Lista inicial de clientes
@@ -931,9 +931,12 @@
     try {
       const storedClients = JSON.parse(localStorage.getItem('wepink_clients'));
       clients = storedClients && Array.isArray(storedClients) ? storedClients : initialClients;
+      console.log('Passo 4: Clientes carregados do localStorage:', clients);
     } catch (error) {
-      console.error('Erro ao carregar clientes do localStorage:', error);
+      console.error('Passo 4: Erro ao carregar clientes do localStorage:', error);
       clients = initialClients;
+      localStorage.setItem('wepink_clients', JSON.stringify(clients));
+      console.log('Passo 4: Clientes inicializados com initialClients:', clients);
     }
 
     // Função para formatar valores monetários
@@ -957,536 +960,110 @@
 
     // Função para formatar CPF
     function formatCPF(cpf) {
-      if (!cpf) return 'Não informado';
+      if (!cpf || typeof cpf !== 'string') return 'Não informado';
       let value = cpf.replace(/\D/g, '').slice(0, 11);
       if (value.length < 11) return 'CPF inválido';
-      let formatted = '';
-      for (let i = 0; i < value.length; i++) {
-        if (i === 3 || i === 6) formatted += '.';
-        if (i === 9) formatted += '-';
-        formatted += value[i];
-      }
-      return formatted;
+      return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     }
 
-    // Função para formatar número do cartão
-    function formatCardNumber(cardNumber) {
-      if (!cardNumber) return 'Não informado';
-      let value = cardNumber.replace(/\D/g, '').slice(0, 16);
-      let formatted = '';
-      for (let i = 0; i < value.length; i++) {
-        formatted += i > 0 && i % 4 === 0 ? ' ' + value[i] : value[i];
-      }
-      return formatted;
-    }
-
-    // Função para salvar produtos no localStorage
-    function saveProducts() {
+    // Função para atualizar a lista de pedidos
+    async function updateOrderList() {
       try {
-        localStorage.setItem('wepink_products', JSON.stringify(products));
-        console.log('Produtos salvos no localStorage:', products);
-      } catch (error) {
-        console.error('Erro ao salvar produtos no localStorage:', error);
-        alert('Erro ao salvar produtos. Verifique o console para mais detalhes.');
-      }
-    }
+        const response = await fetch(getOrdersUrl);
+        if (!response.ok) throw new Error('Erro ao buscar pedidos');
+        const orders = await response.json();
+        const filterStatus = document.getElementById('filter-status').value;
+        const filterMethod = document.getElementById('filter-method').value;
+        const filterLoginType = document.getElementById('filter-login-type').value;
 
-    // Função para salvar clientes no localStorage
-    function saveClients() {
-      try {
-        localStorage.setItem('wepink_clients', JSON.stringify(clients));
-        console.log('Clientes salvos no localStorage:', clients);
-      } catch (error) {
-        console.error('Erro ao salvar clientes no localStorage:', error);
-        alert('Erro ao salvar clientes. Verifique o console para mais detalhes.');
-      }
-    }
-
-    // Função para exportar dados
-    function exportData() {
-      fetch(getOrdersUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(orders => {
-          const data = {
-            products: products,
-            clients: clients,
-            orders: orders
-          };
-          const dataStr = JSON.stringify(data, null, 2);
-          const blob = new Blob([dataStr], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'wepink_data.json';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          alert('Dados exportados com sucesso!');
-        })
-        .catch(err => {
-          console.error('Erro ao exportar dados:', err);
-          alert('Erro ao exportar dados: ' + err.message);
+        const filteredOrders = orders.filter(order => {
+          const statusMatch = filterStatus === 'all' || order.status === filterStatus;
+          const methodMatch = filterMethod === 'all' || order.paymentMethod === filterMethod;
+          const loginTypeMatch = filterLoginType === 'all' || order.loginType === filterLoginType;
+          return statusMatch && methodMatch && loginTypeMatch;
         });
-    }
 
-    // Função para importar dados
-    function importData(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try {
-            const data = JSON.parse(e.target.result);
-            if (data.products && Array.isArray(data.products)) {
-              products = data.products;
-              saveProducts();
-            }
-            if (data.clients && Array.isArray(data.clients)) {
-              clients = data.clients;
-              saveClients();
-            }
-            if (data.orders && Array.isArray(data.orders)) {
-              // Enviar os pedidos para o backend
-              fetch(saveOrderUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data.orders)
-              })
-                .then(response => {
-                  if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-                  }
-                  return response.json();
-                })
-                .then(() => {
-                  updateOrderList();
-                  updateSummary();
-                })
-                .catch(err => {
-                  console.error('Erro ao importar pedidos para o backend:', err);
-                  alert('Erro ao importar pedidos: ' + err.message);
-                });
-            }
-            alert('Dados importados com sucesso!');
-          } catch (error) {
-            alert('Erro ao importar dados: formato inválido.');
-            console.error('Erro ao importar dados:', error);
-          }
-        };
-        reader.readAsText(file);
+        const orderList = document.getElementById('order-list');
+        orderList.innerHTML = '';
+        filteredOrders.forEach((order, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${order.orderNumber || 'N/A'}</td>
+            <td>${formatDate(order.orderDate)}</td>
+            <td>${order.items.length}</td>
+            <td class="order-items">${order.items.map(item => `<p>${item.name} (x${item.quantity})</p>`).join('')}</td>
+            <td>${formatCurrency(order.subtotal)}</td>
+            <td>${formatCurrency(order.deliveryFee)}</td>
+            <td>${formatCurrency(order.total)}</td>
+            <td class="address-details"><p>${order.address || 'Não informado'}</p></td>
+            <td>${order.clientName || 'Não informado'}</td>
+            <td>${order.email || 'Não informado'}</td>
+            <td>${formatCPF(order.cpf)}</td>
+            <td>${order.loginType || 'Não informado'}</td>
+            <td class="payment-details"><p>${order.paymentMethod}</p><code>${order.paymentId || 'N/A'}</code></td>
+            <td>${order.status}</td>
+            <td><button onclick="editOrder(${index})">Editar</button></td>
+          `;
+          orderList.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Erro ao atualizar lista de pedidos:', error);
       }
     }
 
     // Função para atualizar o resumo financeiro
-    function updateSummary() {
-      fetch(getOrdersUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(adminOrders => {
-          console.log('Passo 4: Dados carregados para o resumo financeiro:', adminOrders);
-          let totalSales = 0;
-          let totalPixSales = 0;
-          let totalCardSales = 0;
-          let pendingOrders = 0;
-          let completedOrders = 0;
+    async function updateSummary() {
+      try {
+        const response = await fetch(getOrdersUrl);
+        if (!response.ok) throw new Error('Erro ao buscar pedidos');
+        const orders = await response.json();
 
-          adminOrders.forEach(order => {
-            if (!order.purchaseData || !order.purchaseData.cartItems) return;
+        const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const totalPixSales = orders
+          .filter(order => order.paymentMethod === 'Pix')
+          .reduce((sum, order) => sum + (order.total || 0), 0);
+        const totalCardSales = orders
+          .filter(order => order.paymentMethod === 'Cartão')
+          .reduce((sum, order) => sum + (order.total || 0), 0);
+        const pendingOrders = orders.filter(order => order.status === 'Pendente').length;
+        const completedOrders = orders.filter(order => order.status === 'Efetuado').length;
 
-            let subtotal = 0;
-            order.purchaseData.cartItems.forEach(item => {
-              subtotal += (item.priceNew || 0) * (item.quantity || 1);
-            });
-            const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
-            const totalWithDelivery = subtotal + deliveryFee;
-            totalSales += totalWithDelivery;
-
-            const method = order.paymentMethod || 'Desconhecido';
-            const status = order.status || 'Pendente';
-
-            if (method === 'Pix') {
-              totalPixSales += totalWithDelivery;
-            } else if (method === 'Cartão') {
-              totalCardSales += totalWithDelivery;
-            }
-
-            if (status === 'Gerado' || status === 'Pendente') {
-              pendingOrders++;
-            } else if (status === 'Efetuado') {
-              completedOrders++;
-            }
-          });
-
-          document.getElementById('total-sales').textContent = formatCurrency(totalSales);
-          document.getElementById('total-pix-sales').textContent = formatCurrency(totalPixSales);
-          document.getElementById('total-card-sales').textContent = formatCurrency(totalCardSales);
-          document.getElementById('pending-orders').textContent = pendingOrders;
-          document.getElementById('completed-orders').textContent = completedOrders;
-        })
-        .catch(err => {
-          console.error('Passo 4: Erro ao atualizar resumo financeiro:', err);
-          document.getElementById('total-sales').textContent = 'Erro: ' + err.message;
-          document.getElementById('total-pix-sales').textContent = 'Erro';
-          document.getElementById('total-card-sales').textContent = 'Erro';
-          document.getElementById('pending-orders').textContent = 'Erro';
-          document.getElementById('completed-orders').textContent = 'Erro';
-        });
-    }
-
-    // Função para atualizar a lista de pedidos
-    function updateOrderList() {
-      const orderList = document.getElementById('order-list');
-      const filterStatus = document.getElementById('filter-status').value;
-      const filterMethod = document.getElementById('filter-method').value;
-      const filterLoginType = document.getElementById('filter-login-type').value;
-      orderList.innerHTML = 'Carregando...';
-
-      fetch(getOrdersUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(adminOrders => {
-          console.log('Passo 4: Dados carregados do backend:', adminOrders);
-          orderList.innerHTML = '';
-
-          if (adminOrders.length === 0) {
-            orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
-            return;
-          }
-
-          adminOrders.forEach((order, index) => {
-            if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
-              console.warn(`Passo 4: Pedido #${index + 1} não possui itens válidos.`, order);
-              return;
-            }
-
-            const method = order.paymentMethod || 'Desconhecido';
-            const status = order.status || 'Pendente';
-            const loginType = order.loginType || 'Unknown';
-
-            if (filterStatus !== 'all' && status !== filterStatus) return;
-            if (filterMethod !== 'all' && method !== filterMethod) return;
-            if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
-
-            let subtotal = 0;
-            const itemsHtml = order.items.map(item => {
-              const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
-              subtotal += itemTotal;
-              return `
-                <p>${item.name || 'Produto desconhecido'} - Quantidade: ${item.quantity || 1} - ${formatCurrency(itemTotal)}</p>
-              `;
-            }).join('');
-
-            const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
-            const totalWithDelivery = subtotal + deliveryFee;
-
-            const address = order.purchaseData.address || {};
-            console.log(`Passo 4: Endereço do pedido #${index + 1}:`, address);
-            const fullAddress = `
-              <p>CEP: ${address.cep || 'Não informado'}</p>
-              <p>Rua: ${address.street || 'Não informado'}</p>
-              <p>Número: ${address.number || 'Não informado'}</p>
-              <p>Complemento: ${address.complement || 'Não informado'}</p>
-              <p>Bairro: ${address.neighborhood || 'Não informado'}</p>
-              <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
-            `;
-
-            const customer = order.customerDetails || {};
-            const clientName = customer.name || 'Convidado';
-            const clientEmail = customer.email || 'Não informado';
-            const clientCPF = customer.cpf || 'Não informado';
-
-            if (!clientName || !clientEmail || !clientCPF) {
-              console.warn(`Passo 4: Dados do cliente incompletos no pedido #${index + 1}:`, customer);
-            }
-
-            let paymentDetailsHtml = '';
-            if (method === 'Cartão' && order.paymentDetails) {
-              const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
-              const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
-              paymentDetailsHtml = `
-                <p><strong>Método:</strong> Cartão</p>
-                <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
-                <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
-                <p><strong>CPF:</strong> ${formattedCPF}</p>
-                <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
-                <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
-                <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
-                <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
-              `;
-            } else if (method === 'Pix' && order.pixDetails) {
-              const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
-              paymentDetailsHtml = `
-                <p><strong>Método:</strong> Pix</p>
-                <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
-                <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
-                <p><strong>CPF:</strong> ${formattedCPF}</p>
-                <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
-                <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
-              `;
-            } else {
-              paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
-            }
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>#${index + 1}</td>
-              <td>${formatDate(order.orderDate)}</td>
-              <td>${order.items.length}</td>
-              <td>
-                <div class="order-items">
-                  ${itemsHtml}
-                </div>
-              </td>
-              <td>${formatCurrency(subtotal)}</td>
-              <td>${formatCurrency(deliveryFee)}</td>
-              <td>${formatCurrency(totalWithDelivery)}</td>
-              <td>
-                <div class="address-details">
-                  ${fullAddress}
-                </div>
-              </td>
-              <td>${clientName}</td>
-              <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
-              <td>${formatCPF(clientCPF)}</td>
-              <td>${loginType}</td>
-              <td>
-                <div class="payment-details">
-                  ${paymentDetailsHtml}
-                </div>
-              </td>
-              <td>${status}</td>
-              <td>
-                <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
-                <button onclick="removeOrder(${index})" aria-label="Remover pedido"><i class="fas fa-trash"></i> Remover</button>
-              </td>
-            `;
-            orderList.appendChild(row);
-
-            console.log(`Passo 4: Pedido #${index + 1} processado:`, {
-              clientName,
-              clientEmail,
-              clientCPF,
-              method,
-              status,
-              total: formatCurrency(totalWithDelivery),
-              loginType: loginType
-            });
-          });
-        })
-        .catch(err => {
-          console.error('Passo 4: Erro ao carregar pedidos do backend:', err);
-          orderList.innerHTML = '<tr><td colspan="15">Erro ao carregar pedidos: ' + err.message + '</td></tr>';
-        });
-    }
-
-    // Função para abrir o modal de edição de pedido
-    function openEditOrderModal(index) {
-      fetch(getOrdersUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(adminOrders => {
-          const order = adminOrders[index];
-          if (!order) {
-            alert('Pedido não encontrado.');
-            return;
-          }
-
-          document.getElementById('edit-order-index').value = index;
-          document.getElementById('edit-order-status').value = order.status || 'Pendente';
-          openModal('edit-order-modal');
-        })
-        .catch(err => {
-          console.error('Passo 4: Erro ao carregar pedidos para edição:', err);
-          alert('Erro ao abrir pedido para edição: ' + err.message);
-        });
-    }
-
-    // Função para salvar alterações no pedido
-    function saveOrderChanges() {
-      const index = parseInt(document.getElementById('edit-order-index').value);
-      const newStatus = document.getElementById('edit-order-status').value;
-
-      fetch(getOrdersUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(adminOrders => {
-          if (adminOrders[index]) {
-            adminOrders[index].status = newStatus;
-
-            // Enviar a lista atualizada de pedidos para o backend
-            fetch(saveOrderUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(adminOrders)
-            })
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-              })
-              .then(() => {
-                updateOrderList();
-                updateSummary();
-                closeModal('edit-order-modal');
-              })
-              .catch(err => {
-                console.error('Passo 4: Erro ao salvar alterações do pedido:', err);
-                alert('Erro ao salvar alterações: ' + err.message);
-              });
-          }
-        })
-        .catch(err => {
-          console.error('Passo 4: Erro ao carregar pedidos para salvar alterações:', err);
-          alert('Erro ao carregar pedidos para edição: ' + err.message);
-        });
-    }
-
-    // Função para remover um pedido
-    function removeOrder(index) {
-      if (confirm('Tem certeza que deseja remover este pedido?')) {
-        fetch(getOrdersUrl)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-          })
-          .then(adminOrders => {
-            adminOrders.splice(index, 1);
-
-            // Enviar a lista atualizada de pedidos para o backend
-            fetch(saveOrderUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(adminOrders)
-            })
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-              })
-              .then(() => {
-                updateOrderList();
-                updateSummary();
-              })
-              .catch(err => {
-                console.error('Passo 4: Erro ao remover pedido:', err);
-                alert('Erro ao remover pedido: ' + err.message);
-              });
-          })
-          .catch(err => {
-            console.error('Passo 4: Erro ao carregar pedidos para remoção:', err);
-            alert('Erro ao carregar pedidos para remoção: ' + err.message);
-          });
+        document.getElementById('total-sales').textContent = formatCurrency(totalSales);
+        document.getElementById('total-pix-sales').textContent = formatCurrency(totalPixSales);
+        document.getElementById('total-card-sales').textContent = formatCurrency(totalCardSales);
+        document.getElementById('pending-orders').textContent = pendingOrders;
+        document.getElementById('completed-orders').textContent = completedOrders;
+      } catch (error) {
+        console.error('Erro ao atualizar resumo:', error);
       }
     }
 
-    // Função para abrir o modal
+    // Funções para abrir e fechar modais
     function openModal(modalId) {
       document.getElementById(modalId).style.display = 'flex';
     }
 
-    // Função para fechar o modal
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
+      clearModalInputs(modalId);
+    }
+
+    function clearModalInputs(modalId) {
+      const modal = document.getElementById(modalId);
+      const inputs = modal.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        if (input.type === 'file') input.value = '';
+        else if (input.tagName === 'SELECT') input.selectedIndex = 0;
+        else input.value = '';
+      });
+      const errorMessages = modal.querySelectorAll('.error-message');
+      errorMessages.forEach(msg => msg.classList.remove('visible'));
       if (modalId === 'add-product-modal') {
-        document.getElementById('product-name').value = '';
-        document.getElementById('product-description').value = '';
-        document.getElementById('product-full-description').value = '';
-        document.getElementById('product-notes').value = '';
-        document.getElementById('product-price-total').value = '';
-        document.getElementById('product-price-new').value = '';
-        document.getElementById('product-delivery-option1').value = '';
-        document.getElementById('product-delivery-option2').value = '';
-        document.getElementById('product-image-file').value = '';
         document.getElementById('product-image-preview').style.display = 'none';
-        clearProductErrors();
-      } else if (modalId === 'add-client-modal') {
-        document.getElementById('client-name').value = '';
-        document.getElementById('client-email').value = '';
-        document.getElementById('client-phone').value = '';
-        document.getElementById('client-address').value = '';
-        document.getElementById('client-purchases').value = '';
-        clearClientErrors();
       }
     }
 
-    // Função para limpar mensagens de erro do modal de produto
-    function clearProductErrors() {
-      const fields = [
-        'product-name', 'product-description', 'product-full-description',
-        'product-notes', 'product-price-total', 'product-price-new',
-        'product-delivery-option1', 'product-delivery-option2', 'product-image-file'
-      ];
-      fields.forEach(field => {
-        const input = document.getElementById(field);
-        const error = document.getElementById(`error-${field}`);
-        input.classList.remove('invalid');
-        error.classList.remove('visible');
-        error.textContent = '';
-      });
-    }
-
-    // Função para limpar mensagens de erro do modal de cliente
-    function clearClientErrors() {
-      const fields = ['client-name', 'client-email', 'client-phone', 'client-address', 'client-purchases'];
-      fields.forEach(field => {
-        const input = document.getElementById(field);
-        const error = document.getElementById(`error-${field}`);
-        input.classList.remove('invalid');
-        error.classList.remove('visible');
-        error.textContent = '';
-      });
-    }
-
-    // Função para pré-visualizar a imagem selecionada no modal de adição
-    document.getElementById('product-image-file').addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      const error = document.getElementById('error-product-image-file');
-      if (file && file.type === 'image/png') {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.getElementById('product-image-preview');
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-        event.target.classList.remove('invalid');
-        error.classList.remove('visible');
-        error.textContent = '';
-      } else {
-        event.target.classList.add('invalid');
-        error.textContent = 'Por favor, selecione um arquivo no formato PNG.';
-        error.classList.add('visible');
-        event.target.value = '';
-      }
-    });
-
-    // Função para validar e adicionar um produto
+    // Função para adicionar produto
     function addProduct() {
       const name = document.getElementById('product-name').value.trim();
       const description = document.getElementById('product-description').value.trim();
@@ -1498,67 +1075,45 @@
       const deliveryOption2 = parseFloat(document.getElementById('product-delivery-option2').value);
       const imageFile = document.getElementById('product-image-file').files[0];
 
-      let isValid = true;
-      clearProductErrors();
-
-      if (!name || name.length < 3) {
-        document.getElementById('product-name').classList.add('invalid');
-        document.getElementById('error-product-name').textContent = 'O nome deve ter pelo menos 3 caracteres.';
-        document.getElementById('error-product-name').classList.add('visible');
-        isValid = false;
+      let hasError = false;
+      if (!name) {
+        showError('error-product-name', 'Nome do produto é obrigatório.');
+        hasError = true;
       }
-      if (!description || description.length < 5) {
-        document.getElementById('product-description').classList.add('invalid');
-        document.getElementById('error-product-description').textContent = 'A descrição curta deve ter pelo menos 5 caracteres.';
-        document.getElementById('error-product-description').classList.add('visible');
-        isValid = false;
+      if (!description) {
+        showError('error-product-description', 'Descrição curta é obrigatória.');
+        hasError = true;
       }
-      if (!fullDescription || fullDescription.length < 10) {
-        document.getElementById('product-full-description').classList.add('invalid');
-        document.getElementById('error-product-full-description').textContent = 'A descrição completa deve ter pelo menos 10 caracteres.';
-        document.getElementById('error-product-full-description').classList.add('visible');
-        isValid = false;
+      if (!fullDescription) {
+        showError('error-product-full-description', 'Descrição completa é obrigatória.');
+        hasError = true;
       }
-      if (!notes || !notes.includes('<br>')) {
-        document.getElementById('product-notes').classList.add('invalid');
-        document.getElementById('error-product-notes').textContent = 'As notas devem ser separadas por <br>.';
-        document.getElementById('error-product-notes').classList.add('visible');
-        isValid = false;
+      if (!notes) {
+        showError('error-product-notes', 'Notas são obrigatórias.');
+        hasError = true;
       }
       if (isNaN(priceTotal) || priceTotal <= 0) {
-        document.getElementById('product-price-total').classList.add('invalid');
-        document.getElementById('error-product-price-total').textContent = 'O preço total deve ser um valor positivo.';
-        document.getElementById('error-product-price-total').classList.add('visible');
-        isValid = false;
+        showError('error-product-price-total', 'Preço total inválido.');
+        hasError = true;
       }
       if (isNaN(priceNew) || priceNew <= 0) {
-        document.getElementById('product-price-new').classList.add('invalid');
-        document.getElementById('error-product-price-new').textContent = 'O preço promocional deve ser um valor positivo.';
-        document.getElementById('error-product-price-new').classList.add('visible');
-        isValid = false;
+        showError('error-product-price-new', 'Preço promocional inválido.');
+        hasError = true;
       }
       if (isNaN(deliveryOption1) || deliveryOption1 < 0) {
-        document.getElementById('product-delivery-option1').classList.add('invalid');
-        document.getElementById('error-product-delivery-option1').textContent = 'A taxa de entrega (Opção 1) deve ser um valor não negativo.';
-        document.getElementById('error-product-delivery-option1').classList.add('visible');
-        isValid = false;
+        showError('error-product-delivery-option1', 'Taxa de entrega inválida.');
+        hasError = true;
       }
       if (isNaN(deliveryOption2) || deliveryOption2 < 0) {
-        document.getElementById('product-delivery-option2').classList.add('invalid');
-        document.getElementById('error-product-delivery-option2').textContent = 'A taxa de entrega (Opção 2) deve ser um valor não negativo.';
-        document.getElementById('error-product-delivery-option2').classList.add('visible');
-        isValid = false;
+        showError('error-product-delivery-option2', 'Taxa de entrega inválida.');
+        hasError = true;
       }
       if (!imageFile) {
-        document.getElementById('product-image-file').classList.add('invalid');
-        document.getElementById('error-product-image-file').textContent = 'Por favor, selecione uma imagem PNG.';
-        document.getElementById('error-product-image-file').classList.add('visible');
-        isValid = false;
+        showError('error-product-image-file', 'Imagem é obrigatória.');
+        hasError = true;
       }
 
-      if (!isValid) return;
-
-      const installmentsPerUnit = priceNew / 6;
+      if (hasError) return;
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -1569,23 +1124,24 @@
           fullDescription,
           notes,
           priceOld: priceTotal,
-          priceNew: priceNew,
-          installmentsPerUnit: installmentsPerUnit,
+          priceNew,
+          installmentsPerUnit: priceNew / 6,
           image: e.target.result,
           deliveryFees: {
             sp: { option1: deliveryOption1, option2: deliveryOption2 },
-            southeast: { option1: deliveryOption1, option2: deliveryOption2 },
-            other: { option1: deliveryOption1, option2: deliveryOption2 }
+            southeast: { option1: deliveryOption1 + 2, option2: deliveryOption2 + 2 },
+            other: { option1: deliveryOption1 + 4, option2: deliveryOption2 + 4 }
           }
         };
         products.push(newProduct);
-        saveProducts();
+        localStorage.setItem('wepink_products', JSON.stringify(products));
         closeModal('add-product-modal');
+        alert('Produto adicionado com sucesso!');
       };
       reader.readAsDataURL(imageFile);
     }
 
-    // Função para adicionar um cliente
+    // Função para adicionar cliente
     function addClient() {
       const name = document.getElementById('client-name').value.trim();
       const email = document.getElementById('client-email').value.trim();
@@ -1593,62 +1149,137 @@
       const address = document.getElementById('client-address').value.trim();
       const purchases = document.getElementById('client-purchases').value.trim();
 
-      let isValid = true;
-      clearClientErrors();
-
-      if (!name || name.length < 3) {
-        document.getElementById('client-name').classList.add('invalid');
-        document.getElementById('error-client-name').textContent = 'O nome deve ter pelo menos 3 caracteres.';
-        document.getElementById('error-client-name').classList.add('visible');
-        isValid = false;
+      let hasError = false;
+      if (!name) {
+        showError('error-client-name', 'Nome é obrigatório.');
+        hasError = true;
       }
-      if (!email || !email.includes('@')) {
-        document.getElementById('client-email').classList.add('invalid');
-        document.getElementById('error-client-email').textContent = 'Por favor, insira um e-mail válido.';
-        document.getElementById('error-client-email').classList.add('visible');
-        isValid = false;
+      if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        showError('error-client-email', 'E-mail inválido.');
+        hasError = true;
       }
-      if (!phone || phone.length < 10) {
-        document.getElementById('client-phone').classList.add('invalid');
-        document.getElementById('error-client-phone').textContent = 'O telefone deve ter pelo menos 10 caracteres.';
-        document.getElementById('error-client-phone').classList.add('visible');
-        isValid = false;
+      if (!phone) {
+        showError('error-client-phone', 'Telefone é obrigatório.');
+        hasError = true;
       }
-      if (!address || address.length < 5) {
-        document.getElementById('client-address').classList.add('invalid');
-        document.getElementById('error-client-address').textContent = 'O endereço deve ter pelo menos 5 caracteres.';
-        document.getElementById('error-client-address').classList.add('visible');
-        isValid = false;
+      if (!address) {
+        showError('error-client-address', 'Endereço é obrigatório.');
+        hasError = true;
       }
-      if (!purchases || !/^\d+\s+pedido(s)?$/.test(purchases)) {
-        document.getElementById('client-purchases').classList.add('invalid');
-        document.getElementById('error-client-purchases').textContent = 'Use o formato "X pedidos", ex.: "3 pedidos".';
-        document.getElementById('error-client-purchases').classList.add('visible');
-        isValid = false;
+      if (!purchases) {
+        showError('error-client-purchases', 'Compras realizadas são obrigatórias.');
+        hasError = true;
       }
 
-      if (!isValid) return;
+      if (hasError) return;
 
-      clients.push({
-        name,
-        email,
-        phone,
-        address,
-        purchases
-      });
-      saveClients();
+      const newClient = { name, email, phone, address, purchases };
+      clients.push(newClient);
+      localStorage.setItem('wepink_clients', JSON.stringify(clients));
       closeModal('add-client-modal');
+      alert('Cliente adicionado com sucesso!');
     }
 
-    // Escutar mudanças no localStorage para atualizar produtos e clientes dinamicamente
-    window.addEventListener('storage', function(event) {
-      if (event.key === 'wepink_products') {
-        console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
-        products = JSON.parse(event.newValue) || initialProducts;
+    // Função para exibir mensagens de erro
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.textContent = message;
+      errorElement.classList.add('visible');
+    }
+
+    // Função para editar pedido
+    async function editOrder(index) {
+      try {
+        const response = await fetch(getOrdersUrl);
+        if (!response.ok) throw new Error('Erro ao buscar pedidos');
+        const orders = await response.json();
+        const order = orders[index];
+        if (!order) return;
+
+        document.getElementById('edit-order-index').value = index;
+        document.getElementById('edit-order-status').value = order.status;
+        openModal('edit-order-modal');
+      } catch (error) {
+        console.error('Erro ao editar pedido:', error);
       }
-      if (event.key === 'wepink_clients') {
-        console.log('Mudança detectada no localStorage para wepink_clients:', event.newValue);
-        clients = JSON.parse(event.newValue) || initialClients;
+    }
+
+    // Função para salvar alterações no pedido
+    async function saveOrderChanges() {
+      const index = document.getElementById('edit-order-index').value;
+      const newStatus = document.getElementById('edit-order-status').value;
+
+      try {
+        const response = await fetch(getOrdersUrl);
+        if (!response.ok) throw new Error('Erro ao buscar pedidos');
+        let orders = await response.json();
+        orders[index].status = newStatus;
+
+        const saveResponse = await fetch(saveOrderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orders[index])
+        });
+        if (!saveResponse.ok) throw new Error('Erro ao salvar alterações');
+
+        closeModal('edit-order-modal');
+        updateOrderList();
+        updateSummary();
+        alert('Alterações salvas com sucesso!');
+      } catch (error) {
+        console.error('Erro ao salvar alterações:', error);
+        alert('Erro ao salvar alterações. Tente novamente.');
+      }
+    }
+
+    // Função para exportar dados
+    function exportData() {
+      const data = {
+        products,
+        clients
+      };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'wepink_data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Função para importar dados
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.products) {
+            products = data.products;
+            localStorage.setItem('wepink_products', JSON.stringify(products));
+          }
+          if (data.clients) {
+            clients = data.clients;
+            localStorage.setItem('wepink_clients', JSON.stringify(clients));
+          }
+          alert('Dados importados com sucesso!');
+          updateOrderList();
+          updateSummary();
+        } catch (error) {
+          console.error('Erro ao importar dados:', error);
+          alert('Erro ao importar dados. Verifique o arquivo.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Adicionar evento de tecla Enter na tela de login
+    document.getElementById('admin-password').addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        checkPassword();
       }
     });
   </script>
