@@ -870,7 +870,7 @@
   </footer>
 
   <script>
-    const ACCESS_TOKEN = 'APP_USR-3709341188085811-050219-1dde9cca4db5f13738f043119fdb7c30-220520212'; // Substitua pelo seu access_token do Mercado Pago
+    const backendUrl = '/create-pix';
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -883,6 +883,19 @@
         formatted += i > 0 && i % 4 === 0 ? ' ' + value[i] : value[i];
       }
       input.value = formatted;
+    }
+
+    function formatCPFDisplay(cpf) {
+      if (!cpf) return 'Não informado';
+      let value = cpf.replace(/\D/g, '').slice(0, 11);
+      if (value.length < 11) return 'CPF inválido';
+      let formatted = '';
+      for (let i = 0; i < value.length; i++) {
+        if (i === 3 || i === 6) formatted += '.';
+        if (i === 9) formatted += '-';
+        formatted += value[i];
+      }
+      return formatted;
     }
 
     function cleanCPFInput(input) {
@@ -954,8 +967,7 @@
 
       if (!purchase.cartItems || purchase.cartItems.length === 0) {
         console.log('Nenhum item encontrado no carrinho. Redirecionando para product.html');
-        showErrorScreen('Nenhum item encontrado no carrinho. Você será redirecionado.');
-        setTimeout(() => window.location.href = 'product.html', 3000);
+        window.location.href = 'product.html';
         return;
       }
 
@@ -966,14 +978,7 @@
           subtotal += item.priceNew * item.quantity;
           const itemElement = document.createElement('div');
           itemElement.className = 'order-item';
-          itemElement.innerHTML = `
-            <img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}">
-            <div class="order-item-details">
-              <p>${item.name || 'Produto'}</p>
-              <p>Quantidade: ${item.quantity}</p>
-              <p class="price">${formatCurrency(item.priceNew * item.quantity)}</p>
-            </div>
-          `;
+          itemElement.innerHTML = `<img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}"><div class="order-item-details"><p>${item.name || 'Produto'}</p><p>Quantidade: ${item.quantity}</p><p class="price">${formatCurrency(item.priceNew * item.quantity)}</p></div>`;
           orderItems.appendChild(itemElement);
         }
       });
@@ -982,7 +987,7 @@
       const total = subtotal + fee;
       deliveryFee.textContent = formatCurrency(fee);
       orderTotal.textContent = formatCurrency(total);
-      console.log('Resumo do pedido atualizado:', { subtotal, fee, total, purchase });
+      console.log('Resumo do pedido atualizado:', { subtotal, fee, total });
     }
 
     function validatePixForm() {
@@ -1061,103 +1066,78 @@
       }
 
       const paymentData = {
-        transaction_amount: parseFloat(totalAmount.toFixed(2)),
-        description: purchase.cartItems.map(item => item.name).join(', ') || 'Compra Wepink',
-        payment_method_id: 'pix',
-        payer: {
-          email: emailInput,
-          first_name: nameInput.split(' ')[0] || 'Cliente',
-          last_name: nameInput.split(' ').slice(1).join(' ') || 'WePink',
-          identification: {
-            type: 'CPF',
-            number: cpfInput
-          },
-          address: {
-            zip_code: purchase.address?.cep || '01001000',
-            street_name: purchase.address?.street || 'Rua Desconhecida',
-            street_number: purchase.address?.number || '123',
-            neighborhood: purchase.address?.neighborhood || 'Bairro Desconhecido',
-            city: purchase.address?.city || 'São Paulo',
-            federal_unit: purchase.address?.state || 'SP'
-          }
-        }
+        amount: parseFloat(totalAmount.toFixed(2)),
+        description: 'Compra Wepink',
+        email: emailInput
       };
 
       try {
         generateButton.disabled = true;
         generateButton.textContent = 'Gerando...';
 
-        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+        const response = await fetch(backendUrl, {
           method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ACCESS_TOKEN}`,
-            'X-Idempotency-Key': `wepink_${Date.now()}_${Math.random().toString(36).substring(2)}`
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(paymentData)
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || 'Erro ao gerar o QR code Pix');
+          throw new Error(errorData.error || 'Erro ao gerar o QR code Pix');
         }
 
         const data = await response.json();
-        console.log('Resposta da API do Mercado Pago:', data);
 
-        if (data.status === 'pending' && data.point_of_interaction?.transaction_data) {
-          const transactionData = data.point_of_interaction.transaction_data;
-          document.getElementById('pix-inputs').style.display = 'none';
-          const codeContainer = document.getElementById('pix-code-manual');
-          const codeText = document.getElementById('pix-code-text');
-          const qrContainer = document.getElementById('pix-qr-manual');
-
-          codeContainer.style.display = 'block';
-          qrContainer.style.display = 'block';
-          codeText.textContent = transactionData.qr_code;
-          qrImage.src = `data:image/png;base64,${transactionData.qr_code_base64}`;
-          qrImage.dataset.pixData = JSON.stringify(data);
-
-          const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-          const newOrder = {
-            purchaseData: purchase,
-            items: purchase.cartItems || [],
-            customerDetails: {
-              name: nameInput,
-              email: emailInput,
-              cpf: cpfInput
-            },
-            paymentMethod: 'Pix',
-            pixDetails: {
-              first_name: data.payer.first_name,
-              last_name: data.payer.last_name,
-              email: data.payer.email,
-              identification: data.payer.identification,
-              qrCode: transactionData.qr_code,
-              amount: totalAmount
-            },
-            orderDate: new Date().toISOString(),
-            status: 'Gerado',
-            loginType: purchase.loginType || 'Unknown'
-          };
-          adminOrders.push(newOrder);
-          localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
-          console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
-
-          showSuccessMessage();
-        } else {
-          throw new Error('Dados do QR Code não encontrados na resposta da API.');
+        if (!data || !data.qrCode || !data.qrCodeBase64) {
+          throw new Error('Dados do QR code não retornados. Verifique se a chave PIX está registrada.');
         }
+
+        document.getElementById('pix-inputs').style.display = 'none';
+        const codeContainer = document.getElementById('pix-code-manual');
+        const codeText = document.getElementById('pix-code-text');
+        const qrContainer = document.getElementById('pix-qr-manual');
+
+        codeContainer.style.display = 'block';
+        qrContainer.style.display = 'block';
+        codeText.textContent = data.qrCode;
+        qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
+
+        const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+        const newOrder = {
+          purchaseData: purchase,
+          paymentMethod: 'Pix',
+          pixDetails: {
+            email: emailInput,
+            first_name: nameInput.split(' ')[0] || 'Nome',
+            last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
+            identification: { type: 'CPF', number: cpfInput },
+            qrCode: data.qrCode,
+            amount: totalAmount,
+            status: 'Gerado'
+          },
+          orderDate: new Date().toISOString(),
+          items: purchase.cartItems || [],
+          customerDetails: {
+            name: nameInput,
+            cpf: cpfInput,
+            email: emailInput
+          },
+          status: 'Gerado',
+          loginType: purchase.loginType || 'Unknown'
+        };
+        orders.push(newOrder);
+        localStorage.setItem('adminOrders', JSON.stringify(orders));
+        console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
+
+        localStorage.removeItem('pendingPurchase');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartAddress');
+        console.log('Dados do localStorage limpos após pagamento Pix');
+
+        showSuccessMessage();
       } catch (error) {
         console.error('Erro ao gerar Pix:', error.message);
-        let errorMsg = 'Erro ao gerar Pix: ' + error.message;
-        if (error.message.includes('invalid_token') || error.message.includes('unauthorized')) {
-          errorMsg = 'Erro: Token de acesso inválido. Verifique o ACCESS_TOKEN e tente novamente.';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMsg = 'Erro: Não foi possível conectar à API do Mercado Pago. Certifique-se de estar em um ambiente HTTPS e tente novamente.';
-        }
-        showErrorScreen(errorMsg);
+        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
       } finally {
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
@@ -1297,15 +1277,9 @@
 
       setTimeout(() => {
         const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-        const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+        const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
         const newOrder = {
           purchaseData: purchase,
-          items: purchase.cartItems || [],
-          customerDetails: {
-            name: cardName,
-            email: cardEmail,
-            cpf: cardCPF
-          },
           paymentMethod: 'Cartão',
           paymentDetails: {
             cardName,
@@ -1319,11 +1293,17 @@
             email: cardEmail
           },
           orderDate: new Date().toISOString(),
+          items: purchase.cartItems || [],
+          customerDetails: {
+            name: cardName,
+            cpf: cardCPF,
+            email: cardEmail
+          },
           status: 'Efetuado',
           loginType: purchase.loginType || 'Unknown'
         };
-        adminOrders.push(newOrder);
-        localStorage.setItem('adminOrders', JSON.stringify(adminOrders));
+        orders.push(newOrder);
+        localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
 
         localStorage.removeItem('pendingPurchase');
