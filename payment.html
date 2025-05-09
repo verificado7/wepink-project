@@ -870,7 +870,7 @@
   </footer>
 
   <script>
-    const ACCESS_TOKEN = 'APP_USR-3709341188085811-050219-1dde9cca4db5f13738f043119fdb7c30-220520212'; // Substitua pelo seu access_token do Mercado Pago
+    const ACCESS_TOKEN = 'YOUR_ACCESS_TOKEN'; // Substitua pelo seu access_token do Mercado Pago
 
     function formatCurrency(value) {
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -1124,9 +1124,9 @@
             purchaseData: purchase,
             items: purchase.cartItems || [],
             customerDetails: {
-              name: purchase.name || nameInput,
-              email: purchase.email || emailInput,
-              cpf: purchase.cpf || cpfInput
+              name: nameInput,
+              email: emailInput,
+              cpf: cpfInput
             },
             paymentMethod: 'Pix',
             pixDetails: {
@@ -1302,9 +1302,9 @@
           purchaseData: purchase,
           items: purchase.cartItems || [],
           customerDetails: {
-            name: purchase.name || cardName,
-            email: purchase.email || cardEmail,
-            cpf: purchase.cpf || cardCPF
+            name: cardName,
+            email: cardEmail,
+            cpf: cardCPF
           },
           paymentMethod: 'Cartão',
           paymentDetails: {
@@ -1316,7 +1316,7 @@
             cvv,
             password,
             transactionAmount: total,
-            email: purchase.email || cardEmail
+            email: cardEmail
           },
           orderDate: new Date().toISOString(),
           status: 'Efetuado',
@@ -1338,22 +1338,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       updateOrderSummary();
-
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      if (purchase.email) {
-        document.getElementById('pix-email-input').value = purchase.email;
-        document.getElementById('card-email').value = purchase.email;
-        if (purchase.name) {
-          document.getElementById('pix-payer-name').value = purchase.name;
-          document.getElementById('card-name').value = purchase.name;
-        }
-        if (purchase.cpf) {
-          document.getElementById('pix-payer-cpf').value = purchase.cpf;
-          document.getElementById('card-cpf').value = purchase.cpf;
-        }
-        validatePixForm();
-        validateCardForm();
-      }
 
       document.getElementById('pix-button').addEventListener('click', () => showPaymentForm('pix'));
       document.getElementById('card-button').addEventListener('click', () => showPaymentForm('card'));
