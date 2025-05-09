@@ -1042,6 +1042,10 @@
         <input type="password" id="password" placeholder="Senha" required aria-label="Senha do cartão">
         <p class="error-message" id="error-password"></p>
         <button id="confirm-payment-button" disabled aria-label="Confirmar pagamento com cartão">Confirmar Pagamento</button>
+        <p class="success-message" id="card-success-message">
+          Pagamento com cartão efetuado com sucesso! Você será redirecionado em 5 segundos.
+          <button class="cancel-redirect" id="cancel-card-redirect" aria-label="Cancelar redirecionamento">Cancelar Redirecionamento</button>
+        </p>
       </div>
     </form>
   </main>
@@ -1140,10 +1144,14 @@
       errorScreen.style.display = 'flex';
       document.getElementById('try-again').onclick = () => {
         errorScreen.style.display = 'none';
+        // Resetar formulário de Pix
         document.getElementById('pix-inputs').style.display = 'block';
         document.getElementById('pix-code-manual').style.display = 'none';
         document.getElementById('pix-qr-manual').style.display = 'none';
         document.getElementById('pix-success-message').style.display = 'none';
+        // Resetar formulário de cartão
+        document.getElementById('card-details').style.display = 'block';
+        document.getElementById('card-success-message').style.display = 'none';
         clearTimeout(timeoutId);
       };
     }
@@ -1163,6 +1171,8 @@
       if (type === 'card') {
         cardButton.classList.add('active');
         cardForm.classList.add('active');
+        document.getElementById('card-details').style.display = 'block';
+        document.getElementById('card-success-message').style.display = 'none';
       } else if (type === 'pix') {
         pixButton.classList.add('active');
         pixForm.classList.add('active');
@@ -1389,13 +1399,15 @@
           body: JSON.stringify(order)
         });
 
+        const responseBody = await response.text(); // Captura a resposta como texto para depuração
+        console.log('Passo 4: Resposta bruta do backend:', responseBody);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Passo 4: Resposta de erro do backend:', errorData);
-          throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
+          console.error('Passo 4: Resposta de erro do backend:', responseBody);
+          throw new Error(`Erro ao salvar o pedido no backend: ${response.status} ${response.statusText} - ${responseBody}`);
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseBody); // Converte a resposta para JSON
         console.log('Passo 4: Pedido salvo no backend:', data);
         return data;
       } catch (error) {
@@ -1550,9 +1562,12 @@
       const expMonth = document.getElementById('exp-month').value;
       const expYear = document.getElementById('exp-year').value;
       const cvv = document.getElementById('cvv').value.replace(/\D/g, '');
+      const successMessage = document.getElementById('card-success-message');
+      const cancelRedirectButton = document.getElementById('cancel-card-redirect');
 
       console.log('Passo 3: Dados do pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv });
 
+      // Validações
       if (!cardName || cardName.length < 3) {
         console.error('Passo 3: Nome no cartão inválido:', cardName);
         showErrorScreen('Erro: Nome no cartão deve ter pelo menos 3 caracteres.');
@@ -1616,9 +1631,25 @@
       };
 
       try {
-        await saveOrder(order);
-        document.body.classList.add('fade-out');
-        setTimeout(() => window.location.href = 'confirmation.html', 500);
+        const savedOrder = await saveOrder(order);
+        console.log('Passo 3: Pedido de cartão salvo com sucesso:', savedOrder);
+
+        // Exibir mensagem de sucesso
+        document.getElementById('card-details').style.display = 'none';
+        successMessage.classList.add('visible');
+
+        // Redirecionar após 5 segundos
+        timeoutId = setTimeout(() => {
+          document.body.classList.add('fade-out');
+          setTimeout(() => window.location.href = 'confirmation.html', 500);
+        }, 5000);
+
+        // Permitir cancelar o redirecionamento
+        cancelRedirectButton.onclick = () => {
+          clearTimeout(timeoutId);
+          successMessage.classList.remove('visible');
+          document.getElementById('card-details').style.display = 'block';
+        };
       } catch (error) {
         console.error('Passo 3: Erro ao processar pagamento com cartão:', error.message);
         showErrorScreen(`Erro ao processar o pagamento: ${error.message}`);
