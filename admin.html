@@ -596,7 +596,7 @@
         </div>
         <div class="summary-card">
           <h3>Pedidos Concluídos</h3>
-          <p id="pending-orders">0</p>
+          <p id="completed-orders">0</p>
         </div>
       </div>
 
@@ -628,7 +628,7 @@
         </div>
       </div>
       <div id="no-orders-message" class="no-orders-message" style="display: none;">
-        Nenhum pedido encontrado. Verifique se os pedidos foram criados no sistema.
+        Carregando pedidos...
       </div>
       <table class="table">
         <thead>
@@ -746,6 +746,38 @@
     const ADMIN_PASSWORD = "admin123";
     const getOrdersUrl = 'https://wepink-backend.onrender.com/get-orders'; // URL do backend para buscar pedidos
     const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // URL do backend para salvar pedidos
+
+    // Função para realizar requisições com retry
+    async function fetchWithRetry(url, options, retries = 3, delay = 2000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ${response.status}: ${response.statusText} - ${errorText}`);
+          }
+
+          return await response.json();
+        } catch (error) {
+          if (i === retries - 1) {
+            // Última tentativa, lançar o erro
+            if (error.name === 'AbortError') {
+              throw new Error('Timeout: O servidor demorou muito para responder. Tente novamente mais tarde.');
+            }
+            throw error;
+          }
+          console.warn(`Passo 5: Tentativa ${i + 1} falhou. Tentando novamente em ${delay}ms...`, error);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
 
     // Função para verificar a senha do administrador
     function checkPassword() {
@@ -1006,31 +1038,26 @@
 
     // Função para atualizar a lista de pedidos
     async function updateOrderList() {
+      const orderList = document.getElementById('order-list');
+      const noOrdersMessage = document.getElementById('no-orders-message');
+      noOrdersMessage.textContent = 'Carregando pedidos...';
+      noOrdersMessage.style.display = 'block';
+      orderList.innerHTML = '';
+
       try {
         console.log('Passo 5: Buscando pedidos do backend via', getOrdersUrl);
-        const response = await fetch(getOrdersUrl, {
+        const orders = await fetchWithRetry(getOrdersUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erro ao buscar pedidos: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-        
-        const orders = await response.json();
+        }, 3, 2000);
         console.log('Passo 5: Pedidos recebidos do backend:', orders);
-
-        const orderList = document.getElementById('order-list');
-        const noOrdersMessage = document.getElementById('no-orders-message');
 
         if (!orders || orders.length === 0) {
           console.log('Passo 5: Nenhum pedido encontrado no backend.');
           orderList.innerHTML = '';
+          noOrdersMessage.textContent = 'Nenhum pedido encontrado. Verifique se os pedidos foram criados no sistema.';
           noOrdersMessage.style.display = 'block';
           return;
-        } else {
-          noOrdersMessage.style.display = 'none';
         }
 
         const filterStatus = document.getElementById('filter-status').value;
@@ -1044,7 +1071,14 @@
           return statusMatch && methodMatch && loginTypeMatch;
         });
 
-        orderList.innerHTML = '';
+        if (filteredOrders.length === 0) {
+          orderList.innerHTML = '';
+          noOrdersMessage.textContent = 'Nenhum pedido encontrado com os filtros selecionados.';
+          noOrdersMessage.style.display = 'block';
+          return;
+        }
+
+        noOrdersMessage.style.display = 'none';
         filteredOrders.forEach((order, index) => {
           // Calcular subtotal, taxa de entrega e total
           const subtotal = calculateSubtotal(order.items);
@@ -1079,10 +1113,8 @@
         });
       } catch (error) {
         console.error('Passo 5: Erro ao atualizar lista de pedidos:', error);
-        const orderList = document.getElementById('order-list');
-        const noOrdersMessage = document.getElementById('no-orders-message');
         orderList.innerHTML = '';
-        noOrdersMessage.textContent = 'Erro ao carregar os pedidos. Verifique a conexão com o backend ou tente novamente mais tarde.';
+        noOrdersMessage.textContent = `Erro ao carregar os pedidos: ${error.message}. Tente novamente mais tarde.`;
         noOrdersMessage.style.display = 'block';
       }
     }
@@ -1090,15 +1122,10 @@
     // Função para atualizar o resumo financeiro
     async function updateSummary() {
       try {
-        const response = await fetch(getOrdersUrl, {
+        const orders = await fetchWithRetry(getOrdersUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erro ao buscar pedidos: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-        const orders = await response.json();
+        }, 3, 2000);
         console.log('Passo 5: Pedidos para resumo financeiro:', orders);
 
         const totalSales = orders.reduce((sum, order) => {
@@ -1293,15 +1320,10 @@
     // Função para editar pedido
     async function editOrder(index) {
       try {
-        const response = await fetch(getOrdersUrl, {
+        const orders = await fetchWithRetry(getOrdersUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erro ao buscar pedidos: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-        const orders = await response.json();
+        }, 3, 2000);
         const order = orders[index];
         if (!order) {
           console.error('Passo 5: Pedido não encontrado no índice:', index);
@@ -1325,15 +1347,10 @@
 
       try {
         // Buscar todos os pedidos
-        const response = await fetch(getOrdersUrl, {
+        let orders = await fetchWithRetry(getOrdersUrl, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Erro ao buscar pedidos: ${response.status} ${response.statusText} - ${errorText}`);
-        }
-        let orders = await response.json();
+        }, 3, 2000);
         if (!orders || !Array.isArray(orders)) {
           throw new Error('Lista de pedidos inválida retornada pelo backend.');
         }
