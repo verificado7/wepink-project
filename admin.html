@@ -604,6 +604,11 @@
             <option value="Pix">Pix</option>
             <option value="Cartão">Cartão</option>
           </select>
+          <select id="filter-login-type" onchange="updateOrderList()" aria-label="Filtrar por tipo de login">
+            <option value="all">Todos os Tipos de Login</option>
+            <option value="User">Usuário Logado</option>
+            <option value="Guest">Convidado</option>
+          </select>
           <button onclick="openModal('add-product-modal')" aria-label="Adicionar novo produto"><i class="fas fa-box"></i> Adicionar Produto</button>
           <button onclick="openModal('add-client-modal')" aria-label="Adicionar novo cliente"><i class="fas fa-user-plus"></i> Adicionar Cliente</button>
           <button onclick="exportData()" aria-label="Exportar dados"><i class="fas fa-download"></i> Exportar Dados</button>
@@ -615,14 +620,18 @@
         <thead>
           <tr>
             <th>Nº do Pedido</th>
+            <th>Data do Pedido</th>
+            <th>Quantidade de Itens</th>
+            <th>Produtos</th>
+            <th>Subtotal</th>
+            <th>Taxa de Entrega</th>
+            <th>Total</th>
+            <th>Endereço</th>
             <th>Cliente</th>
             <th>E-mail</th>
             <th>CPF</th>
-            <th>Produtos</th>
-            <th>Endereço</th>
-            <th>Total</th>
+            <th>Tipo de Login</th>
             <th>Pagamento</th>
-            <th>Data do Pedido</th>
             <th>Status</th>
             <th>Ação</th>
           </tr>
@@ -1102,12 +1111,13 @@
       const orderList = document.getElementById('order-list');
       const filterStatus = document.getElementById('filter-status').value;
       const filterMethod = document.getElementById('filter-method').value;
+      const filterLoginType = document.getElementById('filter-login-type').value;
       orderList.innerHTML = '';
 
       console.log('Carregando adminOrders:', adminOrders);
 
       if (adminOrders.length === 0) {
-        orderList.innerHTML = '<tr><td colspan="11">Nenhum pedido registrado.</td></tr>';
+        orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
         console.log('Nenhum pedido encontrado em adminOrders.');
         return;
       }
@@ -1120,10 +1130,12 @@
 
         const method = order.paymentMethod || 'Desconhecido';
         const status = order.status || 'Pendente';
+        const loginType = order.loginType || 'Unknown';
 
         // Aplicar filtros
         if (filterStatus !== 'all' && status !== filterStatus) return;
         if (filterMethod !== 'all' && method !== filterMethod) return;
+        if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
 
         let subtotal = 0;
         const itemsHtml = order.items.map(item => {
@@ -1138,6 +1150,7 @@
         const totalWithDelivery = subtotal + deliveryFee;
 
         const address = order.purchaseData.address || {};
+        console.log(`Endereço do pedido #${index + 1}:`, address);
         const fullAddress = `
           <p>CEP: ${address.cep || 'Não informado'}</p>
           <p>Rua: ${address.street || 'Não informado'}</p>
@@ -1152,6 +1165,7 @@
         const clientName = customer.name || 'Convidado';
         const clientEmail = customer.email || 'Não informado';
         const clientCPF = customer.cpf || 'Não informado';
+        // A senha está salva em customerDetails.password, mas não será exibida por segurança
 
         // Verificar se os dados do cliente estão disponíveis
         if (!clientName || !clientEmail || !clientCPF) {
@@ -1190,26 +1204,30 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>#${index + 1}</td>
-          <td>${clientName}</td>
-          <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
-          <td>${formatCPF(clientCPF)}</td>
+          <td>${formatDate(order.orderDate)}</td>
+          <td>${order.items.length}</td>
           <td>
             <div class="order-items">
               ${itemsHtml}
             </div>
           </td>
+          <td>${formatCurrency(subtotal)}</td>
+          <td>${formatCurrency(deliveryFee)}</td>
+          <td>${formatCurrency(totalWithDelivery)}</td>
           <td>
             <div class="address-details">
               ${fullAddress}
             </div>
           </td>
-          <td>${formatCurrency(totalWithDelivery)}</td>
+          <td>${clientName}</td>
+          <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
+          <td>${formatCPF(clientCPF)}</td>
+          <td>${loginType}</td>
           <td>
             <div class="payment-details">
               ${paymentDetailsHtml}
             </div>
           </td>
-          <td>${formatDate(order.orderDate)}</td>
           <td>${status}</td>
           <td>
             <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
@@ -1225,7 +1243,7 @@
           method,
           status,
           total: formatCurrency(totalWithDelivery),
-          loginType: order.loginType || 'Unknown'
+          loginType: loginType
         });
       });
     }
