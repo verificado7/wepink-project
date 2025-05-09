@@ -1458,14 +1458,16 @@
           body: JSON.stringify({ amount: total, description, email })
         });
 
+        const responseBody = await response.text(); // Captura a resposta como texto para depuração
+        console.log('Passo 3: Resposta bruta do backend:', responseBody);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Passo 3: Resposta de erro do backend:', errorData);
-          throw new Error(errorData.error || `Erro ao gerar o Pix: ${response.status} ${response.statusText}`);
+          console.error('Passo 3: Resposta de erro do backend:', responseBody);
+          throw new Error(`Erro ao gerar o Pix: ${response.status} ${response.statusText} - ${responseBody}`);
         }
 
-        const pix = await response.json();
-        console.log('Passo 3: Resposta do backend:', pix);
+        const pix = JSON.parse(responseBody); // Converte a resposta para JSON
+        console.log('Passo 3: Resposta do backend (JSON):', pix);
 
         const order = {
           purchaseData: purchase,
@@ -1484,12 +1486,14 @@
         await saveOrder(order);
 
         if (pix.qrCode && pix.qrCodeBase64 && pix.qrCode !== 'Erro na geração do Pix') {
+          console.log('Passo 3: QR Code gerado com sucesso:', pix.qrCode);
           document.getElementById('pix-code-text').textContent = pix.qrCode;
           qrImage.src = `data:image/png;base64,${pix.qrCodeBase64}`;
           document.getElementById('pix-code-manual').style.display = 'block';
           document.getElementById('pix-qr-manual').style.display = 'block';
         } else {
-          document.getElementById('pix-code-text').textContent = 'Erro na geração do Pix';
+          console.error('Passo 3: Falha na geração do QR Code:', pix.qrCode);
+          document.getElementById('pix-code-text').textContent = pix.qrCode || 'Erro na geração do Pix';
           document.getElementById('pix-code-manual').style.display = 'block';
           document.getElementById('pix-qr-manual').style.display = 'none';
         }
@@ -1519,7 +1523,7 @@
           items: purchase.cartItems,
           status: 'Gerado',
           pixDetails: {
-            qrCode: 'Erro na geração do Pix',
+            qrCode: error.message.includes('Erro na geração do Pix') ? error.message : 'Erro na geração do Pix: ' + error.message,
             qrCodeBase64: ''
           },
           loginType: 'Guest'
