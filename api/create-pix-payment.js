@@ -59,7 +59,6 @@ function validateOrder(order) {
     throw new Error('Pedido inválido: objeto de pedido não fornecido ou mal formado.');
   }
 
-  // Campos obrigatórios
   if (!order.purchaseData || !order.purchaseData.cartItems || !Array.isArray(order.purchaseData.cartItems)) {
     throw new Error('Pedido inválido: cartItems não fornecido ou não é um array.');
   }
@@ -95,7 +94,10 @@ function validateOrder(order) {
 // Função para criar QR Code Pix
 async function createPix(amount, description, payerEmail) {
   try {
-    console.log('Criando Pix com os dados:', { amount, description, payerEmail });
+    // Gerar um valor único para o X-Idempotency-Key
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log('Criando Pix com os dados:', { amount, description, payerEmail, idempotencyKey });
+
     const response = await axios.post('https://api.mercadopago.com/v1/payments', {
       transaction_amount: amount,
       description: description,
@@ -106,7 +108,8 @@ async function createPix(amount, description, payerEmail) {
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey
       }
     });
 
