@@ -730,6 +730,8 @@
   <script>
     // Senha fixa para acesso ao painel
     const ADMIN_PASSWORD = "admin123";
+    const getOrdersUrl = 'https://wepink-backend.onrender.com/get-orders'; // Substitua pela URL real do seu backend no Render
+    const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // Endpoint para salvar pedidos
 
     // Função para verificar a senha do administrador
     function checkPassword() {
@@ -1002,8 +1004,13 @@
 
     // Função para exportar dados
     function exportData() {
-      fetch('https://seu-app.onrender.com/get-orders')
-        .then(response => response.json())
+      fetch(getOrdersUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(orders => {
           const data = {
             products: products,
@@ -1024,7 +1031,7 @@
         })
         .catch(err => {
           console.error('Erro ao exportar dados:', err);
-          alert('Erro ao exportar dados. Verifique o console para mais detalhes.');
+          alert('Erro ao exportar dados: ' + err.message);
         });
     }
 
@@ -1046,19 +1053,24 @@
             }
             if (data.orders && Array.isArray(data.orders)) {
               // Enviar os pedidos para o backend
-              fetch('https://seu-app.onrender.com/save-order', {
+              fetch(saveOrderUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data.orders)
               })
-                .then(response => response.json())
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+                  }
+                  return response.json();
+                })
                 .then(() => {
                   updateOrderList();
                   updateSummary();
                 })
                 .catch(err => {
                   console.error('Erro ao importar pedidos para o backend:', err);
-                  alert('Erro ao importar pedidos. Verifique o console para mais detalhes.');
+                  alert('Erro ao importar pedidos: ' + err.message);
                 });
             }
             alert('Dados importados com sucesso!');
@@ -1073,9 +1085,15 @@
 
     // Função para atualizar o resumo financeiro
     function updateSummary() {
-      fetch('https://seu-app.onrender.com/get-orders')
-        .then(response => response.json())
+      fetch(getOrdersUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(adminOrders => {
+          console.log('Passo 4: Dados carregados para o resumo financeiro:', adminOrders);
           let totalSales = 0;
           let totalPixSales = 0;
           let totalCardSales = 0;
@@ -1116,8 +1134,8 @@
           document.getElementById('completed-orders').textContent = completedOrders;
         })
         .catch(err => {
-          console.error('Erro ao atualizar resumo financeiro:', err);
-          document.getElementById('total-sales').textContent = 'Erro';
+          console.error('Passo 4: Erro ao atualizar resumo financeiro:', err);
+          document.getElementById('total-sales').textContent = 'Erro: ' + err.message;
           document.getElementById('total-pix-sales').textContent = 'Erro';
           document.getElementById('total-card-sales').textContent = 'Erro';
           document.getElementById('pending-orders').textContent = 'Erro';
@@ -1133,8 +1151,13 @@
       const filterLoginType = document.getElementById('filter-login-type').value;
       orderList.innerHTML = 'Carregando...';
 
-      fetch('https://seu-app.onrender.com/get-orders')
-        .then(response => response.json())
+      fetch(getOrdersUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(adminOrders => {
           console.log('Passo 4: Dados carregados do backend:', adminOrders);
           orderList.innerHTML = '';
@@ -1266,25 +1289,33 @@
         })
         .catch(err => {
           console.error('Passo 4: Erro ao carregar pedidos do backend:', err);
-          orderList.innerHTML = '<tr><td colspan="15">Erro ao carregar pedidos.</td></tr>';
+          orderList.innerHTML = '<tr><td colspan="15">Erro ao carregar pedidos: ' + err.message + '</td></tr>';
         });
     }
 
     // Função para abrir o modal de edição de pedido
     function openEditOrderModal(index) {
-      fetch('https://seu-app.onrender.com/get-orders')
-        .then(response => response.json())
+      fetch(getOrdersUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(adminOrders => {
           const order = adminOrders[index];
-          if (!order) return;
+          if (!order) {
+            alert('Pedido não encontrado.');
+            return;
+          }
 
           document.getElementById('edit-order-index').value = index;
           document.getElementById('edit-order-status').value = order.status || 'Pendente';
           openModal('edit-order-modal');
         })
         .catch(err => {
-          console.error('Erro ao carregar pedidos para edição:', err);
-          alert('Erro ao abrir pedido para edição.');
+          console.error('Passo 4: Erro ao carregar pedidos para edição:', err);
+          alert('Erro ao abrir pedido para edição: ' + err.message);
         });
     }
 
@@ -1293,63 +1324,83 @@
       const index = parseInt(document.getElementById('edit-order-index').value);
       const newStatus = document.getElementById('edit-order-status').value;
 
-      fetch('https://seu-app.onrender.com/get-orders')
-        .then(response => response.json())
+      fetch(getOrdersUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(adminOrders => {
           if (adminOrders[index]) {
             adminOrders[index].status = newStatus;
 
             // Enviar a lista atualizada de pedidos para o backend
-            fetch('https://seu-app.onrender.com/save-order', {
+            fetch(saveOrderUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(adminOrders)
             })
-              .then(response => response.json())
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+              })
               .then(() => {
                 updateOrderList();
                 updateSummary();
                 closeModal('edit-order-modal');
               })
               .catch(err => {
-                console.error('Erro ao salvar alterações do pedido:', err);
-                alert('Erro ao salvar alterações. Verifique o console para mais detalhes.');
+                console.error('Passo 4: Erro ao salvar alterações do pedido:', err);
+                alert('Erro ao salvar alterações: ' + err.message);
               });
           }
         })
         .catch(err => {
-          console.error('Erro ao carregar pedidos para salvar alterações:', err);
-          alert('Erro ao carregar pedidos para edição.');
+          console.error('Passo 4: Erro ao carregar pedidos para salvar alterações:', err);
+          alert('Erro ao carregar pedidos para edição: ' + err.message);
         });
     }
 
     // Função para remover um pedido
     function removeOrder(index) {
       if (confirm('Tem certeza que deseja remover este pedido?')) {
-        fetch('https://seu-app.onrender.com/get-orders')
-          .then(response => response.json())
+        fetch(getOrdersUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(adminOrders => {
             adminOrders.splice(index, 1);
 
             // Enviar a lista atualizada de pedidos para o backend
-            fetch('https://seu-app.onrender.com/save-order', {
+            fetch(saveOrderUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(adminOrders)
             })
-              .then(response => response.json())
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`Erro HTTP: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+              })
               .then(() => {
                 updateOrderList();
                 updateSummary();
               })
               .catch(err => {
-                console.error('Erro ao remover pedido:', err);
-                alert('Erro ao remover pedido. Verifique o console para mais detalhes.');
+                console.error('Passo 4: Erro ao remover pedido:', err);
+                alert('Erro ao remover pedido: ' + err.message);
               });
           })
           .catch(err => {
-            console.error('Erro ao carregar pedidos para remoção:', err);
-            alert('Erro ao carregar pedidos para remoção.');
+            console.error('Passo 4: Erro ao carregar pedidos para remoção:', err);
+            alert('Erro ao carregar pedidos para remoção: ' + err.message);
           });
       }
     }
