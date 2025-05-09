@@ -132,17 +132,32 @@ async function createPix(amount, description, payerEmail) {
       throw new Error('Token de acesso do Mercado Pago (MP_ACCESS_TOKEN) não está definido. Configure a variável de ambiente.');
     }
 
+    // Converter o valor para centavos (Mercado Pago espera o valor em centavos)
+    const transactionAmount = Math.round(amount * 100);
+    console.log('Passo 6: Valor convertido para centavos:', transactionAmount);
+
+    // Extrair primeiro e último nome do e-mail (se possível, para preencher os campos exigidos)
+    const [firstName, lastName] = payerEmail.split('@')[0].split('.');
+    const payer = {
+      email: payerEmail,
+      first_name: firstName || 'Cliente',
+      last_name: lastName || 'Wepink',
+      identification: {
+        type: 'CPF',
+        number: '12345678901' // CPF fictício, pode ser ajustado dinamicamente se disponível no pedido
+      }
+    };
+
     // Gerar um valor único para o X-Idempotency-Key
-    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log('Passo 6: Criando Pix com os dados:', { amount, description, payerEmail, idempotencyKey });
+    const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    console.log('Passo 6: Criando Pix com os dados:', { transaction_amount: transactionAmount, description, payer, idempotencyKey });
 
     const response = await axios.post('https://api.mercadopago.com/v1/payments', {
-      transaction_amount: amount,
+      transaction_amount: transactionAmount,
       description: description,
       payment_method_id: 'pix',
-      payer: {
-        email: payerEmail
-      }
+      payer: payer,
+      notification_url: 'https://wepink-backend.onrender.com/webhook' // URL para receber notificações (opcional)
     }, {
       headers: {
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
@@ -151,7 +166,7 @@ async function createPix(amount, description, payerEmail) {
       }
     });
 
-    console.log('Passo 6: Resposta do Mercado Pago:', response.data);
+    console.log('Passo 6: Resposta completa do Mercado Pago:', response.data);
 
     const qrCode = response.data.point_of_interaction?.transaction_data?.qr_code;
     const qrCodeBase64 = response.data.point_of_interaction?.transaction_data?.qr_code_base64;
@@ -190,10 +205,17 @@ app.post('/create-pix', async (req, res) => {
     console.error('Passo 6: Erro na rota /create-pix:', error.message);
     // Retornar um QR code fictício para permitir o salvamento do pedido
     res.status(200).json({
-      qrCode: 'Erro na geração do Pix',
+      qrCode: 'Erro na geração do Pix: ' + error.message,
       qrCodeBase64: ''
     });
   }
+});
+
+// Rota para receber notificações do Mercado Pago (webhook)
+app.post('/webhook', (req, res) => {
+  console.log('Passo 6: Notificação recebida no webhook:', req.body);
+  // Aqui você pode processar a notificação do Mercado Pago (ex.: atualizar o status do pedido)
+  res.status(200).send('Notificação recebida');
 });
 
 // Rota para salvar pedidos
