@@ -722,7 +722,7 @@
     // Senha fixa para acesso ao painel
     const ADMIN_PASSWORD = "admin123";
 
-    // Função para verificar a senha
+    // Função para verificar a senha do administrador
     function checkPassword() {
       const passwordInput = document.getElementById('admin-password').value;
       const errorMessage = document.getElementById('error-password');
@@ -738,7 +738,7 @@
       }
     }
 
-    // Função para logout
+    // Função para realizar logout
     function logout() {
       document.getElementById('admin-panel').style.display = 'none';
       document.getElementById('login-screen').style.display = 'block';
@@ -746,7 +746,7 @@
       document.getElementById('error-password').classList.remove('visible');
     }
 
-    // Dados iniciais dos produtos (sincronizados com product.html e index.html)
+    // Lista inicial de produtos (sincronizada com product.html e index.html)
     let initialProducts = [
       {
         id: "onetouch",
@@ -897,7 +897,7 @@
       console.log('Produtos inicializados com initialProducts após erro:', products);
     }
 
-    // Carregar clientes do localStorage ou usar a lista inicial
+    // Lista inicial de clientes
     let initialClients = [
       {
         name: "Ana Silva",
@@ -914,6 +914,8 @@
         purchases: "5 pedidos"
       }
     ];
+
+    // Carregar clientes do localStorage ou usar a lista inicial
     let clients = [];
     try {
       const storedClients = JSON.parse(localStorage.getItem('wepink_clients'));
@@ -1145,12 +1147,18 @@
           <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
         `;
 
-        // Priorizar customerDetails para informações do cliente
+        // Acessar dados do cliente diretamente de customerDetails
         const customer = order.customerDetails || {};
-        const clientName = customer.name || (order.paymentDetails?.cardName) || (order.pixDetails ? `${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}`.trim() : 'Convidado');
-        const clientEmail = customer.email || order.paymentDetails?.email || order.pixDetails?.email || 'Não informado';
-        const clientCPF = customer.cpf || order.paymentDetails?.cardCPF || order.pixDetails?.identification?.number || 'Não informado';
+        const clientName = customer.name || 'Convidado';
+        const clientEmail = customer.email || 'Não informado';
+        const clientCPF = customer.cpf || 'Não informado';
 
+        // Verificar se os dados do cliente estão disponíveis
+        if (!clientName || !clientEmail || !clientCPF) {
+          console.warn(`Dados do cliente incompletos no pedido #${index + 1}:`, customer);
+        }
+
+        // Detalhes do pagamento
         let paymentDetailsHtml = '';
         if (method === 'Cartão' && order.paymentDetails) {
           const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
@@ -1158,7 +1166,7 @@
           paymentDetailsHtml = `
             <p><strong>Método:</strong> Cartão</p>
             <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
-            <p><strong>E-mail:</strong> ${clientEmail}</p>
+            <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
             <p><strong>CPF:</strong> ${formattedCPF}</p>
             <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
             <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
@@ -1169,8 +1177,8 @@
           const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
           paymentDetailsHtml = `
             <p><strong>Método:</strong> Pix</p>
-            <p><strong>Nome:</strong> ${clientName}</p>
-            <p><strong>E-mail:</strong> ${clientEmail}</p>
+            <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
+            <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
             <p><strong>CPF:</strong> ${formattedCPF}</p>
             <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
             <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
