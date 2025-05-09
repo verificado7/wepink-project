@@ -23,25 +23,25 @@ app.use(express.static('.'));
 
 // Rota para servir payment.html
 app.get('/payment.html', (req, res) => {
-  console.log('Passo 6: Servindo payment.html');
+  console.log('Passo 7: Servindo payment.html');
   res.sendFile(path.join(__dirname, 'payment.html'));
 });
 
 // Rota para servir confirmation.html
 app.get('/confirmation.html', (req, res) => {
-  console.log('Passo 6: Servindo confirmation.html');
+  console.log('Passo 7: Servindo confirmation.html');
   res.sendFile(path.join(__dirname, 'confirmation.html'));
 });
 
 // Rota para servir admin.html
 app.get('/admin.html', (req, res) => {
-  console.log('Passo 6: Servindo admin.html');
+  console.log('Passo 7: Servindo admin.html');
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Rota padrão para a raiz
 app.get('/', (req, res) => {
-  console.log('Passo 6: Servindo payment.html na rota raiz');
+  console.log('Passo 7: Servindo payment.html na rota raiz');
   res.sendFile(path.join(__dirname, 'payment.html'));
 });
 
@@ -59,13 +59,13 @@ if (fs.existsSync(ordersFilePath)) {
   try {
     const data = fs.readFileSync(ordersFilePath, 'utf8');
     orders = JSON.parse(data);
-    console.log('Passo 6: Pedidos carregados do arquivo:', orders);
+    console.log('Passo 7: Pedidos carregados do arquivo:', orders);
   } catch (error) {
-    console.error('Passo 6: Erro ao carregar pedidos do arquivo:', error.message);
+    console.error('Passo 7: Erro ao carregar pedidos do arquivo:', error.message);
     orders = [];
   }
 } else {
-  console.log('Passo 6: Arquivo orders.json não encontrado. Criando novo arquivo.');
+  console.log('Passo 7: Arquivo orders.json não encontrado. Criando novo arquivo.');
   fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
 }
 
@@ -73,9 +73,9 @@ if (fs.existsSync(ordersFilePath)) {
 function saveOrders() {
   try {
     fs.writeFileSync(ordersFilePath, JSON.stringify(orders, null, 2));
-    console.log('Passo 6: Pedidos salvos no arquivo:', orders);
+    console.log('Passo 7: Pedidos salvos no arquivo:', orders);
   } catch (error) {
-    console.error('Passo 6: Erro ao salvar pedidos no arquivo:', error.message);
+    console.error('Passo 7: Erro ao salvar pedidos no arquivo:', error.message);
     throw new Error('Erro ao salvar pedidos no arquivo: ' + error.message);
   }
 }
@@ -134,7 +134,7 @@ async function createPix(amount, description, payerEmail) {
 
     // Converter o valor para centavos (Mercado Pago espera o valor em centavos)
     const transactionAmount = Math.round(amount * 100);
-    console.log('Passo 6: Valor convertido para centavos:', transactionAmount);
+    console.log('Passo 7: Valor convertido para centavos:', transactionAmount);
 
     // Extrair primeiro e último nome do e-mail (se possível, para preencher os campos exigidos)
     const [firstName, lastName] = payerEmail.split('@')[0].split('.');
@@ -150,8 +150,9 @@ async function createPix(amount, description, payerEmail) {
 
     // Gerar um valor único para o X-Idempotency-Key
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    console.log('Passo 6: Criando Pix com os dados:', { transaction_amount: transactionAmount, description, payer, idempotencyKey });
+    console.log('Passo 7: Criando Pix com os dados:', { transaction_amount: transactionAmount, description, payer, idempotencyKey });
 
+    // Fazer a requisição ao Mercado Pago
     const response = await axios.post('https://api.mercadopago.com/v1/payments', {
       transaction_amount: transactionAmount,
       description: description,
@@ -166,7 +167,7 @@ async function createPix(amount, description, payerEmail) {
       }
     });
 
-    console.log('Passo 6: Resposta completa do Mercado Pago:', response.data);
+    console.log('Passo 7: Resposta completa do Mercado Pago:', JSON.stringify(response.data, null, 2));
 
     const qrCode = response.data.point_of_interaction?.transaction_data?.qr_code;
     const qrCodeBase64 = response.data.point_of_interaction?.transaction_data?.qr_code_base64;
@@ -175,10 +176,12 @@ async function createPix(amount, description, payerEmail) {
       throw new Error('QR Code ou QR Code Base64 não retornados pelo Mercado Pago. Resposta: ' + JSON.stringify(response.data));
     }
 
+    console.log('Passo 7: QR Code gerado com sucesso:', { qrCode, qrCodeBase64 });
     return { qrCode, qrCodeBase64 };
   } catch (error) {
-    console.error('Passo 6: Erro ao criar Pix:', error.response?.data || error.message);
+    console.error('Passo 7: Erro ao criar Pix:', error.response?.data || error.message);
     const errorMessage = error.response?.data?.message || error.message;
+    console.error('Passo 7: Detalhes do erro do Mercado Pago:', error.response?.data || error);
     throw new Error(`Falha ao gerar QR code Pix: ${errorMessage}`);
   }
 }
@@ -186,7 +189,7 @@ async function createPix(amount, description, payerEmail) {
 // Rota para gerar o QR Code Pix
 app.post('/create-pix', async (req, res) => {
   try {
-    console.log('Passo 6: Requisição recebida em /create-pix:', req.body);
+    console.log('Passo 7: Requisição recebida em /create-pix:', req.body);
     const { amount, description, email } = req.body;
 
     if (!amount || !description || !email) {
@@ -202,7 +205,7 @@ app.post('/create-pix', async (req, res) => {
     const pix = await createPix(amount, description, email);
     res.status(200).json(pix);
   } catch (error) {
-    console.error('Passo 6: Erro na rota /create-pix:', error.message);
+    console.error('Passo 7: Erro na rota /create-pix:', error.message);
     // Retornar um QR code fictício para permitir o salvamento do pedido
     res.status(200).json({
       qrCode: 'Erro na geração do Pix: ' + error.message,
@@ -213,7 +216,7 @@ app.post('/create-pix', async (req, res) => {
 
 // Rota para receber notificações do Mercado Pago (webhook)
 app.post('/webhook', (req, res) => {
-  console.log('Passo 6: Notificação recebida no webhook:', req.body);
+  console.log('Passo 7: Notificação recebida no webhook:', req.body);
   // Aqui você pode processar a notificação do Mercado Pago (ex.: atualizar o status do pedido)
   res.status(200).send('Notificação recebida');
 });
@@ -221,7 +224,7 @@ app.post('/webhook', (req, res) => {
 // Rota para salvar pedidos
 app.post('/save-order', (req, res) => {
   try {
-    console.log('Passo 6: Requisição recebida em /save-order:', req.body);
+    console.log('Passo 7: Requisição recebida em /save-order:', req.body);
     const orderData = req.body;
     if (Array.isArray(orderData)) {
       // Caso o admin.html envie uma lista de pedidos (atualização em massa)
@@ -230,7 +233,7 @@ app.post('/save-order', (req, res) => {
         try {
           validateOrder(order);
         } catch (error) {
-          console.error(`Passo 6: Erro ao validar pedido #${index + 1} na lista:`, error.message);
+          console.error(`Passo 7: Erro ao validar pedido #${index + 1} na lista:`, error.message);
           throw new Error(`Erro ao validar pedido #${index + 1}: ${error.message}`);
         }
       });
@@ -241,20 +244,20 @@ app.post('/save-order', (req, res) => {
     }
 
     saveOrders();
-    console.log('Passo 6: Pedido(s) salvo(s) no backend:', orders);
+    console.log('Passo 7: Pedido(s) salvo(s) no backend:', orders);
     res.status(200).json({ message: 'Pedido(s) salvo(s) com sucesso', orders });
   } catch (error) {
-    console.error('Passo 6: Erro na rota /save-order:', error.message);
+    console.error('Passo 7: Erro na rota /save-order:', error.message);
     res.status(500).json({ error: 'Erro ao salvar pedido: ' + error.message });
   }
 });
 
 // Rota para recuperar pedidos
 app.get('/get-orders', (req, res) => {
-  console.log('Passo 6: Requisição recebida em /get-orders');
-  console.log('Passo 6: Pedidos recuperados do backend:', orders);
+  console.log('Passo 7: Requisição recebida em /get-orders');
+  console.log('Passo 7: Pedidos recuperados do backend:', orders);
   if (!Array.isArray(orders)) {
-    console.error('Passo 6: Lista de pedidos não é um array. Retornando array vazio.');
+    console.error('Passo 7: Lista de pedidos não é um array. Retornando array vazio.');
     res.status(200).json([]);
   } else {
     res.status(200).json(orders);
