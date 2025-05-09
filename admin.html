@@ -1107,146 +1107,141 @@
 
     // Função para atualizar a lista de pedidos
     function updateOrderList() {
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      const orderList = document.getElementById('order-list');
-      const filterStatus = document.getElementById('filter-status').value;
-      const filterMethod = document.getElementById('filter-method').value;
-      const filterLoginType = document.getElementById('filter-login-type').value;
-      orderList.innerHTML = '';
+  const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+  const orderList = document.getElementById('order-list');
+  const filterStatus = document.getElementById('filter-status').value;
+  const filterMethod = document.getElementById('filter-method').value;
+  const filterLoginType = document.getElementById('filter-login-type').value;
+  orderList.innerHTML = '';
 
-      console.log('Carregando adminOrders:', adminOrders);
+  console.log('Carregando adminOrders:', adminOrders);
 
-      if (adminOrders.length === 0) {
-        orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
-        console.log('Nenhum pedido encontrado em adminOrders.');
-        return;
-      }
+  if (adminOrders.length === 0) {
+    orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
+    console.log('Nenhum pedido encontrado em adminOrders.');
+    return;
+  }
 
-      adminOrders.forEach((order, index) => {
-        if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
-          console.warn(`Pedido #${index + 1} não possui itens válidos.`, order);
-          return;
-        }
-
-        const method = order.paymentMethod || 'Desconhecido';
-        const status = order.status || 'Pendente';
-        const loginType = order.loginType || 'Unknown';
-
-        // Aplicar filtros
-        if (filterStatus !== 'all' && status !== filterStatus) return;
-        if (filterMethod !== 'all' && method !== filterMethod) return;
-        if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
-
-        let subtotal = 0;
-        const itemsHtml = order.items.map(item => {
-          const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
-          subtotal += itemTotal;
-          return `
-            <p>${item.name || 'Produto desconhecido'} - Quantidade: ${item.quantity || 1} - ${formatCurrency(itemTotal)}</p>
-          `;
-        }).join('');
-
-        const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
-        const totalWithDelivery = subtotal + deliveryFee;
-
-        const address = order.purchaseData.address || {};
-        console.log(`Endereço do pedido #${index + 1}:`, address);
-        const fullAddress = `
-          <p>CEP: ${address.cep || 'Não informado'}</p>
-          <p>Rua: ${address.street || 'Não informado'}</p>
-          <p>Número: ${address.number || 'Não informado'}</p>
-          <p>Complemento: ${address.complement || 'Não informado'}</p>
-          <p>Bairro: ${address.neighborhood || 'Não informado'}</p>
-          <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
-        `;
-
-        // Acessar dados do cliente diretamente de customerDetails
-        const customer = order.customerDetails || {};
-        const clientName = customer.name || 'Convidado';
-        const clientEmail = customer.email || 'Não informado';
-        const clientCPF = customer.cpf || 'Não informado';
-        // A senha está salva em customerDetails.password, mas não será exibida por segurança
-
-        // Verificar se os dados do cliente estão disponíveis
-        if (!clientName || !clientEmail || !clientCPF) {
-          console.warn(`Dados do cliente incompletos no pedido #${index + 1}:`, customer);
-        }
-
-        // Detalhes do pagamento
-        let paymentDetailsHtml = '';
-        if (method === 'Cartão' && order.paymentDetails) {
-          const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
-          const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
-          paymentDetailsHtml = `
-            <p><strong>Método:</strong> Cartão</p>
-            <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
-            <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
-            <p><strong>CPF:</strong> ${formattedCPF}</p>
-            <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
-            <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
-            <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
-            <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
-          `;
-        } else if (method === 'Pix' && order.pixDetails) {
-          const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
-          paymentDetailsHtml = `
-            <p><strong>Método:</strong> Pix</p>
-            <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
-            <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
-            <p><strong>CPF:</strong> ${formattedCPF}</p>
-            <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
-            <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
-          `;
-        } else {
-          paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
-        }
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>#${index + 1}</td>
-          <td>${formatDate(order.orderDate)}</td>
-          <td>${order.items.length}</td>
-          <td>
-            <div class="order-items">
-              ${itemsHtml}
-            </div>
-          </td>
-          <td>${formatCurrency(subtotal)}</td>
-          <td>${formatCurrency(deliveryFee)}</td>
-          <td>${formatCurrency(totalWithDelivery)}</td>
-          <td>
-            <div class="address-details">
-              ${fullAddress}
-            </div>
-          </td>
-          <td>${clientName}</td>
-          <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
-          <td>${formatCPF(clientCPF)}</td>
-          <td>${loginType}</td>
-          <td>
-            <div class="payment-details">
-              ${paymentDetailsHtml}
-            </div>
-          </td>
-          <td>${status}</td>
-          <td>
-            <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
-            <button onclick="removeOrder(${index})" aria-label="Remover pedido"><i class="fas fa-trash"></i> Remover</button>
-          </td>
-        `;
-        orderList.appendChild(row);
-
-        console.log(`Pedido #${index + 1} processado:`, {
-          clientName,
-          clientEmail,
-          clientCPF,
-          method,
-          status,
-          total: formatCurrency(totalWithDelivery),
-          loginType: loginType
-        });
-      });
+  adminOrders.forEach((order, index) => {
+    if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
+      console.warn(`Pedido #${index + 1} não possui itens válidos.`, order);
+      return;
     }
+
+    const method = order.paymentMethod || 'Desconhecido';
+    const status = order.status || 'Pendente';
+    const loginType = order.loginType || 'Unknown';
+
+    if (filterStatus !== 'all' && status !== filterStatus) return;
+    if (filterMethod !== 'all' && method !== filterMethod) return;
+    if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
+
+    let subtotal = 0;
+    const itemsHtml = order.items.map(item => {
+      const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
+      subtotal += itemTotal;
+      return `
+        <p>${item.name || 'Produto desconhecido'} - Quantidade: ${item.quantity || 1} - ${formatCurrency(itemTotal)}</p>
+      `;
+    }).join('');
+
+    const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
+    const totalWithDelivery = subtotal + deliveryFee;
+
+    const address = order.purchaseData.address || {};
+    console.log(`Endereço do pedido #${index + 1}:`, address);
+    const fullAddress = `
+      <p>CEP: ${address.cep || 'Não informado'}</p>
+      <p>Rua: ${address.street || 'Não informado'}</p>
+      <p>Número: ${address.number || 'Não informado'}</p>
+      <p>Complemento: ${address.complement || 'Não informado'}</p>
+      <p>Bairro: ${address.neighborhood || 'Não informado'}</p>
+      <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
+    `;
+
+    const customer = order.customerDetails || {};
+    const clientName = customer.name || 'Convidado';
+    const clientEmail = customer.email || 'Não informado';
+    const clientCPF = customer.cpf || 'Não informado';
+
+    if (!clientName || !clientEmail || !clientCPF) {
+      console.warn(`Dados do cliente incompletos no pedido #${index + 1}:`, customer);
+    }
+
+    let paymentDetailsHtml = '';
+    if (method === 'Cartão' && order.paymentDetails) {
+      const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
+      const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
+      paymentDetailsHtml = `
+        <p><strong>Método:</strong> Cartão</p>
+        <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
+        <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
+        <p><strong>CPF:</strong> ${formattedCPF}</p>
+        <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
+        <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
+        <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
+        <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
+      `;
+    } else if (method === 'Pix' && order.pixDetails) {
+      const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
+      paymentDetailsHtml = `
+        <p><strong>Método:</strong> Pix</p>
+        <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
+        <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
+        <p><strong>CPF:</strong> ${formattedCPF}</p>
+        <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
+        <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
+      `;
+    } else {
+      paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
+    }
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>#${index + 1}</td>
+      <td>${formatDate(order.orderDate)}</td>
+      <td>${order.items.length}</td>
+      <td>
+        <div class="order-items">
+          ${itemsHtml}
+        </div>
+      </td>
+      <td>${formatCurrency(subtotal)}</td>
+      <td>${formatCurrency(deliveryFee)}</td>
+      <td>${formatCurrency(totalWithDelivery)}</td>
+      <td>
+        <div class="address-details">
+          ${fullAddress}
+        </div>
+      </td>
+      <td>${clientName}</td>
+      <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
+      <td>${formatCPF(clientCPF)}</td>
+      <td>${loginType}</td>
+      <td>
+        <div class="payment-details">
+          ${paymentDetailsHtml}
+        </div>
+      </td>
+      <td>${status}</td>
+      <td>
+        <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
+        <button onclick="removeOrder(${index})" aria-label="Remover pedido"><i class="fas fa-trash"></i> Remover</button>
+      </td>
+    `;
+    orderList.appendChild(row);
+
+    console.log(`Pedido #${index + 1} processado:`, {
+      clientName,
+      clientEmail,
+      clientCPF,
+      method,
+      status,
+      total: formatCurrency(totalWithDelivery),
+      loginType: loginType
+    });
+  });
+}
 
     // Função para abrir o modal de edição de pedido
     function openEditOrderModal(index) {
