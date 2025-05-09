@@ -1439,274 +1439,241 @@
         return;
       }
 
-      let subtotal = 0;
-      purchase.cartItems.forEach(item => {
-        if (item.priceNew && item.quantity) {
-          subtotal += item.priceNew * item.quantity;
-        }
-      });
-      const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
-
-      if (totalAmount <= 0) {
-        console.error('Passo 3: Valor do pedido inválido:', totalAmount);
-        showErrorScreen('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
+      if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
+        console.error('Passo 3: Dados do pedido inválidos:', purchase);
+        showErrorScreen('Erro: Dados do pedido não encontrados.');
         return;
       }
 
-      const paymentData = {
-        amount: parseFloat(totalAmount.toFixed(2)),
-        description: 'Compra Wepink',
-        email: email
-      };
-
-      const newOrder = {
-        purchaseData: purchase,
-        paymentMethod: 'Pix',
-        pixDetails: {
-          email: email,
-          first_name: name.split(' ')[0] || 'Nome',
-          last_name: name.split(' ').slice(1).join(' ') || 'Sobrenome',
-          identification: { type: 'CPF', number: cpf },
-          qrCode: '',
-          amount: totalAmount,
-          status: 'Gerado'
-        },
-        orderDate: new Date().toISOString(),
-        items: purchase.cartItems || [],
-        customerDetails: {
-          name: name,
-          cpf: cpf,
-          email: email,
-          password: purchase.loginType === 'User' ? purchase.password : undefined
-        },
-        status: 'Gerado',
-        loginType: purchase.loginType || 'Guest'
-      };
-
-      let qrCodeData = null;
+      const subtotal = purchase.cartItems.reduce((sum, item) => sum + (item.priceNew * item.quantity), 0);
+      const fee = purchase.address?.deliveryFee || 0;
+      const total = subtotal + fee;
+      const description = 'Compra Wepink';
 
       try {
-        generateButton.disabled = true;
-        generateButton.textContent = 'Gerando...';
-        console.log('Passo 3: Enviando requisição para /create-pix:', paymentData);
-
+        console.log('Passo 3: Enviando requisição para /create-pix:', { amount: total, description, email });
         const response = await fetch(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentData)
+          body: JSON.stringify({ amount: total, description, email })
         });
 
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Passo 3: Resposta de erro do backend:', errorData);
-          throw new Error(errorData.error || `Erro ao gerar o QR code Pix: ${response.status} ${response.statusText}`);
+          throw new Error(errorData.error || `Erro ao gerar o Pix: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('Passo 3: Resposta do backend:', data);
+        const pix = await response.json();
+        console.log('Passo 3: Resposta do backend:', pix);
 
-        if (!data || !data.qrCode || !data.qrCodeBase64) {
-          throw new Error('Dados do QR code não retornados. Verifique se a chave PIX está registrada no backend.');
+        const order = {
+          purchaseData: purchase,
+          customerDetails: { name, cpf, email },
+          paymentMethod: 'Pix',
+          orderDate: new Date().toISOString(),
+          items: purchase.cartItems,
+          status: 'Gerado',
+          pixDetails: {
+            qrCode: pix.qrCode || 'Erro na geração do Pix',
+            qrCodeBase64: pix.qrCodeBase64 || ''
+          },
+          loginType: 'Guest'
+        };
+
+        await saveOrder(order);
+
+        if (pix.qrCode && pix.qrCodeBase64 && pix.qrCode !== 'Erro na geração do Pix') {
+          document.getElementById('pix-code-text').textContent = pix.qrCode;
+          qrImage.src = `data:image/png;base64,${pix.qrCodeBase64}`;
+          document.getElementById('pix-code-manual').style.display = 'block';
+          document.getElementById('pix-qr-manual').style.display = 'block';
+        } else {
+          document.getElementById('pix-code-text').textContent = 'Erro na geração do Pix';
+          document.getElementById('pix-code-manual').style.display = 'block';
+          document.getElementById('pix-qr-manual').style.display = 'none';
         }
-
-        qrCodeData = data;
 
         document.getElementById('pix-inputs').style.display = 'none';
-        const codeContainer = document.getElementById('pix-code-manual');
-        const codeText = document.getElementById('pix-code-text');
-        const qrContainer = document.getElementById('pix-qr-manual');
-
-        codeContainer.style.display = 'block';
-        qrContainer.style.display = 'block';
-        codeText.textContent = qrCodeData.qrCode;
-        qrImage.src = `data:image/png;base64,${qrCodeData.qrCodeBase64}`;
         successMessage.classList.add('visible');
 
-        // Atualizar o qrCode no objeto newOrder
-        newOrder.pixDetails.qrCode = qrCodeData.qrCode;
-
-        // Salvar o pedido no backend
-        await saveOrder(newOrder);
-
-        // Configurar o redirecionamento automático
         timeoutId = setTimeout(() => {
           document.body.classList.add('fade-out');
-          setTimeout(() => window.location.href = '/confirmation.html', 500);
+          setTimeout(() => window.location.href = 'confirmation.html', 500);
         }, 10000);
 
-        // Permitir que o usuário cancele o redirecionamento
-        cancelRedirectButton.addEventListener('click', () => {
+        cancelRedirectButton.onclick = () => {
           clearTimeout(timeoutId);
-          successMessage.textContent = 'Redirecionamento cancelado. Você pode permanecer nesta página.';
-          cancelRedirectButton.style.display = 'none';
-        });
-
-        generateButton.disabled = false;
-        generateButton.textContent = 'Gerar Pix';
+          successMessage.classList.remove('visible');
+          document.getElementById('pix-inputs').style.display = 'block';
+          document.getElementById('pix-code-manual').style.display = 'none';
+          document.getElementById('pix-qr-manual').style.display = 'none';
+        };
       } catch (error) {
-        console.error('Passo 3: Erro ao gerar Pix:', error.message);
-        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
+        console.error('Passo 3: Erro ao gerar o Pix:', error.message);
+        const order = {
+          purchaseData: purchase,
+          customerDetails: { name, cpf, email },
+          paymentMethod: 'Pix',
+          orderDate: new Date().toISOString(),
+          items: purchase.cartItems,
+          status: 'Gerado',
+          pixDetails: {
+            qrCode: 'Erro na geração do Pix',
+            qrCodeBase64: ''
+          },
+          loginType: 'Guest'
+        };
 
-        // Tentar salvar o pedido mesmo com erro na geração do Pix (para depuração)
         try {
-          newOrder.pixDetails.qrCode = 'Erro na geração do Pix';
-          await saveOrder(newOrder);
+          await saveOrder(order);
+          console.log('Passo 3: Pedido salvo mesmo com falha na geração do Pix:', order);
         } catch (saveError) {
-          console.error('Passo 3: Erro ao salvar pedido após falha na geração do Pix:', saveError.message);
+          console.error('Passo 3: Erro ao salvar pedido após falha no Pix:', saveError.message);
         }
 
-        generateButton.disabled = false;
-        generateButton.textContent = 'Gerar Pix';
-        return;
+        showErrorScreen(`Erro ao gerar o Pix: ${error.message}`);
       }
-
-      // Limpar dados locais após sucesso
-      localStorage.removeItem('pendingPurchase');
-      localStorage.removeItem('cartItems');
-      localStorage.removeItem('cartAddress');
-      console.log('Passo 3: Dados locais limpos após Pix');
     }
 
-    // Função para processar o pagamento com cartão
+    // Função para processar pagamento com cartão
     async function processCardPayment() {
+      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
       const cardName = document.getElementById('card-name').value.trim();
       const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
       const cardEmail = document.getElementById('card-email').value.trim();
       const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
       const expMonth = document.getElementById('exp-month').value;
       const expYear = document.getElementById('exp-year').value;
-      const cvv = document.getElementById('cvv').value;
-      const password = document.getElementById('password').value;
-      const total = parseFloat(document.getElementById('order-total').textContent.replace('R$ ', '').replace(',', '.'));
+      const cvv = document.getElementById('cvv').value.replace(/\D/g, '');
       const confirmButton = document.getElementById('confirm-payment-button');
 
-      console.log('Passo 3: Dados para pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv, password, total });
+      console.log('Passo 3: Dados do pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv });
 
-      if (cardNumber.length !== 16 || !isValidCPF(cardCPF) || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !isValidEmail(cardEmail)) {
-        console.error('Passo 3: Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
-        showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
+      if (!cardName || cardName.length < 3) {
+        console.error('Passo 3: Nome no cartão inválido:', cardName);
+        showErrorScreen('Erro: Nome no cartão deve ter pelo menos 3 caracteres.');
         return;
       }
 
-      confirmButton.disabled = true;
-      confirmButton.textContent = 'Processando...';
+      if (!isValidCPF(cardCPF)) {
+        console.error('Passo 3: CPF inválido:', cardCPF);
+        showErrorScreen('Erro: CPF deve conter exatamente 11 dígitos.');
+        return;
+      }
+
+      if (!isValidEmail(cardEmail)) {
+        console.error('Passo 3: E-mail inválido:', cardEmail);
+        showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
+        return;
+      }
+
+      if (cardNumber.length !== 16) {
+        console.error('Passo 3: Número do cartão inválido:', cardNumber);
+        showErrorScreen('Erro: Número do cartão deve conter 16 dígitos.');
+        return;
+      }
+
+      if (!expMonth) {
+        console.error('Passo 3: Mês de expiração inválido:', expMonth);
+        showErrorScreen('Erro: Mês de expiração é obrigatório.');
+        return;
+      }
+
+      if (!expYear) {
+        console.error('Passo 3: Ano de expiração inválido:', expYear);
+        showErrorScreen('Erro: Ano de expiração é obrigatório.');
+        return;
+      }
+
+      if (cvv.length < 3 || cvv.length > 4) {
+        console.error('Passo 3: CVV inválido:', cvv);
+        showErrorScreen('Erro: CVV deve conter 3 ou 4 dígitos.');
+        return;
+      }
+
+      if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
+        console.error('Passo 3: Dados do pedido inválidos:', purchase);
+        showErrorScreen('Erro: Dados do pedido não encontrados.');
+        return;
+      }
+
+      const order = {
+        purchaseData: purchase,
+        customerDetails: {
+          name: cardName,
+          cpf: cardCPF,
+          email: cardEmail
+        },
+        paymentMethod: 'Cartão',
+        orderDate: new Date().toISOString(),
+        items: purchase.cartItems,
+        status: 'Efetuado',
+        loginType: 'Guest'
+      };
 
       try {
-        const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-        const newOrder = {
-          purchaseData: purchase,
-          paymentMethod: 'Cartão',
-          paymentDetails: {
-            cardName,
-            cardCPF,
-            cardNumber,
-            expMonth,
-            expYear,
-            cvv,
-            transactionAmount: total,
-            email: cardEmail
-          },
-          orderDate: new Date().toISOString(),
-          items: purchase.cartItems || [],
-          customerDetails: {
-            name: cardName,
-            cpf: cardCPF,
-            email: cardEmail,
-            password: purchase.loginType === 'User' ? purchase.password : undefined
-          },
-          status: 'Efetuado',
-          loginType: purchase.loginType || 'Guest'
-        };
-
-        await saveOrder(newOrder);
-
-        localStorage.removeItem('pendingPurchase');
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('cartAddress');
-        console.log('Passo 3: Dados locais limpos após Cartão');
-
+        await saveOrder(order);
         document.body.classList.add('fade-out');
-        setTimeout(() => window.location.href = '/confirmation.html', 500);
+        setTimeout(() => window.location.href = 'confirmation.html', 500);
       } catch (error) {
-        console.error('Passo 3: Erro ao salvar pedido no backend:', error.message);
-        showErrorScreen(`Erro ao salvar o pedido no servidor: ${error.message}`);
-      } finally {
-        confirmButton.disabled = false;
-        confirmButton.textContent = 'Confirmar Pagamento';
+        console.error('Passo 3: Erro ao processar pagamento com cartão:', error.message);
+        showErrorScreen(`Erro ao processar o pagamento: ${error.message}`);
       }
     }
 
-    // Inicialização e eventos
+    // Função para copiar o código Pix
+    function copyPixCode() {
+      const pixCode = document.getElementById('pix-code-text').textContent;
+      const copyButton = document.getElementById('copy-pix-code');
+      const copiedMessage = document.getElementById('copied-message');
+
+      navigator.clipboard.writeText(pixCode).then(() => {
+        copyButton.classList.add('copied');
+        copyButton.textContent = 'Copiado!';
+        copiedMessage.classList.add('visible');
+        setTimeout(() => {
+          copyButton.classList.remove('copied');
+          copyButton.textContent = 'Copiar';
+          copiedMessage.classList.remove('visible');
+        }, 2000);
+      }).catch(err => {
+        console.error('Passo 3: Erro ao copiar código Pix:', err);
+        showErrorScreen('Erro ao copiar o código Pix.');
+      });
+    }
+
+    // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
       updateOrderSummary();
+      showPaymentForm('pix');
 
-      document.getElementById('pix-button').addEventListener('click', () => showPaymentForm('pix'));
-      document.getElementById('card-button').addEventListener('click', () => showPaymentForm('card'));
+      const pixButton = document.getElementById('pix-button');
+      const cardButton = document.getElementById('card-button');
+      const pixInputs = ['pix-payer-name', 'pix-payer-cpf', 'pix-email-input'];
+      const cardInputs = ['card-name', 'card-cpf', 'card-email', 'card-number', 'exp-month', 'exp-year', 'cvv', 'password'];
 
-      const generatePixButton = document.getElementById('generate-pix-button');
-      const copyPixCodeButton = document.getElementById('copy-pix-code');
-      const pixNameInput = document.getElementById('pix-payer-name');
-      const pixCPFInput = document.getElementById('pix-payer-cpf');
-      const pixEmailInput = document.getElementById('pix-email-input');
-      const cardNameInput = document.getElementById('card-name');
-      const cardCPFInput = document.getElementById('card-cpf');
-      const cardEmailInput = document.getElementById('card-email');
-      const cardNumberInput = document.getElementById('card-number');
-      const expMonthInput = document.getElementById('exp-month');
-      const expYearInput = document.getElementById('exp-year');
-      const cvvInput = document.getElementById('cvv');
-      const passwordInput = document.getElementById('password');
-      const confirmPaymentButton = document.getElementById('confirm-payment-button');
+      pixButton.addEventListener('click', () => showPaymentForm('pix'));
+      cardButton.addEventListener('click', () => showPaymentForm('card'));
 
-      [pixNameInput, pixCPFInput, pixEmailInput].forEach(input => {
-        input.addEventListener('input', validatePixForm);
+      pixInputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', validatePixForm);
       });
 
-      pixCPFInput.addEventListener('input', () => {
-        cleanCPFInput(pixCPFInput);
-        validatePixForm();
-      });
-
-      cardCPFInput.addEventListener('input', () => {
-        cleanCPFInput(cardCPFInput);
-        validateCardForm();
-      });
-
-      generatePixButton.addEventListener('click', generatePixQRCode);
-
-      copyPixCodeButton.addEventListener('click', () => {
-        const pixCodeText = document.getElementById('pix-code-text').textContent;
-        navigator.clipboard.writeText(pixCodeText).then(() => {
-          console.log('Passo 3: Código PIX copiado:', pixCodeText);
-          copyPixCodeButton.textContent = 'Copiado!';
-          copyPixCodeButton.classList.add('copied');
-          document.getElementById('copied-message').classList.add('visible');
-          setTimeout(() => {
-            copyPixCodeButton.textContent = 'Copiar';
-            copyPixCodeButton.classList.remove('copied');
-            document.getElementById('copied-message').classList.remove('visible');
-          }, 2000);
-
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            showPaymentForm('pix');
-          }, 30000);
-        }).catch(err => {
-          console.error('Passo 3: Erro ao copiar o código PIX:', err);
-          showErrorScreen('Erro ao copiar o código PIX: ' + err.message);
-        });
-      });
-
-      [cardNameInput, cardCPFInput, cardEmailInput, cardNumberInput, expMonthInput, expYearInput, cvvInput, passwordInput].forEach(input => {
+      cardInputs.forEach(id => {
+        const input = document.getElementById(id);
         input.addEventListener('input', validateCardForm);
+        if (id === 'card-number' || id === 'card-cpf') {
+          input.addEventListener('input', () => {
+            if (id === 'card-number') formatCardNumber(input);
+            if (id === 'card-cpf') cleanCPFInput(input);
+          });
+        }
       });
 
-      cardNumberInput.addEventListener('input', () => {
-        formatCardNumber(cardNumberInput);
-        validateCardForm();
-      });
-
-      confirmPaymentButton.addEventListener('click', processCardPayment);
+      document.getElementById('generate-pix-button').addEventListener('click', generatePixQRCode);
+      document.getElementById('confirm-payment-button').addEventListener('click', processCardPayment);
+      document.getElementById('copy-pix-code').addEventListener('click', copyPixCode);
     });
   </script>
 </body>
