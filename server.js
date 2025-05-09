@@ -1,25 +1,18 @@
-const axios = require('axios');
 const express = require('express');
-const fs = require('fs');
+const axios = require('axios');
+const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 
-// Middleware para parsing de JSON
+// Middlewares
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
+}));
 app.use(express.json());
-
-// Configuração do CORS para permitir chamadas de diferentes origens
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// Servir arquivos estáticos da raiz do projeto
-app.use(express.static('.'));
+app.use(express.static('.')); // Serve arquivos estáticos da raiz
 
 // Rota para servir payment.html
 app.get('/payment.html', (req, res) => {
@@ -39,19 +32,8 @@ app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Rota padrão para a raiz
-app.get('/', (req, res) => {
-  console.log('Passo 7: Servindo payment.html na rota raiz');
-  res.sendFile(path.join(__dirname, 'payment.html'));
-});
-
-// Rota de teste para verificar se o servidor está funcionando
-app.get('/test', (req, res) => {
-  res.status(200).json({ message: 'Servidor está funcionando!' });
-});
-
-// Caminho para o arquivo de pedidos
-const ordersFilePath = path.join(__dirname, 'orders.json');
+// Caminho para o arquivo de pedidos no Render Disk
+const ordersFilePath = path.join('/data', 'orders.json');
 
 // Carregar pedidos do arquivo ao iniciar
 let orders = [];
@@ -152,7 +134,6 @@ async function createPix(amount, description, payerEmail) {
     const idempotencyKey = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
     console.log('Passo 7: Criando Pix com os dados:', { transaction_amount: transactionAmount, description, payer, idempotencyKey });
 
-    // Fazer a requisição ao Mercado Pago
     const response = await axios.post('https://api.mercadopago.com/v1/payments', {
       transaction_amount: transactionAmount,
       description: description,
@@ -186,20 +167,21 @@ async function createPix(amount, description, payerEmail) {
   }
 }
 
-// Rota para gerar o QR Code Pix
+// Endpoint para criar QR code Pix
 app.post('/create-pix', async (req, res) => {
   try {
     console.log('Passo 7: Requisição recebida em /create-pix:', req.body);
     const { amount, description, email } = req.body;
 
-    if (!amount || !description || !email) {
-      return res.status(400).json({ error: 'Parâmetros obrigatórios não fornecidos: amount, description, email.' });
+    // Validações
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'O valor da transação é obrigatório e deve ser maior que zero.' });
     }
-    if (typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json({ error: 'O valor (amount) deve ser um número positivo.' });
+    if (!description) {
+      return res.status(400).json({ error: 'A descrição é obrigatória.' });
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      return res.status(400).json({ error: 'E-mail inválido.' });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'O e-mail é obrigatório e deve ser válido.' });
     }
 
     const pix = await createPix(amount, description, email);
@@ -266,11 +248,17 @@ app.get('/get-orders', (req, res) => {
   console.log('Passo 7: Pedidos recuperados do backend:', orders);
   if (!Array.isArray(orders)) {
     console.error('Passo 7: Lista de pedidos não é um array. Retornando array vazio.');
-    res.status(200).json([]);
-  } else {
-    res.status(200).json(orders);
+    return res.status(200).json([]);
   }
+  res.status(200).json(orders);
 });
 
+// Rota padrão para a raiz
+app.get('/', (req, res) => {
+  console.log('Passo 7: Servindo payment.html na rota raiz');
+  res.sendFile(path.join(__dirname, 'payment.html'));
+});
+
+// Iniciar o servidor
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
