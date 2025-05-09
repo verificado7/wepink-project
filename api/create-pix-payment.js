@@ -232,6 +232,10 @@ app.post('/save-order', (req, res) => {
       orders.forEach((order, index) => {
         try {
           validateOrder(order);
+          // Adicionar orderNumber se não existir
+          if (!order.orderNumber) {
+            order.orderNumber = `PED-${Date.now()}-${index + 1}`;
+          }
         } catch (error) {
           console.error(`Passo 7: Erro ao validar pedido #${index + 1} na lista:`, error.message);
           throw new Error(`Erro ao validar pedido #${index + 1}: ${error.message}`);
@@ -240,6 +244,10 @@ app.post('/save-order', (req, res) => {
     } else {
       // Caso o payment.html envie um único pedido
       validateOrder(orderData);
+      // Adicionar orderNumber se não existir
+      if (!orderData.orderNumber) {
+        orderData.orderNumber = `PED-${Date.now()}-${orders.length + 1}`;
+      }
       orders.push(orderData);
     }
 
