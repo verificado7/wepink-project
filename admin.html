@@ -1000,37 +1000,32 @@
       }
     }
 
-    // Função para salvar pedidos
-    function saveOrders(orders) {
-      try {
-        localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Pedidos salvos no localStorage:', orders);
-        updateOrderList();
-        updateSummary();
-      } catch (error) {
-        console.error('Erro ao salvar pedidos no localStorage:', error);
-        alert('Erro ao salvar pedidos. Verifique o console para mais detalhes.');
-      }
-    }
-
     // Função para exportar dados
     function exportData() {
-      const data = {
-        products: products,
-        clients: clients,
-        orders: JSON.parse(localStorage.getItem('adminOrders')) || []
-      };
-      const dataStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'wepink_data.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      alert('Dados exportados com sucesso!');
+      fetch('https://seu-app.onrender.com/get-orders')
+        .then(response => response.json())
+        .then(orders => {
+          const data = {
+            products: products,
+            clients: clients,
+            orders: orders
+          };
+          const dataStr = JSON.stringify(data, null, 2);
+          const blob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'wepink_data.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert('Dados exportados com sucesso!');
+        })
+        .catch(err => {
+          console.error('Erro ao exportar dados:', err);
+          alert('Erro ao exportar dados. Verifique o console para mais detalhes.');
+        });
     }
 
     // Função para importar dados
@@ -1050,7 +1045,21 @@
               saveClients();
             }
             if (data.orders && Array.isArray(data.orders)) {
-              saveOrders(data.orders);
+              // Enviar os pedidos para o backend
+              fetch('https://seu-app.onrender.com/save-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data.orders)
+              })
+                .then(response => response.json())
+                .then(() => {
+                  updateOrderList();
+                  updateSummary();
+                })
+                .catch(err => {
+                  console.error('Erro ao importar pedidos para o backend:', err);
+                  alert('Erro ao importar pedidos. Verifique o console para mais detalhes.');
+                });
             }
             alert('Dados importados com sucesso!');
           } catch (error) {
@@ -1064,216 +1073,284 @@
 
     // Função para atualizar o resumo financeiro
     function updateSummary() {
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      let totalSales = 0;
-      let totalPixSales = 0;
-      let totalCardSales = 0;
-      let pendingOrders = 0;
-      let completedOrders = 0;
+      fetch('https://seu-app.onrender.com/get-orders')
+        .then(response => response.json())
+        .then(adminOrders => {
+          let totalSales = 0;
+          let totalPixSales = 0;
+          let totalCardSales = 0;
+          let pendingOrders = 0;
+          let completedOrders = 0;
 
-      adminOrders.forEach(order => {
-        if (!order.purchaseData || !order.purchaseData.cartItems) return;
+          adminOrders.forEach(order => {
+            if (!order.purchaseData || !order.purchaseData.cartItems) return;
 
-        let subtotal = 0;
-        order.purchaseData.cartItems.forEach(item => {
-          subtotal += (item.priceNew || 0) * (item.quantity || 1);
+            let subtotal = 0;
+            order.purchaseData.cartItems.forEach(item => {
+              subtotal += (item.priceNew || 0) * (item.quantity || 1);
+            });
+            const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
+            const totalWithDelivery = subtotal + deliveryFee;
+            totalSales += totalWithDelivery;
+
+            const method = order.paymentMethod || 'Desconhecido';
+            const status = order.status || 'Pendente';
+
+            if (method === 'Pix') {
+              totalPixSales += totalWithDelivery;
+            } else if (method === 'Cartão') {
+              totalCardSales += totalWithDelivery;
+            }
+
+            if (status === 'Gerado' || status === 'Pendente') {
+              pendingOrders++;
+            } else if (status === 'Efetuado') {
+              completedOrders++;
+            }
+          });
+
+          document.getElementById('total-sales').textContent = formatCurrency(totalSales);
+          document.getElementById('total-pix-sales').textContent = formatCurrency(totalPixSales);
+          document.getElementById('total-card-sales').textContent = formatCurrency(totalCardSales);
+          document.getElementById('pending-orders').textContent = pendingOrders;
+          document.getElementById('completed-orders').textContent = completedOrders;
+        })
+        .catch(err => {
+          console.error('Erro ao atualizar resumo financeiro:', err);
+          document.getElementById('total-sales').textContent = 'Erro';
+          document.getElementById('total-pix-sales').textContent = 'Erro';
+          document.getElementById('total-card-sales').textContent = 'Erro';
+          document.getElementById('pending-orders').textContent = 'Erro';
+          document.getElementById('completed-orders').textContent = 'Erro';
         });
-        const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
-        const totalWithDelivery = subtotal + deliveryFee;
-        totalSales += totalWithDelivery;
-
-        const method = order.paymentMethod || 'Desconhecido';
-        const status = order.status || 'Pendente';
-
-        if (method === 'Pix') {
-          totalPixSales += totalWithDelivery;
-        } else if (method === 'Cartão') {
-          totalCardSales += totalWithDelivery;
-        }
-
-        if (status === 'Gerado' || status === 'Pendente') {
-          pendingOrders++;
-        } else if (status === 'Efetuado') {
-          completedOrders++;
-        }
-      });
-
-      document.getElementById('total-sales').textContent = formatCurrency(totalSales);
-      document.getElementById('total-pix-sales').textContent = formatCurrency(totalPixSales);
-      document.getElementById('total-card-sales').textContent = formatCurrency(totalCardSales);
-      document.getElementById('pending-orders').textContent = pendingOrders;
-      document.getElementById('completed-orders').textContent = completedOrders;
     }
 
     // Função para atualizar a lista de pedidos
     function updateOrderList() {
-  const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-  const orderList = document.getElementById('order-list');
-  const filterStatus = document.getElementById('filter-status').value;
-  const filterMethod = document.getElementById('filter-method').value;
-  const filterLoginType = document.getElementById('filter-login-type').value;
-  orderList.innerHTML = '';
+      const orderList = document.getElementById('order-list');
+      const filterStatus = document.getElementById('filter-status').value;
+      const filterMethod = document.getElementById('filter-method').value;
+      const filterLoginType = document.getElementById('filter-login-type').value;
+      orderList.innerHTML = 'Carregando...';
 
-  console.log('Passo 4: Carregando adminOrders no admin.html:', adminOrders);
+      fetch('https://seu-app.onrender.com/get-orders')
+        .then(response => response.json())
+        .then(adminOrders => {
+          console.log('Passo 4: Dados carregados do backend:', adminOrders);
+          orderList.innerHTML = '';
 
-  if (adminOrders.length === 0) {
-    orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
-    console.log('Passo 4: Nenhum pedido encontrado em adminOrders.');
-    return;
-  }
+          if (adminOrders.length === 0) {
+            orderList.innerHTML = '<tr><td colspan="15">Nenhum pedido registrado.</td></tr>';
+            return;
+          }
 
-  adminOrders.forEach((order, index) => {
-    if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
-      console.warn(`Passo 4: Pedido #${index + 1} não possui itens válidos.`, order);
-      return;
+          adminOrders.forEach((order, index) => {
+            if (!order.purchaseData || !order.purchaseData.cartItems || order.purchaseData.cartItems.length === 0) {
+              console.warn(`Passo 4: Pedido #${index + 1} não possui itens válidos.`, order);
+              return;
+            }
+
+            const method = order.paymentMethod || 'Desconhecido';
+            const status = order.status || 'Pendente';
+            const loginType = order.loginType || 'Unknown';
+
+            if (filterStatus !== 'all' && status !== filterStatus) return;
+            if (filterMethod !== 'all' && method !== filterMethod) return;
+            if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
+
+            let subtotal = 0;
+            const itemsHtml = order.items.map(item => {
+              const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
+              subtotal += itemTotal;
+              return `
+                <p>${item.name || 'Produto desconhecido'} - Quantidade: ${item.quantity || 1} - ${formatCurrency(itemTotal)}</p>
+              `;
+            }).join('');
+
+            const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
+            const totalWithDelivery = subtotal + deliveryFee;
+
+            const address = order.purchaseData.address || {};
+            console.log(`Passo 4: Endereço do pedido #${index + 1}:`, address);
+            const fullAddress = `
+              <p>CEP: ${address.cep || 'Não informado'}</p>
+              <p>Rua: ${address.street || 'Não informado'}</p>
+              <p>Número: ${address.number || 'Não informado'}</p>
+              <p>Complemento: ${address.complement || 'Não informado'}</p>
+              <p>Bairro: ${address.neighborhood || 'Não informado'}</p>
+              <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
+            `;
+
+            const customer = order.customerDetails || {};
+            const clientName = customer.name || 'Convidado';
+            const clientEmail = customer.email || 'Não informado';
+            const clientCPF = customer.cpf || 'Não informado';
+
+            if (!clientName || !clientEmail || !clientCPF) {
+              console.warn(`Passo 4: Dados do cliente incompletos no pedido #${index + 1}:`, customer);
+            }
+
+            let paymentDetailsHtml = '';
+            if (method === 'Cartão' && order.paymentDetails) {
+              const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
+              const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
+              paymentDetailsHtml = `
+                <p><strong>Método:</strong> Cartão</p>
+                <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
+                <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
+                <p><strong>CPF:</strong> ${formattedCPF}</p>
+                <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
+                <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
+                <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
+                <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
+              `;
+            } else if (method === 'Pix' && order.pixDetails) {
+              const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
+              paymentDetailsHtml = `
+                <p><strong>Método:</strong> Pix</p>
+                <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
+                <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
+                <p><strong>CPF:</strong> ${formattedCPF}</p>
+                <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
+                <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
+              `;
+            } else {
+              paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>#${index + 1}</td>
+              <td>${formatDate(order.orderDate)}</td>
+              <td>${order.items.length}</td>
+              <td>
+                <div class="order-items">
+                  ${itemsHtml}
+                </div>
+              </td>
+              <td>${formatCurrency(subtotal)}</td>
+              <td>${formatCurrency(deliveryFee)}</td>
+              <td>${formatCurrency(totalWithDelivery)}</td>
+              <td>
+                <div class="address-details">
+                  ${fullAddress}
+                </div>
+              </td>
+              <td>${clientName}</td>
+              <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
+              <td>${formatCPF(clientCPF)}</td>
+              <td>${loginType}</td>
+              <td>
+                <div class="payment-details">
+                  ${paymentDetailsHtml}
+                </div>
+              </td>
+              <td>${status}</td>
+              <td>
+                <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
+                <button onclick="removeOrder(${index})" aria-label="Remover pedido"><i class="fas fa-trash"></i> Remover</button>
+              </td>
+            `;
+            orderList.appendChild(row);
+
+            console.log(`Passo 4: Pedido #${index + 1} processado:`, {
+              clientName,
+              clientEmail,
+              clientCPF,
+              method,
+              status,
+              total: formatCurrency(totalWithDelivery),
+              loginType: loginType
+            });
+          });
+        })
+        .catch(err => {
+          console.error('Passo 4: Erro ao carregar pedidos do backend:', err);
+          orderList.innerHTML = '<tr><td colspan="15">Erro ao carregar pedidos.</td></tr>';
+        });
     }
-
-    const method = order.paymentMethod || 'Desconhecido';
-    const status = order.status || 'Pendente';
-    const loginType = order.loginType || 'Unknown';
-
-    // Remova os filtros temporariamente para depuração
-    // if (filterStatus !== 'all' && status !== filterStatus) return;
-    // if (filterMethod !== 'all' && method !== filterMethod) return;
-    // if (filterLoginType !== 'all' && loginType !== filterLoginType) return;
-
-    let subtotal = 0;
-    const itemsHtml = order.items.map(item => {
-      const itemTotal = (item.priceNew || 0) * (item.quantity || 1);
-      subtotal += itemTotal;
-      return `
-        <p>${item.name || 'Produto desconhecido'} - Quantidade: ${item.quantity || 1} - ${formatCurrency(itemTotal)}</p>
-      `;
-    }).join('');
-
-    const deliveryFee = order.purchaseData.address?.deliveryFee || 0;
-    const totalWithDelivery = subtotal + deliveryFee;
-
-    const address = order.purchaseData.address || {};
-    console.log(`Passo 4: Endereço do pedido #${index + 1}:`, address);
-    const fullAddress = `
-      <p>CEP: ${address.cep || 'Não informado'}</p>
-      <p>Rua: ${address.street || 'Não informado'}</p>
-      <p>Número: ${address.number || 'Não informado'}</p>
-      <p>Complemento: ${address.complement || 'Não informado'}</p>
-      <p>Bairro: ${address.neighborhood || 'Não informado'}</p>
-      <p>Cidade: ${address.city || 'Não informado'}, ${address.state || 'Não informado'}</p>
-    `;
-
-    const customer = order.customerDetails || {};
-    const clientName = customer.name || 'Convidado';
-    const clientEmail = customer.email || 'Não informado';
-    const clientCPF = customer.cpf || 'Não informado';
-
-    if (!clientName || !clientEmail || !clientCPF) {
-      console.warn(`Passo 4: Dados do cliente incompletos no pedido #${index + 1}:`, customer);
-    }
-
-    let paymentDetailsHtml = '';
-    if (method === 'Cartão' && order.paymentDetails) {
-      const formattedCPF = formatCPF(order.paymentDetails.cardCPF || clientCPF);
-      const formattedCardNumber = formatCardNumber(order.paymentDetails.cardNumber || '');
-      paymentDetailsHtml = `
-        <p><strong>Método:</strong> Cartão</p>
-        <p><strong>Nome:</strong> ${order.paymentDetails.cardName || clientName}</p>
-        <p><strong>E-mail:</strong> ${order.paymentDetails.email || clientEmail}</p>
-        <p><strong>CPF:</strong> ${formattedCPF}</p>
-        <p><strong>Número do Cartão:</strong> ${formattedCardNumber}</p>
-        <p><strong>Validade:</strong> ${order.paymentDetails.expMonth || ''}/${order.paymentDetails.expYear || ''}</p>
-        <p><strong>CVV:</strong> ${order.paymentDetails.cvv || 'Não informado'}</p>
-        <p><strong>Valor:</strong> ${formatCurrency(order.paymentDetails.transactionAmount || totalWithDelivery)}</p>
-      `;
-    } else if (method === 'Pix' && order.pixDetails) {
-      const formattedCPF = formatCPF(order.pixDetails.identification?.number || clientCPF);
-      paymentDetailsHtml = `
-        <p><strong>Método:</strong> Pix</p>
-        <p><strong>Nome:</strong> ${order.pixDetails.first_name || ''} ${order.pixDetails.last_name || ''}</p>
-        <p><strong>E-mail:</strong> ${order.pixDetails.email || clientEmail}</p>
-        <p><strong>CPF:</strong> ${formattedCPF}</p>
-        <p><strong>Código Pix:</strong> <code>${order.pixDetails.qrCode || 'Não informado'}</code></p>
-        <p><strong>Valor:</strong> ${formatCurrency(order.pixDetails.amount || totalWithDelivery)}</p>
-      `;
-    } else {
-      paymentDetailsHtml = `<p>Detalhes do pagamento não disponíveis.</p>`;
-    }
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>#${index + 1}</td>
-      <td>${formatDate(order.orderDate)}</td>
-      <td>${order.items.length}</td>
-      <td>
-        <div class="order-items">
-          ${itemsHtml}
-        </div>
-      </td>
-      <td>${formatCurrency(subtotal)}</td>
-      <td>${formatCurrency(deliveryFee)}</td>
-      <td>${formatCurrency(totalWithDelivery)}</td>
-      <td>
-        <div class="address-details">
-          ${fullAddress}
-        </div>
-      </td>
-      <td>${clientName}</td>
-      <td><a href="mailto:${clientEmail}">${clientEmail}</a></td>
-      <td>${formatCPF(clientCPF)}</td>
-      <td>${loginType}</td>
-      <td>
-        <div class="payment-details">
-          ${paymentDetailsHtml}
-        </div>
-      </td>
-      <td>${status}</td>
-      <td>
-        <button onclick="openEditOrderModal(${index})" aria-label="Editar pedido"><i class="fas fa-edit"></i> Editar</button>
-        <button onclick="removeOrder(${index})" aria-label="Remover pedido"><i class="fas fa-trash"></i> Remover</button>
-      </td>
-    `;
-    orderList.appendChild(row);
-
-    console.log(`Passo 4: Pedido #${index + 1} processado:`, {
-      clientName,
-      clientEmail,
-      clientCPF,
-      method,
-      status,
-      total: formatCurrency(totalWithDelivery),
-      loginType: loginType
-    });
-  });
-}
 
     // Função para abrir o modal de edição de pedido
     function openEditOrderModal(index) {
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-      const order = adminOrders[index];
-      if (!order) return;
+      fetch('https://seu-app.onrender.com/get-orders')
+        .then(response => response.json())
+        .then(adminOrders => {
+          const order = adminOrders[index];
+          if (!order) return;
 
-      document.getElementById('edit-order-index').value = index;
-      document.getElementById('edit-order-status').value = order.status || 'Pendente';
-      openModal('edit-order-modal');
+          document.getElementById('edit-order-index').value = index;
+          document.getElementById('edit-order-status').value = order.status || 'Pendente';
+          openModal('edit-order-modal');
+        })
+        .catch(err => {
+          console.error('Erro ao carregar pedidos para edição:', err);
+          alert('Erro ao abrir pedido para edição.');
+        });
     }
 
     // Função para salvar alterações no pedido
     function saveOrderChanges() {
       const index = parseInt(document.getElementById('edit-order-index').value);
       const newStatus = document.getElementById('edit-order-status').value;
-      const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
 
-      if (adminOrders[index]) {
-        adminOrders[index].status = newStatus;
-        saveOrders(adminOrders);
-        closeModal('edit-order-modal');
-      }
+      fetch('https://seu-app.onrender.com/get-orders')
+        .then(response => response.json())
+        .then(adminOrders => {
+          if (adminOrders[index]) {
+            adminOrders[index].status = newStatus;
+
+            // Enviar a lista atualizada de pedidos para o backend
+            fetch('https://seu-app.onrender.com/save-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(adminOrders)
+            })
+              .then(response => response.json())
+              .then(() => {
+                updateOrderList();
+                updateSummary();
+                closeModal('edit-order-modal');
+              })
+              .catch(err => {
+                console.error('Erro ao salvar alterações do pedido:', err);
+                alert('Erro ao salvar alterações. Verifique o console para mais detalhes.');
+              });
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao carregar pedidos para salvar alterações:', err);
+          alert('Erro ao carregar pedidos para edição.');
+        });
     }
 
     // Função para remover um pedido
     function removeOrder(index) {
       if (confirm('Tem certeza que deseja remover este pedido?')) {
-        const adminOrders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        adminOrders.splice(index, 1);
-        saveOrders(adminOrders);
+        fetch('https://seu-app.onrender.com/get-orders')
+          .then(response => response.json())
+          .then(adminOrders => {
+            adminOrders.splice(index, 1);
+
+            // Enviar a lista atualizada de pedidos para o backend
+            fetch('https://seu-app.onrender.com/save-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(adminOrders)
+            })
+              .then(response => response.json())
+              .then(() => {
+                updateOrderList();
+                updateSummary();
+              })
+              .catch(err => {
+                console.error('Erro ao remover pedido:', err);
+                alert('Erro ao remover pedido. Verifique o console para mais detalhes.');
+              });
+          })
+          .catch(err => {
+            console.error('Erro ao carregar pedidos para remoção:', err);
+            alert('Erro ao carregar pedidos para remoção.');
+          });
       }
     }
 
@@ -1512,16 +1589,15 @@
       closeModal('add-client-modal');
     }
 
-    // Escutar mudanças no localStorage para atualizar a lista dinamicamente
+    // Escutar mudanças no localStorage para atualizar produtos e clientes dinamicamente
     window.addEventListener('storage', function(event) {
-      if (event.key === 'adminOrders') {
-        console.log('Mudança detectada no localStorage para adminOrders:', event.newValue);
-        updateOrderList();
-        updateSummary();
-      }
       if (event.key === 'wepink_products') {
         console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
         products = JSON.parse(event.newValue) || initialProducts;
+      }
+      if (event.key === 'wepink_clients') {
+        console.log('Mudança detectada no localStorage para wepink_clients:', event.newValue);
+        clients = JSON.parse(event.newValue) || initialClients;
       }
     });
   </script>
