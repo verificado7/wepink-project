@@ -987,11 +987,13 @@
 
     // Função para formatar valores monetários
     function formatCurrency(value) {
-      return `R$ ${parseFloat(value || 0).toFixed(2).replace('.', ',')}`;
+      if (isNaN(value) || value == null) return 'R$ 0,00';
+      return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
     }
 
     // Função para formatar a data
     function formatDate(dateString) {
+      if (!dateString) return 'Data inválida';
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Data inválida';
       return date.toLocaleString('pt-BR', { 
@@ -1030,8 +1032,8 @@
     function calculateSubtotal(items) {
       if (!items || !Array.isArray(items)) return 0;
       return items.reduce((sum, item) => {
-        const price = item.priceNew || 0;
-        const quantity = item.quantity || 0;
+        const price = Number(item.priceNew) || 0;
+        const quantity = Number(item.quantity) || 0;
         return sum + (price * quantity);
       }, 0);
     }
@@ -1052,10 +1054,16 @@
         }, 3, 2000);
         console.log('Passo 5: Pedidos recebidos do backend:', orders);
 
-        if (!orders || orders.length === 0) {
+        // Validação inicial dos dados retornados
+        if (!Array.isArray(orders)) {
+          console.error('Passo 5: Dados retornados não são uma lista de pedidos:', orders);
+          throw new Error('Os dados retornados do servidor não são uma lista válida de pedidos.');
+        }
+
+        if (orders.length === 0) {
           console.log('Passo 5: Nenhum pedido encontrado no backend.');
           orderList.innerHTML = '';
-          noOrdersMessage.textContent = 'Nenhum pedido encontrado. Verifique se os pedidos foram criados no sistema.';
+          noOrdersMessage.textContent = 'Nenhum pedido encontrado. Verifique se os pedidos foram criados no sistema ou se o servidor está funcionando corretamente.';
           noOrdersMessage.style.display = 'block';
           return;
         }
@@ -1065,9 +1073,10 @@
         const filterLoginType = document.getElementById('filter-login-type').value;
 
         const filteredOrders = orders.filter(order => {
-          const statusMatch = filterStatus === 'all' || order.status === filterStatus;
-          const methodMatch = filterMethod === 'all' || order.paymentMethod === filterMethod;
-          const loginTypeMatch = filterLoginType === 'all' || order.loginType === filterLoginType;
+          if (!order || typeof order !== 'object') return false; // Ignora pedidos inválidos
+          const statusMatch = filterStatus === 'all' || (order.status || '') === filterStatus;
+          const methodMatch = filterMethod === 'all' || (order.paymentMethod || '') === filterMethod;
+          const loginTypeMatch = filterLoginType === 'all' || (order.loginType || '') === filterLoginType;
           return statusMatch && methodMatch && loginTypeMatch;
         });
 
@@ -1080,9 +1089,15 @@
 
         noOrdersMessage.style.display = 'none';
         filteredOrders.forEach((order, index) => {
+          // Validação dos dados do pedido
+          if (!order.purchaseData || !order.customerDetails) {
+            console.warn(`Passo 5: Pedido no índice ${index} está incompleto:`, order);
+            return;
+          }
+
           // Calcular subtotal, taxa de entrega e total
           const subtotal = calculateSubtotal(order.items);
-          const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+          const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
           const total = subtotal + deliveryFee;
 
           // Gerar número do pedido (usando timestamp ou índice como fallback)
@@ -1092,8 +1107,8 @@
           row.innerHTML = `
             <td>${orderNumber}</td>
             <td>${formatDate(order.orderDate)}</td>
-            <td>${order.items?.length || 0}</td>
-            <td class="order-items">${order.items?.map(item => `<p>${item.name || 'Produto não especificado'} (x${item.quantity || 0})</p>`).join('') || 'Não informado'}</td>
+            <td>${Array.isArray(order.items) ? order.items.length : 0}</td>
+            <td class="order-items">${Array.isArray(order.items) ? order.items.map(item => `<p>${item.name || 'Produto não especificado'} (x${item.quantity || 0})</p>`).join('') : 'Não informado'}</td>
             <td>${formatCurrency(subtotal)}</td>
             <td>${formatCurrency(deliveryFee)}</td>
             <td>${formatCurrency(total)}</td>
@@ -1114,7 +1129,7 @@
       } catch (error) {
         console.error('Passo 5: Erro ao atualizar lista de pedidos:', error);
         orderList.innerHTML = '';
-        noOrdersMessage.textContent = `Erro ao carregar os pedidos: ${error.message}. Tente novamente mais tarde.`;
+        noOrdersMessage.textContent = `Erro ao carregar os pedidos: ${error.message}. O servidor pode estar offline ou os dados podem ter sido apagados devido à reinicialização do servidor.`;
         noOrdersMessage.style.display = 'block';
       }
     }
@@ -1128,9 +1143,13 @@
         }, 3, 2000);
         console.log('Passo 5: Pedidos para resumo financeiro:', orders);
 
+        if (!Array.isArray(orders)) {
+          throw new Error('Os dados retornados do servidor não são uma lista válida de pedidos.');
+        }
+
         const totalSales = orders.reduce((sum, order) => {
           const subtotal = calculateSubtotal(order.items);
-          const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+          const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
           return sum + (subtotal + deliveryFee);
         }, 0);
 
@@ -1138,7 +1157,7 @@
           .filter(order => order.paymentMethod === 'Pix')
           .reduce((sum, order) => {
             const subtotal = calculateSubtotal(order.items);
-            const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+            const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
             return sum + (subtotal + deliveryFee);
           }, 0);
 
@@ -1146,7 +1165,7 @@
           .filter(order => order.paymentMethod === 'Cartão')
           .reduce((sum, order) => {
             const subtotal = calculateSubtotal(order.items);
-            const deliveryFee = order.purchaseData?.address?.deliveryFee || 0;
+            const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
             return sum + (subtotal + deliveryFee);
           }, 0);
 
@@ -1324,15 +1343,21 @@
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         }, 3, 2000);
+        console.log('Passo 5: Pedidos carregados para edição:', orders);
+
+        if (!Array.isArray(orders)) {
+          throw new Error('Os dados retornados do servidor não são uma lista válida de pedidos.');
+        }
+
         const order = orders[index];
         if (!order) {
           console.error('Passo 5: Pedido não encontrado no índice:', index);
-          alert('Pedido não encontrado.');
+          alert('Pedido não encontrado. A lista pode ter sido alterada.');
           return;
         }
 
         document.getElementById('edit-order-index').value = index;
-        document.getElementById('edit-order-status').value = order.status;
+        document.getElementById('edit-order-status').value = order.status || 'Gerado';
         openModal('edit-order-modal');
       } catch (error) {
         console.error('Passo 5: Erro ao editar pedido:', error);
@@ -1351,17 +1376,20 @@
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         }, 3, 2000);
-        if (!orders || !Array.isArray(orders)) {
+        console.log('Passo 5: Pedidos carregados para salvar alterações:', orders);
+
+        if (!Array.isArray(orders)) {
           throw new Error('Lista de pedidos inválida retornada pelo backend.');
         }
 
         // Atualizar o status do pedido no índice especificado
         if (!orders[index]) {
-          throw new Error(`Pedido no índice ${index} não encontrado.`);
+          throw new Error(`Pedido no índice ${index} não encontrado. A lista pode ter sido alterada.`);
         }
         orders[index].status = newStatus;
 
         // Enviar o pedido atualizado para o backend
+        console.log('Passo 5: Enviando pedidos atualizados para /save-order:', orders);
         const saveResponse = await fetch(saveOrderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1371,6 +1399,9 @@
           const errorText = await saveResponse.text();
           throw new Error(`Erro ao salvar alterações: ${saveResponse.status} ${saveResponse.statusText} - ${errorText}`);
         }
+
+        const saveData = await saveResponse.json();
+        console.log('Passo 5: Resposta do backend após salvar:', saveData);
 
         closeModal('edit-order-modal');
         updateOrderList();
