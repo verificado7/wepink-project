@@ -4,135 +4,191 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>wepink :: Login</title>
-  <meta name="description" content="Faça login na sua conta Wepink">
+  <meta name="description" content="Faça login ou continue como convidado na Wepink">
   <meta name="copyright" content="WePink">
   <meta name="author" content="WePink">
   <meta name="country" content="BRA">
   <meta name="language" content="pt-BR">
-  <link rel="icon" href="/img/we.png" type="image/png">
-  <link rel="stylesheet" href="/styles.css">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="img/we.png" type="image/png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
   <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #f5f5f5 0%, #e0e7ff 100%);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+      overflow-x: hidden;
       transition: opacity 0.5s ease;
     }
+
     body.fade-out {
       opacity: 0;
     }
-    header, footer, section { padding: 20px; }
+
     .notification-bar {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: white;
       text-align: center;
       padding: 10px;
-      font-weight: bold;
+      font-weight: 600;
       font-size: 0.95rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
+
     .notification-bar a {
       color: white;
       text-decoration: none;
       transition: color 0.3s;
     }
+
     .notification-bar a:hover {
       color: #f0f0f0;
       text-decoration: underline;
     }
+
     .header-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 20px;
-      background: linear-gradient(90deg, #ffffff, #f9f9f9);
-      position: relative;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-radius: 0 0 12px 12px;
+      padding: 16px 24px;
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: background 0.3s ease;
     }
+
     .header-bar .logo-text {
       font-weight: 700;
       font-size: 1.5rem;
-      color: #ff2e82;
+      color: #fff;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      transition: color 0.3s ease;
     }
-    .header-icons { display: flex; gap: 10px; }
-    .header-icons svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
-    .header-icons svg:hover { stroke: #ff2e82; }
-    .menu-icon { background: none; border: none; cursor: pointer; }
-    .menu-icon svg { width: 24px; height: 24px; stroke: #333; stroke-width: 2; transition: stroke 0.3s; }
-    .menu-icon svg:hover { stroke: #ff2e82; }
+
+    .header-icons {
+      display: flex;
+      gap: 16px;
+      position: relative;
+    }
+
+    .header-icons a,
+    .menu-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .header-icons svg,
+    .menu-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      stroke-width: 2;
+      transition: stroke 0.3s ease, transform 0.3s ease;
+    }
+
+    .header-icons svg:hover,
+    .menu-icon svg:hover {
+      stroke: #ff2e82;
+      transform: scale(1.1);
+    }
+
     .login-section {
       max-width: 400px;
-      margin: 20px auto;
-      text-align: center;
-      position: relative;
-      background: linear-gradient(145deg, #ffffff, #f9f9f9);
+      margin: 40px auto;
       padding: 25px;
+      flex: 1;
+      animation: fadeIn 0.5s ease-in-out;
+      text-align: center;
+      background: #fff;
       border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
+
     .login-section:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     }
+
     .login-section h2 {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: #ff2e82;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      letter-spacing: 1.5px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
+
     .login-section .error-message {
       color: #ff2e82;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       margin: -2px 0 8px;
       display: none;
       background: #fff2f4;
       padding: 4px 8px;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
+
     .login-section .error-message.visible {
       display: block;
     }
+
     .login-section input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 12px 16px;
       margin: 8px 0;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 0.95rem;
-      box-sizing: border-box;
-      background: #f9f9f9;
+      background: #f9f9fb;
       transition: all 0.3s ease;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
+
     .login-section input:focus {
       border-color: #ff2e82;
       background: #fff;
-      box-shadow: 0 0 8px rgba(255,46,130,0.3);
+      box-shadow: 0 0 8px rgba(255, 46, 130, 0.3);
       outline: none;
     }
+
     .login-section input.invalid {
       border-color: #ff2e82;
       background: #fff2f4;
     }
+
     .login-section input::placeholder {
       color: #999;
       font-weight: normal;
       font-size: 0.95rem;
     }
+
     .login-section .password-wrapper {
       position: relative;
     }
+
     .login-section .password-wrapper .toggle-password {
       position: absolute;
       right: 10px;
@@ -140,6 +196,7 @@
       transform: translateY(-50%);
       cursor: pointer;
     }
+
     .login-section .password-wrapper .toggle-password svg {
       width: 20px;
       height: 20px;
@@ -147,9 +204,11 @@
       stroke-width: 2;
       transition: stroke 0.3s;
     }
+
     .login-section .password-wrapper .toggle-password svg:hover {
       stroke: #ff2e82;
     }
+
     .login-section .forgot-password {
       display: block;
       font-size: 0.875rem;
@@ -160,16 +219,19 @@
       font-weight: normal;
       transition: color 0.3s;
     }
+
     .login-section .forgot-password:hover {
       color: #e02974;
       text-decoration: underline;
     }
+
     .login-section .action-buttons {
       display: flex;
       flex-direction: column;
       gap: 10px;
       position: relative;
     }
+
     .login-section button {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: white;
@@ -180,55 +242,64 @@
       font-size: 1rem;
       cursor: pointer;
       width: 100%;
-      margin-top: 15px;
+      margin-top: 16px;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       text-transform: uppercase;
       letter-spacing: 1px;
       position: relative;
     }
+
     .login-section button:hover {
       background: linear-gradient(90deg, #e02974, #ff80b3);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
+
     .login-section button:disabled {
       background: #ccc;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
     }
+
     .login-section .guest-button {
       background: linear-gradient(90deg, #ffffff, #f9f9f9);
       color: #ff2e82;
       border: 2px solid #ff2e82;
     }
+
     .login-section .guest-button:hover {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
-      color: #fff;
+      color: white;
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
+
     .login-section .signup-link {
       font-size: 0.875rem;
       color: #ff2e82;
       text-decoration: none;
-      margin-top: 10px;
+      margin-top: 16px;
       display: inline-block;
       font-weight: normal;
       transition: color 0.3s;
     }
+
     .login-section .signup-link:hover {
       color: #e02974;
       text-decoration: underline;
     }
+
     .guest-details {
       display: none;
       margin-top: 20px;
     }
+
     .guest-details.active {
       display: block;
     }
+
     .spinner {
       display: none;
       position: absolute;
@@ -242,54 +313,82 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+
     .spinner.visible {
       display: block;
     }
+
     @keyframes spin {
       0% { transform: translate(-50%, -50%) rotate(0deg); }
       100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
+
     button.loading {
       opacity: 0.7;
       cursor: not-allowed;
     }
+
     footer {
       background: linear-gradient(90deg, #ff2e82, #ff99cc);
       color: #fff;
-      padding: 25px;
+      padding: 40px 16px;
       border-top-left-radius: 16px;
       border-top-right-radius: 16px;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+      margin-top: auto;
+      transition: background 0.3s ease;
     }
+
     footer .footer-logo {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 15px;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      margin-bottom: 24px;
+      text-align: center;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
     }
+
+    footer .footer-logo:hover {
+      transform: scale(1.05);
+    }
+
     footer .footer-links {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
     }
+
     footer .footer-links a {
       color: #fff;
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 400;
-      transition: color 0.3s;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      text-transform: capitalize;
     }
+
     footer .footer-links a:hover {
-      color: #f0f0f0;
-      text-decoration: underline;
+      color: #ff2e82;
+      background: #fff;
+      transform: translateY(-2px);
     }
+
+    footer .footer-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
     footer .social-links {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 25px;
+      gap: 16px;
+      margin-bottom: 28px;
     }
+
     footer .social-links a {
       background-color: #fff;
       border-radius: 50%;
@@ -299,64 +398,203 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     }
+
     footer .social-links a:hover {
       transform: scale(1.1);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      background: #f0f0f0;
     }
+
+    footer .social-links a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
     footer .social-links img {
       width: 24px;
       height: 24px;
+      transition: filter 0.3s ease;
     }
+
+    footer .social-links a:hover img {
+      filter: brightness(0.9);
+    }
+
     footer .payment-methods {
       text-align: center;
-      margin-top: 25px;
+      margin-top: 24px;
     }
+
     footer .payment-methods h4 {
       font-size: 1rem;
-      margin-bottom: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
+
     footer .payment-methods img {
-      margin: 0 5px;
+      margin: 0 6px;
       height: 30px;
-      filter: brightness(0) invert(1);
+      border-radius: 4px;
+      background: #fff;
+      padding: 2px;
+      transition: transform 0.3s ease, filter 0.3s ease;
     }
+
+    footer .payment-methods img:hover {
+      transform: scale(1.1);
+      filter: brightness(0.9);
+    }
+
     footer .payment-methods img.pix-icon {
       height: 40px;
     }
+
+    footer .footer-info {
+      text-align: center;
+      margin-top: 24px;
+    }
+
     footer .footer-info p {
       font-size: 0.85rem;
-      margin: 5px 0;
+      margin: 6px 0;
+      opacity: 0.9;
     }
+
     footer .footer-info a {
       color: #fff;
-      transition: color 0.3s;
+      text-decoration: none;
+      transition: color 0.3s ease, text-decoration 0.3s ease;
     }
+
     footer .footer-info a:hover {
       color: #f0f0f0;
+      text-decoration: underline;
     }
+
+    footer .footer-info a:focus {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
     @media (max-width: 600px) {
-      .header-bar .logo-text { font-size: 1.2rem; }
-      .header-icons svg { width: 20px; height: 20px; }
-      .menu-icon svg { width: 20px; height: 20px; }
-      .login-section { padding: 20px; }
-      .login-section h2 { font-size: 1.1rem; }
-      .login-section .error-message { font-size: 0.7rem; }
-      .login-section input { font-size: 0.85rem; }
-      .login-section input::placeholder { font-size: 0.85rem; }
-      .login-section button { font-size: 0.9rem; }
-      .login-section .forgot-password { font-size: 0.75rem; }
-      .login-section .signup-link { font-size: 0.75rem; }
-      .spinner { width: 20px; height: 20px; }
-      footer .footer-logo { font-size: 1.2rem; }
-      footer .footer-links a { font-size: 0.8rem; }
-      footer .payment-methods h4 { font-size: 0.9rem; }
-      footer .social-links img { width: 20px; height: 20px; }
-      footer .social-links a { width: 35px; height: 35px; }
+      .notification-bar {
+        font-size: 0.85rem;
+        padding: 8px;
+      }
+
+      .header-bar {
+        padding: 12px 16px;
+      }
+
+      .header-bar .logo-text {
+        font-size: 1.2rem;
+      }
+
+      .header-icons svg,
+      .menu-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .login-section {
+        padding: 20px;
+        margin: 24px auto;
+      }
+
+      .login-section h2 {
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+      }
+
+      .login-section input {
+        font-size: 0.85rem;
+      }
+
+      .login-section input::placeholder {
+        font-size: 0.85rem;
+      }
+
+      .login-section .error-message {
+        font-size: 0.75rem;
+      }
+
+      .login-section button {
+        font-size: 0.9rem;
+        padding: 12px 16px;
+      }
+
+      .login-section .forgot-password,
+      .login-section .signup-link {
+        font-size: 0.75rem;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+      }
+
+      footer {
+        padding: 32px 12px;
+      }
+
+      footer .footer-logo {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+      }
+
+      footer .footer-links {
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      footer .footer-links a {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+      }
+
+      footer .social-links {
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      footer .social-links a {
+        width: 35px;
+        height: 35px;
+      }
+
+      footer .social-links img {
+        width: 20px;
+        height: 20px;
+      }
+
+      footer .payment-methods h4 {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+      }
+
+      footer .payment-methods img {
+        margin: 0 6px;
+        height: 28px;
+      }
+
+      footer .payment-methods img.pix-icon {
+        height: 38px;
+      }
+
+      footer .footer-info p {
+        font-size: 0.8rem;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
@@ -375,12 +613,16 @@
     </button>
     <div class="logo-text">wepink</div>
     <div class="header-icons">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
+      <a href="login.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </a>
+      <a href="product.html">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </a>
     </div>
   </div>
 
@@ -422,7 +664,7 @@
   <!-- Rodapé -->
   <footer>
     <div class="footer-logo">wepink</div>
-    <div class="footer-links">
+    <nav class="footer-links" role="navigation" aria-label="Links do rodapé">
       <a href="#">Sobre nós</a>
       <a href="#">Central de ajuda</a>
       <a href="#">Troca e devoluções</a>
@@ -431,29 +673,29 @@
       <a href="#">Trabalhe conosco</a>
       <a href="#">Consulte sua entrega</a>
       <a href="#">Franquias</a>
-    </div>
-    <div class="social-links">
-      <a href="https://www.instagram.com" target="_blank">
-        <img src="/img/instagram.png" alt="Instagram">
+    </nav>
+    <div class="social-links" role="navigation" aria-label="Links sociais">
+      <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
+        <img src="img/instagram.png" alt="Ícone do Instagram" onerror="this.src='https://via.placeholder.com/24?text=IG';">
       </a>
-      <a href="https://www.facebook.com" target="_blank">
-        <img src="/img/facebook.png" alt="Facebook">
+      <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
+        <img src="img/facebook.png" alt="Ícone do Facebook" onerror="this.src='https://via.placeholder.com/24?text=FB';">
       </a>
-      <a href="https://www.youtube.com" target="_blank">
-        <img src="/img/youtube.png" alt="YouTube">
+      <a href="https://www.youtube.com" target="_blank" aria-label="YouTube">
+        <img src="img/youtube.png" alt="Ícone do YouTube" onerror="this.src='https://via.placeholder.com/24?text=YT';">
       </a>
-      <a href="https://www.whatsapp.com" target="_blank">
-        <img src="/img/whatsapp.png" alt="WhatsApp">
+      <a href="https://www.whatsapp.com" target="_blank" aria-label="WhatsApp">
+        <img src="img/whatsapp.png" alt="Ícone do WhatsApp" onerror="this.src='https://via.placeholder.com/24?text=WA';">
       </a>
     </div>
     <div class="payment-methods">
       <h4>Formas de pagamento</h4>
-      <img src="/img/visa.png" alt="Visa" height="30">
-      <img src="/img/mastercard.png" alt="Mastercard" height="30">
-      <img src="/img/elo.png" alt="Elo" height="30">
-      <img src="/img/amex.png" alt="Amex" height="30">
-      <img src="/img/boleto.png" alt="Boleto" height="30">
-      <img src="/img/pix.png" alt="Pix" class="pix-icon" height="40">
+      <img src="img/visa.png" alt="Ícone da bandeira Visa" onerror="this.src='https://via.placeholder.com/30?text=Visa';">
+      <img src="img/mastercard.png" alt="Ícone da bandeira Mastercard" onerror="this.src='https://via.placeholder.com/30?text=MC';">
+      <img src="img/elo.png" alt="Ícone da bandeira Elo" onerror="this.src='https://via.placeholder.com/30?text=Elo';">
+      <img src="img/amex.png" alt="Ícone da bandeira Amex" onerror="this.src='https://via.placeholder.com/30?text=Amex';">
+      <img src="img/boleto.png" alt="Ícone do método Boleto" onerror="this.src='https://via.placeholder.com/30?text=Boleto';">
+      <img src="img/pix.png" alt="Ícone do método Pix" class="pix-icon" onerror="this.src='https://via.placeholder.com/40?text=Pix';">
     </div>
     <div class="footer-info">
       <p>Política de Privacidade | Termos de Uso</p>
@@ -630,15 +872,18 @@
 
     // Função para simular o login e redirecionar para payment.html
     function simulateLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      if (!email || !password) return;
+      if (!email || !password) {
+        console.error('E-mail ou senha não preenchidos.');
+        return;
+      }
 
       showLoadingSpinner('login-button', 'login-spinner');
 
       const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Dados de pendingPurchase após login:', purchaseData);
+      console.log('Dados de pendingPurchase antes do login:', purchaseData);
 
       if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
         const errorMessage = document.getElementById('error-message');
@@ -652,16 +897,26 @@
       const simulatedUserData = {
         name: 'Usuário Logado',
         cpf: '98765432100',
-        email: email
+        email: email,
+        password: password
       };
 
-      // Atualizar pendingPurchase com os dados do usuário
+      // Atualizar pendingPurchase com os dados do usuário logado
       purchaseData.name = simulatedUserData.name;
       purchaseData.cpf = simulatedUserData.cpf;
       purchaseData.email = simulatedUserData.email;
+      purchaseData.password = simulatedUserData.password; // Salvar a senha para auditoria
       purchaseData.loginType = 'User';
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
       console.log('pendingPurchase atualizado com dados do usuário logado:', purchaseData);
+
+      // Verificar se os dados foram salvos corretamente
+      const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
+      if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.password || savedPurchaseData.loginType !== 'User') {
+        console.error('Erro ao salvar dados do usuário no pendingPurchase:', savedPurchaseData);
+        alert('Erro ao processar o login. Tente novamente.');
+        return;
+      }
 
       setTimeout(() => window.location.href = 'payment.html', 500);
     }
@@ -672,12 +927,15 @@
       const email = document.getElementById('guest-email').value.trim();
       const cpf = document.getElementById('guest-cpf').value.trim();
 
-      if (!name || !email || !cpf) return;
+      if (!name || !email || !cpf) {
+        console.error('Dados de convidado incompletos.');
+        return;
+      }
 
       showLoadingSpinner('guest-proceed-button', 'guest-proceed-spinner');
 
       const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Dados de pendingPurchase ao prosseguir como convidado:', purchaseData);
+      console.log('Dados de pendingPurchase antes de prosseguir como convidado:', purchaseData);
 
       if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
         const errorMessage = document.getElementById('error-message');
@@ -692,8 +950,17 @@
       purchaseData.email = email;
       purchaseData.cpf = cpf;
       purchaseData.loginType = 'Guest';
+      purchaseData.password = null; // Garantir que não há senha para convidado
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
       console.log('pendingPurchase atualizado com dados do convidado:', purchaseData);
+
+      // Verificar se os dados foram salvos corretamente
+      const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
+      if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.cpf || savedPurchaseData.loginType !== 'Guest') {
+        console.error('Erro ao salvar dados do convidado no pendingPurchase:', savedPurchaseData);
+        alert('Erro ao prosseguir como convidado. Tente novamente.');
+        return;
+      }
 
       setTimeout(() => window.location.href = 'payment.html', 500);
     }
