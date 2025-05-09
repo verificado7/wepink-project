@@ -42,7 +42,7 @@ app.post('/create-pix', async (req, res) => {
   }
 });
 
-// Nova rota para salvar pedidos
+// Rota para salvar pedidos
 app.post('/save-order', (req, res) => {
   try {
     const order = req.body;
@@ -55,10 +55,21 @@ app.post('/save-order', (req, res) => {
   }
 });
 
-// Nova rota para recuperar pedidos
+// Rota para recuperar pedidos
 app.get('/get-orders', (req, res) => {
   console.log('Pedidos recuperados do backend:', orders);
   res.status(200).json(orders);
+});
+
+// Configuração do CORS para permitir chamadas de diferentes origens (opcional, se necessário)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
 });
 
 const PORT = process.env.PORT || 3000;
