@@ -1824,22 +1824,9 @@
   const neighborhood = neighborhoodInput.style.display === 'block' ? neighborhoodInput.value.trim() : neighborhoodElement.textContent;
   const selectedOption = document.querySelector('.delivery-options button.active');
 
-  cepInput.classList.remove('invalid');
-  errorCepInput.classList.remove('visible');
-  errorCepInput.textContent = '';
-  streetInput.classList.remove('invalid');
-  errorStreetInput.classList.remove('visible');
-  errorStreetInput.textContent = '';
-  neighborhoodInput.classList.remove('invalid');
-  errorNeighborhoodInput.classList.remove('visible');
-  errorNeighborhoodInput.textContent = '';
-  numberInput.classList.remove('invalid');
-  errorNumberInput.classList.remove('visible');
-  errorNumberInput.textContent = '';
-  errorDeliveryOption.classList.remove('visible');
-  errorDeliveryOption.textContent = '';
-
+  // Validações
   if (cartItems.length === 0) {
+    console.error('Erro: Carrinho vazio.');
     alert('Seu carrinho está vazio. Adicione produtos antes de prosseguir.');
     return;
   }
@@ -1885,27 +1872,32 @@
     return;
   }
 
+  // Montar o endereço
   const cartAddress = JSON.parse(localStorage.getItem('cartAddress')) || {};
   cartAddress.street = street;
   cartAddress.neighborhood = neighborhood;
   cartAddress.number = number;
   cartAddress.complement = complementInput.value || '';
 
+  // Montar os dados do pedido
   const purchaseData = {
     cartItems: cartItems,
     address: cartAddress
   };
 
+  // Salvar no localStorage
   localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-  console.log('Dados salvos em pendingPurchase no product.html:', purchaseData);
+  console.log('Passo 1: Dados salvos em pendingPurchase no product.html:', purchaseData);
 
+  // Verificar se os dados foram salvos corretamente
   const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
-  if (!savedPurchaseData || !savedPurchaseData.cartItems || savedPurchaseData.cartItems.length === 0) {
-    console.error('Erro ao salvar pendingPurchase:', savedPurchaseData);
+  if (!savedPurchaseData || !savedPurchaseData.cartItems || savedPurchaseData.cartItems.length === 0 || !savedPurchaseData.address) {
+    console.error('Erro ao salvar pendingPurchase no product.html:', savedPurchaseData);
     alert('Erro ao salvar os dados do pedido. Tente novamente.');
     return;
   }
 
+  // Redirecionar para login.html
   document.body.classList.add('fade-out');
   setTimeout(() => window.location.href = 'login.html', 500);
 }
