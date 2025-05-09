@@ -916,6 +916,8 @@
       deliveryFee.textContent = formatCurrency(fee);
       orderTotal.textContent = formatCurrency(total);
       console.log('Resumo do pedido atualizado:', { subtotal, fee, total, purchase });
+
+      localStorage.setItem('lastPaymentTotal', total);
     }
 
     function validatePixForm() {
@@ -1231,6 +1233,7 @@
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Pagamento via cartão processado e pedido salvo:', newOrder);
 
+        localStorage.setItem('lastPaymentTotal', total);
         localStorage.removeItem('pendingPurchase');
         localStorage.removeItem('cartItems');
         localStorage.removeItem('cartAddress');
