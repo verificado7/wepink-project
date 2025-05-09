@@ -354,24 +354,48 @@
       return `R$ ${value.toFixed(2).replace('.', ',')}`;
     }
 
+    // Função para validar se os produtos carregados são válidos
+    function isValidProductArray(productArray) {
+      if (!Array.isArray(productArray) || productArray.length === 0) {
+        return false;
+      }
+      return productArray.every(product => {
+        return (
+          product &&
+          typeof product === 'object' &&
+          product.id &&
+          product.name &&
+          product.description &&
+          product.fullDescription &&
+          product.notes &&
+          typeof product.priceOld === 'number' &&
+          typeof product.priceNew === 'number' &&
+          typeof product.installmentsPerUnit === 'number' &&
+          product.image &&
+          product.deliveryFees &&
+          typeof product.deliveryFees === 'object'
+        );
+      });
+    }
+
     // Função para carregar os produtos dinamicamente
     let products = [];
     function loadProducts() {
       try {
         const storedProducts = JSON.parse(localStorage.getItem('wepink_products'));
-        if (storedProducts && Array.isArray(storedProducts) && storedProducts.length > 0) {
+        if (storedProducts && isValidProductArray(storedProducts)) {
           products = storedProducts; // Usar os produtos já salvos no localStorage
-          console.log('Produtos carregados do localStorage:', products);
+          console.log('Passo 1: Produtos carregados do localStorage:', products);
         } else {
-          products = defaultProducts; // Fallback para defaultProducts se localStorage estiver vazio
+          products = defaultProducts; // Fallback para defaultProducts se localStorage estiver vazio ou corrompido
           localStorage.setItem('wepink_products', JSON.stringify(products)); // Inicializar o localStorage
-          console.log('Produtos inicializados com defaultProducts:', products);
+          console.log('Passo 1: Produtos inicializados com defaultProducts:', products);
         }
       } catch (error) {
-        console.error('Erro ao carregar produtos do localStorage:', error);
+        console.error('Passo 1: Erro ao carregar produtos do localStorage:', error);
         products = defaultProducts; // Fallback em caso de erro
         localStorage.setItem('wepink_products', JSON.stringify(products));
-        console.log('Produtos inicializados com defaultProducts após erro:', products);
+        console.log('Passo 1: Produtos inicializados com defaultProducts após erro:', products);
       }
 
       const productGrid = document.getElementById('product-grid');
@@ -393,21 +417,29 @@
     }
 
     // Carregar os produtos ao iniciar a página
-    loadProducts();
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProducts();
+    });
 
     // Escutar mudanças no localStorage para atualizar a lista de produtos dinamicamente
     window.addEventListener('storage', function(event) {
       if (event.key === 'wepink_products') {
-        console.log('Mudança detectada no localStorage para wepink_products:', event.newValue);
+        console.log('Passo 1: Mudança detectada no localStorage para wepink_products:', event.newValue);
         loadProducts(); // Recarregar os produtos quando o localStorage for atualizado
       }
+    });
+
+    // Função para recarregar os produtos manualmente (para atualizações na mesma aba)
+    window.addEventListener('focus', () => {
+      console.log('Passo 1: Aba ganhou foco, verificando atualizações no localStorage...');
+      loadProducts(); // Recarregar os produtos ao voltar para a aba
     });
 
     // Incrementar o contador de acessos para o admin
     let accessCount = parseInt(localStorage.getItem('accessCount')) || 0;
     accessCount++;
     localStorage.setItem('accessCount', accessCount.toString());
-    console.log('Contador de acessos atualizado:', accessCount);
+    console.log('Passo 1: Contador de acessos atualizado:', accessCount);
 
     // Função para rolar ao topo
     document.querySelector('.scroll-to-top').addEventListener('click', () => {
