@@ -366,6 +366,24 @@
     .copied-message.visible {
       display: block;
     }
+    .confirm-payment-button {
+      background: linear-gradient(90deg, #ff2e82, #ff99cc);
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+    .confirm-payment-button:hover {
+      background: linear-gradient(90deg, #e02974, #ff80b3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
     .success-message {
       display: none;
       background: #fff;
@@ -754,6 +772,7 @@
           <code id="pix-code-text" role="textbox" aria-readonly="true"></code>
           <button class="copy-button" id="copy-pix-code" aria-label="Copiar código PIX">Copiar</button>
           <p class="copied-message" id="copied-message" role="status">Código Copiado!</p>
+          <button class="confirm-payment-button" id="confirm-pix-payment" aria-label="Confirmar pagamento via Pix">Confirmar Pagamento</button>
         </div>
         <div id="pix-qr-manual" class="pix-qr-container">
           <p>Escaneie o QR Code:</p>
@@ -885,19 +904,6 @@
       input.value = formatted;
     }
 
-    function formatCPFDisplay(cpf) {
-      if (!cpf) return 'Não informado';
-      let value = cpf.replace(/\D/g, '').slice(0, 11);
-      if (value.length < 11) return 'CPF inválido';
-      let formatted = '';
-      for (let i = 0; i < value.length; i++) {
-        if (i === 3 || i === 6) formatted += '.';
-        if (i === 9) formatted += '-';
-        formatted += value[i];
-      }
-      return formatted;
-    }
-
     function cleanCPFInput(input) {
       input.value = input.value.replace(/\D/g, '').slice(0, 11);
     }
@@ -967,7 +973,8 @@
 
       if (!purchase.cartItems || purchase.cartItems.length === 0) {
         console.log('Nenhum item encontrado no carrinho. Redirecionando para product.html');
-        window.location.href = 'product.html';
+        showErrorScreen('Nenhum item encontrado no carrinho. Você será redirecionado.');
+        setTimeout(() => window.location.href = 'product.html', 3000);
         return;
       }
 
@@ -978,7 +985,14 @@
           subtotal += item.priceNew * item.quantity;
           const itemElement = document.createElement('div');
           itemElement.className = 'order-item';
-          itemElement.innerHTML = `<img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}"><div class="order-item-details"><p>${item.name || 'Produto'}</p><p>Quantidade: ${item.quantity}</p><p class="price">${formatCurrency(item.priceNew * item.quantity)}</p></div>`;
+          itemElement.innerHTML = `
+            <img src="${item.image || 'https://via.placeholder.com/70'}" alt="${item.name || 'Produto'}">
+            <div class="order-item-details">
+              <p>${item.name || 'Produto'}</p>
+              <p>Quantidade: ${item.quantity}</p>
+              <p class="price">${formatCurrency(item.priceNew * item.quantity)}</p>
+            </div>
+          `;
           orderItems.appendChild(itemElement);
         }
       });
@@ -987,7 +1001,7 @@
       const total = subtotal + fee;
       deliveryFee.textContent = formatCurrency(fee);
       orderTotal.textContent = formatCurrency(total);
-      console.log('Resumo do pedido atualizado:', { subtotal, fee, total });
+      console.log('Resumo do pedido atualizado:', { subtotal, fee, total, purchase });
     }
 
     function validatePixForm() {
@@ -1128,13 +1142,6 @@
         orders.push(newOrder);
         localStorage.setItem('adminOrders', JSON.stringify(orders));
         console.log('Código PIX gerado com sucesso e pedido salvo:', newOrder);
-
-        localStorage.removeItem('pendingPurchase');
-        localStorage.removeItem('cartItems');
-        localStorage.removeItem('cartAddress');
-        console.log('Dados do localStorage limpos após pagamento Pix');
-
-        showSuccessMessage();
       } catch (error) {
         console.error('Erro ao gerar Pix:', error.message);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
@@ -1142,6 +1149,15 @@
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
       }
+    }
+
+    function confirmPixPayment() {
+      localStorage.removeItem('pendingPurchase');
+      localStorage.removeItem('cartItems');
+      localStorage.removeItem('cartAddress');
+      console.log('Dados do localStorage limpos após confirmar pagamento Pix');
+
+      showSuccessMessage();
     }
 
     function validateCardForm() {
@@ -1324,6 +1340,7 @@
 
       const generatePixButton = document.getElementById('generate-pix-button');
       const copyPixCodeButton = document.getElementById('copy-pix-code');
+      const confirmPixButton = document.getElementById('confirm-pix-payment');
       const pixNameInput = document.getElementById('pix-payer-name');
       const pixCPFInput = document.getElementById('pix-payer-cpf');
       const pixEmailInput = document.getElementById('pix-email-input');
@@ -1370,6 +1387,8 @@
           showErrorScreen('Erro ao copiar o código PIX: ' + err.message);
         });
       });
+
+      confirmPixButton.addEventListener('click', confirmPixPayment);
 
       [cardNameInput, cardCPFInput, cardEmailInput, cardNumberInput, expMonthInput, expYearInput, cvvInput, passwordInput].forEach(input => {
         input.addEventListener('input', validateCardForm);
