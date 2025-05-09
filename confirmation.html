@@ -28,6 +28,11 @@
       color: #333;
       line-height: 1.6;
       overflow-x: hidden;
+      transition: opacity 0.5s ease;
+    }
+
+    body.fade-out {
+      opacity: 0;
     }
 
     .header-bar {
@@ -351,8 +356,12 @@
 
   <main class="confirmation-section" role="main">
     <h2>Compra Efetuada com Sucesso!</h2>
-    <div class="confirmation-details" id="confirmation-details"></div>
-    <button onclick="window.location.href='index.html'" aria-label="Voltar para a página inicial">Voltar para a Página Inicial</button>
+    <div class="confirmation-details" id="confirmation-details">
+      <p><strong>Método de Pagamento:</strong> <span id="payment-method"></span></p>
+      <p><strong>Valor Total:</strong> <span id="total-amount"></span></p>
+      <p><strong>Data:</strong> <span id="order-date"></span></p>
+    </div>
+    <button onclick="returnToHome()" aria-label="Voltar para a página inicial">Voltar para a Página Inicial</button>
   </main>
 
   <footer role="contentinfo">
@@ -392,30 +401,38 @@
 
   <script>
     function formatCurrency(value) {
-      return `R$ ${value.toFixed(2).replace('.', ',')}`;
+      return `R$ ${parseFloat(value || 0).toFixed(2).replace('.', ',')}`;
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Data inválida';
+      return date.toLocaleString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+      });
+    }
+
+    function returnToHome() {
+      document.body.classList.add('fade-out');
+      setTimeout(() => window.location.href = 'index.html', 500);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const confirmationDetails = document.getElementById('confirmation-details');
-      const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      const paymentMethodElement = document.getElementById('payment-method');
+      const totalAmountElement = document.getElementById('total-amount');
+      const orderDateElement = document.getElementById('order-date');
+
       const orders = JSON.parse(localStorage.getItem('adminOrders')) || [];
       const lastOrder = orders[orders.length - 1] || {};
+      const total = localStorage.getItem('lastPaymentTotal') || 0;
 
-      let total = 0;
-      if (purchase.cartItems) {
-        purchase.cartItems.forEach(item => {
-          if (item.priceNew && item.quantity) {
-            total += item.priceNew * item.quantity;
-          }
-        });
-        total += purchase.address?.deliveryFee || 0;
-      }
-
-      confirmationDetails.innerHTML = `
-        <p><strong>Método de Pagamento:</strong> ${lastOrder.paymentMethod || 'Cartão'}</p>
-        <p><strong>Total:</strong> ${formatCurrency(total)}</p>
-        <p><strong>Data:</strong> ${lastOrder.orderDate ? new Date(lastOrder.orderDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</p>
-      `;
+      paymentMethodElement.textContent = lastOrder.paymentMethod || 'Cartão';
+      totalAmountElement.textContent = formatCurrency(total);
+      orderDateElement.textContent = lastOrder.orderDate ? formatDate(lastOrder.orderDate) : formatDate(new Date());
     });
   </script>
 </body>
