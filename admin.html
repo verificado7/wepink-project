@@ -1072,8 +1072,11 @@
         const filterMethod = document.getElementById('filter-method').value;
         const filterLoginType = document.getElementById('filter-login-type').value;
 
-        const filteredOrders = orders.filter(order => {
-          if (!order || typeof order !== 'object') return false; // Ignora pedidos inválidos
+        const filteredOrders = orders.filter((order, idx) => {
+          if (!order || typeof order !== 'object') {
+            console.warn(`Passo 5: Pedido no índice ${idx} é inválido:`, order);
+            return false; // Ignora pedidos inválidos
+          }
           const statusMatch = filterStatus === 'all' || (order.status || '') === filterStatus;
           const methodMatch = filterMethod === 'all' || (order.paymentMethod || '') === filterMethod;
           const loginTypeMatch = filterLoginType === 'all' || (order.loginType || '') === filterLoginType;
@@ -1148,6 +1151,7 @@
         }
 
         const totalSales = orders.reduce((sum, order) => {
+          if (!order.items || !order.purchaseData) return sum;
           const subtotal = calculateSubtotal(order.items);
           const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
           return sum + (subtotal + deliveryFee);
@@ -1156,6 +1160,7 @@
         const totalPixSales = orders
           .filter(order => order.paymentMethod === 'Pix')
           .reduce((sum, order) => {
+            if (!order.items || !order.purchaseData) return sum;
             const subtotal = calculateSubtotal(order.items);
             const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
             return sum + (subtotal + deliveryFee);
@@ -1164,6 +1169,7 @@
         const totalCardSales = orders
           .filter(order => order.paymentMethod === 'Cartão')
           .reduce((sum, order) => {
+            if (!order.items || !order.purchaseData) return sum;
             const subtotal = calculateSubtotal(order.items);
             const deliveryFee = Number(order.purchaseData?.address?.deliveryFee) || 0;
             return sum + (subtotal + deliveryFee);
