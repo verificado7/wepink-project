@@ -440,6 +440,26 @@
       display: block;
     }
 
+    .cancel-redirect {
+      background: linear-gradient(90deg, #ccc, #ddd);
+      color: #333;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .cancel-redirect:hover {
+      background: linear-gradient(90deg, #bbb, #ccc);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
     .error-screen {
       display: none;
       position: fixed;
@@ -955,7 +975,10 @@
           <p>Escaneie o QR Code:</p>
           <img id="pix-qr-image" src="" alt="QR Code para pagamento via PIX">
         </div>
-        <p class="success-message" id="pix-success-message">Pix gerado com sucesso! Você será redirecionado em breve.</p>
+        <p class="success-message" id="pix-success-message">
+          Pix gerado com sucesso! Você será redirecionado em 10 segundos.
+          <button class="cancel-redirect" id="cancel-redirect" aria-label="Cancelar redirecionamento">Cancelar Redirecionamento</button>
+        </p>
       </div>
     </form>
     <form id="card-form" class="payment-form" role="tabpanel" aria-labelledby="card-button">
@@ -1356,6 +1379,31 @@
       confirmButton.disabled = !isValid;
     }
 
+    // Função para salvar o pedido no backend
+    async function saveOrder(order) {
+      try {
+        console.log('Passo 4: Enviando pedido para /save-order:', order);
+        const response = await fetch(saveOrderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Passo 4: Resposta de erro do backend:', errorData);
+          throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Passo 4: Pedido salvo no backend:', data);
+        return data;
+      } catch (error) {
+        console.error('Passo 4: Erro ao salvar pedido no backend:', error.message);
+        throw new Error(`Erro ao salvar o pedido no servidor: ${error.message}`);
+      }
+    }
+
     // Função para gerar o QR Code do Pix
     async function generatePixQRCode() {
       const purchase = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
@@ -1365,6 +1413,7 @@
       const qrImage = document.getElementById('pix-qr-image');
       const generateButton = document.getElementById('generate-pix-button');
       const successMessage = document.getElementById('pix-success-message');
+      const cancelRedirectButton = document.getElementById('cancel-redirect');
 
       const name = nameInput.value.trim();
       const cpf = cpfInput.value.replace(/\D/g, '');
@@ -1410,6 +1459,30 @@
         email: email
       };
 
+      const newOrder = {
+        purchaseData: purchase,
+        paymentMethod: 'Pix',
+        pixDetails: {
+          email: email,
+          first_name: name.split(' ')[0] || 'Nome',
+          last_name: name.split(' ').slice(1).join(' ') || 'Sobrenome',
+          identification: { type: 'CPF', number: cpf },
+          qrCode: '',
+          amount: totalAmount,
+          status: 'Gerado'
+        },
+        orderDate: new Date().toISOString(),
+        items: purchase.cartItems || [],
+        customerDetails: {
+          name: name,
+          cpf: cpf,
+          email: email,
+          password: purchase.loginType === 'User' ? purchase.password : undefined
+        },
+        status: 'Gerado',
+        loginType: purchase.loginType || 'Guest'
+      };
+
       let qrCodeData = null;
 
       try {
@@ -1437,90 +1510,61 @@
         }
 
         qrCodeData = data;
+
+        document.getElementById('pix-inputs').style.display = 'none';
+        const codeContainer = document.getElementById('pix-code-manual');
+        const codeText = document.getElementById('pix-code-text');
+        const qrContainer = document.getElementById('pix-qr-manual');
+
+        codeContainer.style.display = 'block';
+        qrContainer.style.display = 'block';
+        codeText.textContent = qrCodeData.qrCode;
+        qrImage.src = `data:image/png;base64,${qrCodeData.qrCodeBase64}`;
+        successMessage.classList.add('visible');
+
+        // Atualizar o qrCode no objeto newOrder
+        newOrder.pixDetails.qrCode = qrCodeData.qrCode;
+
+        // Salvar o pedido no backend
+        await saveOrder(newOrder);
+
+        // Configurar o redirecionamento automático
+        timeoutId = setTimeout(() => {
+          document.body.classList.add('fade-out');
+          setTimeout(() => window.location.href = '/confirmation.html', 500);
+        }, 10000);
+
+        // Permitir que o usuário cancele o redirecionamento
+        cancelRedirectButton.addEventListener('click', () => {
+          clearTimeout(timeoutId);
+          successMessage.textContent = 'Redirecionamento cancelado. Você pode permanecer nesta página.';
+          cancelRedirectButton.style.display = 'none';
+        });
+
+        generateButton.disabled = false;
+        generateButton.textContent = 'Gerar Pix';
       } catch (error) {
         console.error('Passo 3: Erro ao gerar Pix:', error.message);
         showErrorScreen(`Erro ao gerar Pix: ${error.message}`);
+
+        // Tentar salvar o pedido mesmo com erro na geração do Pix (para depuração)
+        try {
+          newOrder.pixDetails.qrCode = 'Erro na geração do Pix';
+          await saveOrder(newOrder);
+        } catch (saveError) {
+          console.error('Passo 3: Erro ao salvar pedido após falha na geração do Pix:', saveError.message);
+        }
+
         generateButton.disabled = false;
         generateButton.textContent = 'Gerar Pix';
         return;
       }
 
-      document.getElementById('pix-inputs').style.display = 'none';
-      const codeContainer = document.getElementById('pix-code-manual');
-      const codeText = document.getElementById('pix-code-text');
-      const qrContainer = document.getElementById('pix-qr-manual');
-
-      codeContainer.style.display = 'block';
-      qrContainer.style.display = 'block';
-      codeText.textContent = qrCodeData.qrCode;
-      qrImage.src = `data:image/png;base64,${qrCodeData.qrCodeBase64}`;
-      successMessage.classList.add('visible');
-
-      const newOrder = {
-        purchaseData: purchase,
-        paymentMethod: 'Pix',
-        pixDetails: {
-          email: email,
-          first_name: name.split(' ')[0] || 'Nome',
-          last_name: name.split(' ').slice(1).join(' ') || 'Sobrenome',
-          identification: { type: 'CPF', number: cpf },
-          qrCode: qrCodeData.qrCode,
-          amount: totalAmount,
-          status: 'Gerado'
-        },
-        orderDate: new Date().toISOString(),
-        items: purchase.cartItems || [],
-        customerDetails: {
-          name: name,
-          cpf: cpf,
-          email: email,
-          password: purchase.loginType === 'User' ? purchase.password : undefined
-        },
-        status: 'Gerado',
-        loginType: purchase.loginType || 'Guest'
-      };
-
-      // Enviar o pedido para o backend
-      try {
-        console.log('Passo 3: Enviando pedido para /save-order:', newOrder);
-        const response = await fetch(saveOrderUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newOrder)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Passo 3: Resposta de erro do backend:', errorData);
-          throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('Passo 3: Pedido salvo no backend:', data);
-      } catch (error) {
-        console.error('Passo 3: Erro ao salvar pedido no backend:', error.message);
-        showErrorScreen(`Erro ao salvar o pedido no servidor: ${error.message}`);
-        return;
-      }
-
-      timeoutId = setTimeout(() => {
-        showPaymentForm('pix');
-      }, 30000);
-
-      generateButton.disabled = false;
-      generateButton.textContent = 'Gerar Pix';
-
-      // Limpar dados locais
+      // Limpar dados locais após sucesso
       localStorage.removeItem('pendingPurchase');
       localStorage.removeItem('cartItems');
       localStorage.removeItem('cartAddress');
       console.log('Passo 3: Dados locais limpos após Pix');
-
-      // Redirecionar para a página de confirmação após 5 segundos
-      setTimeout(() => {
-        document.body.classList.add('fade-out');
-        setTimeout(() => window.location.href = '/confirmation.html', 500);
-      }, 5000);
     }
 
     // Função para processar o pagamento com cartão
@@ -1574,21 +1618,7 @@
           loginType: purchase.loginType || 'Guest'
         };
 
-        console.log('Passo 3: Enviando pedido para /save-order:', newOrder);
-        const response = await fetch(saveOrderUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newOrder)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Passo 3: Resposta de erro do backend:', errorData);
-          throw new Error(errorData.error || `Erro ao salvar o pedido no backend: ${response.status} ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('Passo 3: Pedido salvo no backend:', data);
+        await saveOrder(newOrder);
 
         localStorage.removeItem('pendingPurchase');
         localStorage.removeItem('cartItems');
