@@ -727,6 +727,17 @@
       input.value = input.value.replace(/\D/g, '').slice(0, 11);
     }
 
+    // Função para validar e-mails
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    // Função para validar CPF
+    function isValidCPF(cpf) {
+      return /^\d{11}$/.test(cpf.replace(/\D/g, ''));
+    }
+
     // Função para validar o formulário de login
     function validateLoginForm() {
       const emailInput = document.getElementById('email');
@@ -737,7 +748,7 @@
 
       const emailValue = emailInput.value.trim();
       const emailError = document.getElementById('error-email');
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      if (!isValidEmail(emailValue)) {
         emailInput.classList.add('invalid');
         emailError.textContent = 'E-mail inválido.';
         emailError.classList.add('visible');
@@ -760,6 +771,7 @@
       }
 
       loginButton.disabled = !isValid;
+      return isValid;
     }
 
     // Função para validar o formulário de convidado
@@ -785,7 +797,7 @@
 
       const emailValue = emailInput.value.trim();
       const emailError = document.getElementById('error-guest-email');
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      if (!isValidEmail(emailValue)) {
         emailInput.classList.add('invalid');
         emailError.textContent = 'E-mail inválido.';
         emailError.classList.add('visible');
@@ -797,7 +809,7 @@
 
       const cpfValue = cpfInput.value.replace(/\D/g, '');
       const cpfError = document.getElementById('error-guest-cpf');
-      if (cpfValue.length !== 11) {
+      if (!isValidCPF(cpfValue)) {
         cpfInput.classList.add('invalid');
         cpfError.textContent = 'CPF deve conter exatamente 11 dígitos.';
         cpfError.classList.add('visible');
@@ -808,6 +820,26 @@
       }
 
       proceedButton.disabled = !isValid;
+      return isValid;
+    }
+
+    // Função para validar o objeto pendingPurchase
+    function validatePendingPurchase(purchaseData) {
+      if (!purchaseData || typeof purchaseData !== 'object') {
+        throw new Error('Dados do pedido não encontrados ou mal formados.');
+      }
+      if (!purchaseData.cartItems || !Array.isArray(purchaseData.cartItems) || purchaseData.cartItems.length === 0) {
+        throw new Error('Nenhum item encontrado no carrinho.');
+      }
+      if (!purchaseData.address || typeof purchaseData.address !== 'object') {
+        throw new Error('Endereço não preenchido.');
+      }
+
+      purchaseData.cartItems.forEach((item, index) => {
+        if (!item.priceNew || !item.quantity || item.quantity <= 0) {
+          throw new Error(`Item inválido no carrinho (índice ${index}): preço ou quantidade inválidos.`);
+        }
+      });
     }
 
     // Função para mostrar o spinner e iniciar transição de fade-out
@@ -847,12 +879,22 @@
     }
 
     // Verificar se há dados de pedido pendente ao carregar a página
-    const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-    console.log('Dados de pendingPurchase ao carregar login.html:', purchaseData);
+    let purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+    console.log('Passo 2: Dados de pendingPurchase ao carregar login.html:', purchaseData);
 
     window.onload = function() {
       const errorMessage = document.getElementById('error-message');
-      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
+      try {
+        validatePendingPurchase(purchaseData);
+        errorMessage.classList.remove('visible');
+        document.querySelector('.action-buttons').style.display = 'flex';
+        document.querySelector('input[id="email"]').style.display = 'block';
+        document.querySelector('.password-wrapper').style.display = 'block';
+        document.querySelector('.forgot-password').style.display = 'block';
+        document.querySelector('.signup-link').style.display = 'inline-block';
+      } catch (error) {
+        console.error('Passo 2: Erro ao validar pendingPurchase:', error.message);
+        errorMessage.textContent = error.message + ' Você será redirecionado.';
         errorMessage.classList.add('visible');
         document.querySelector('.action-buttons').style.display = 'none';
         document.querySelector('input[id="email"]').style.display = 'none';
@@ -860,106 +902,63 @@
         document.querySelector('.forgot-password').style.display = 'none';
         document.querySelector('.signup-link').style.display = 'none';
         setTimeout(() => window.location.href = 'product.html', 3000);
-      } else {
-        errorMessage.classList.remove('visible');
-        document.querySelector('.action-buttons').style.display = 'flex';
-        document.querySelector('input[id="email"]').style.display = 'block';
-        document.querySelector('.password-wrapper').style.display = 'block';
-        document.querySelector('.forgot-password').style.display = 'block';
-        document.querySelector('.signup-link').style.display = 'inline-block';
       }
     };
 
     // Função para simular o login e redirecionar para payment.html
     function simulateLogin() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-  if (!email || !password) {
-    console.error('Passo 2: E-mail ou senha não preenchidos.');
-    return;
-  }
+      if (!validateLoginForm()) {
+        console.error('Passo 2: Validação do formulário de login falhou.');
+        return;
+      }
 
-  showLoadingSpinner('login-button', 'login-spinner');
+      showLoadingSpinner('login-button', 'login-spinner');
 
-  const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-  console.log('Passo 2: Dados de pendingPurchase antes do login:', purchaseData);
+      purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Passo 2: Dados de pendingPurchase antes do login:', purchaseData);
 
-  if (!purchaseData.cartItems || purchaseData.cartItems.length === 0 || !purchaseData.address) {
-    console.error('Passo 2: Dados do pedido não encontrados em pendingPurchase:', purchaseData);
-    const errorMessage = document.getElementById('error-message');
-    errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
-    errorMessage.classList.add('visible');
-    setTimeout(() => window.location.href = 'product.html', 2000);
-    return;
-  }
+      try {
+        validatePendingPurchase(purchaseData);
+      } catch (error) {
+        console.error('Passo 2: Erro ao validar pendingPurchase:', error.message);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = error.message + ' Você será redirecionado.';
+        errorMessage.classList.add('visible');
+        setTimeout(() => window.location.href = 'product.html', 2000);
+        return;
+      }
 
-  const simulatedUserData = {
-    name: 'Usuário Logado',
-    cpf: '98765432100',
-    email: email,
-    password: password
-  };
+      const simulatedUserData = {
+        name: 'Usuário Logado',
+        cpf: '98765432100',
+        email: email,
+        password: password,
+        loginType: 'User'
+      };
 
-  purchaseData.name = simulatedUserData.name;
-  purchaseData.cpf = simulatedUserData.cpf;
-  purchaseData.email = simulatedUserData.email;
-  purchaseData.password = simulatedUserData.password;
-  purchaseData.loginType = 'User';
-  localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-  console.log('Passo 2: pendingPurchase atualizado com dados do usuário logado:', purchaseData);
+      purchaseData.name = simulatedUserData.name;
+      purchaseData.cpf = simulatedUserData.cpf;
+      purchaseData.email = simulatedUserData.email;
+      purchaseData.password = simulatedUserData.password;
+      purchaseData.loginType = simulatedUserData.loginType;
+      localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
+      console.log('Passo 2: pendingPurchase atualizado com dados do usuário logado:', purchaseData);
 
-  const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
-  if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.password || savedPurchaseData.loginType !== 'User') {
-    console.error('Passo 2: Erro ao salvar dados do usuário no pendingPurchase:', savedPurchaseData);
-    alert('Erro ao processar o login. Tente novamente.');
-    return;
-  }
+      const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
+      if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.password || savedPurchaseData.loginType !== 'User') {
+        console.error('Passo 2: Erro ao salvar dados do usuário no pendingPurchase:', savedPurchaseData);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Erro ao processar o login. Você será redirecionado.';
+        errorMessage.classList.add('visible');
+        setTimeout(() => window.location.href = 'product.html', 2000);
+        return;
+      }
 
-  setTimeout(() => window.location.href = 'payment.html', 500);
-}
-
-function proceedAsGuest() {
-  const name = document.getElementById('guest-name').value.trim();
-  const email = document.getElementById('guest-email').value.trim();
-  const cpf = document.getElementById('guest-cpf').value.trim();
-
-  if (!name || !email || !cpf) {
-    console.error('Passo 2: Dados de convidado incompletos.');
-    return;
-  }
-
-  showLoadingSpinner('guest-proceed-button', 'guest-proceed-spinner');
-
-  const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-  console.log('Passo 2: Dados de pendingPurchase antes de prosseguir como convidado:', purchaseData);
-
-  if (!purchaseData.cartItems || purchaseData.cartItems.length === 0 || !purchaseData.address) {
-    console.error('Passo 2: Dados do pedido não encontrados em pendingPurchase:', purchaseData);
-    const errorMessage = document.getElementById('error-message');
-    errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
-    errorMessage.classList.add('visible');
-    setTimeout(() => window.location.href = 'product.html', 2000);
-    return;
-  }
-
-  purchaseData.name = name;
-  purchaseData.email = email;
-  purchaseData.cpf = cpf;
-  purchaseData.loginType = 'Guest';
-  purchaseData.password = null;
-  localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-  console.log('Passo 2: pendingPurchase atualizado com dados do convidado:', purchaseData);
-
-  const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
-  if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.cpf || savedPurchaseData.loginType !== 'Guest') {
-    console.error('Passo 2: Erro ao salvar dados do convidado no pendingPurchase:', savedPurchaseData);
-    alert('Erro ao prosseguir como convidado. Tente novamente.');
-    return;
-  }
-
-  setTimeout(() => window.location.href = 'payment.html', 500);
-}
+      setTimeout(() => window.location.href = 'payment.html', 500);
+    }
 
     // Função para prosseguir como convidado
     function proceedAsGuest() {
@@ -967,38 +966,42 @@ function proceedAsGuest() {
       const email = document.getElementById('guest-email').value.trim();
       const cpf = document.getElementById('guest-cpf').value.trim();
 
-      if (!name || !email || !cpf) {
-        console.error('Dados de convidado incompletos.');
+      if (!validateGuestForm()) {
+        console.error('Passo 2: Validação do formulário de convidado falhou.');
         return;
       }
 
       showLoadingSpinner('guest-proceed-button', 'guest-proceed-spinner');
 
-      const purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
-      console.log('Dados de pendingPurchase antes de prosseguir como convidado:', purchaseData);
+      purchaseData = JSON.parse(localStorage.getItem('pendingPurchase')) || {};
+      console.log('Passo 2: Dados de pendingPurchase antes de prosseguir como convidado:', purchaseData);
 
-      if (!purchaseData.cartItems || purchaseData.cartItems.length === 0) {
+      try {
+        validatePendingPurchase(purchaseData);
+      } catch (error) {
+        console.error('Passo 2: Erro ao validar pendingPurchase:', error.message);
         const errorMessage = document.getElementById('error-message');
-        errorMessage.textContent = 'Erro: Dados do pedido não encontrados. Volte ao carrinho para continuar sua compra.';
+        errorMessage.textContent = error.message + ' Você será redirecionado.';
         errorMessage.classList.add('visible');
         setTimeout(() => window.location.href = 'product.html', 2000);
         return;
       }
 
-      // Atualizar pendingPurchase com os dados do convidado
       purchaseData.name = name;
       purchaseData.email = email;
       purchaseData.cpf = cpf;
       purchaseData.loginType = 'Guest';
-      purchaseData.password = null; // Garantir que não há senha para convidado
+      purchaseData.password = null;
       localStorage.setItem('pendingPurchase', JSON.stringify(purchaseData));
-      console.log('pendingPurchase atualizado com dados do convidado:', purchaseData);
+      console.log('Passo 2: pendingPurchase atualizado com dados do convidado:', purchaseData);
 
-      // Verificar se os dados foram salvos corretamente
       const savedPurchaseData = JSON.parse(localStorage.getItem('pendingPurchase'));
       if (!savedPurchaseData || !savedPurchaseData.email || !savedPurchaseData.cpf || savedPurchaseData.loginType !== 'Guest') {
-        console.error('Erro ao salvar dados do convidado no pendingPurchase:', savedPurchaseData);
-        alert('Erro ao prosseguir como convidado. Tente novamente.');
+        console.error('Passo 2: Erro ao salvar dados do convidado no pendingPurchase:', savedPurchaseData);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Erro ao prosseguir como convidado. Você será redirecionado.';
+        errorMessage.classList.add('visible');
+        setTimeout(() => window.location.href = 'product.html', 2000);
         return;
       }
 
