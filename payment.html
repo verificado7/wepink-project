@@ -90,8 +90,11 @@
           body: JSON.stringify({ amount, description: 'Compra Wepink', email })
         });
 
-        const data = await response.json();
-        console.log('Passo 1: Resposta do backend:', data);
+        const responseBody = await response.text();
+        console.log('Passo 1: Resposta bruta do backend:', responseBody);
+
+        const data = JSON.parse(responseBody);
+        console.log('Passo 1: Resposta do backend (JSON):', data);
 
         if (!data.qr_code || !data.qr_code_base64) {
           throw new Error('QR Code não retornado pelo servidor.');
