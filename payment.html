@@ -46,28 +46,6 @@
     const backendUrl = 'https://wepink-backend.onrender.com/create-pix';
     const saveOrderUrl = 'https://wepink-backend.onrender.com/save-order';
 
-    async function fetchWithRetry(url, options, retries = 3, delay = 2000) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000);
-          const response = await fetch(url, { ...options, signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (!response.ok) throw new Error(`Erro ${response.status}: ${response.statusText}`);
-          return response;
-        } catch (error) {
-          if (i === retries - 1) {
-            if (error.name === 'AbortError') {
-              throw new Error('Timeout: O servidor demorou muito para responder.');
-            }
-            throw error;
-          }
-          console.warn(`Tentativa ${i + 1} falhou. Tentando novamente em ${delay}ms...`, error);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-
     async function generatePixQRCode() {
       const amount = parseFloat(document.getElementById('amount').value);
       const email = document.getElementById('email').value.trim();
@@ -79,16 +57,21 @@
       console.log('Passo 1: Iniciando geração do QR Code...', { amount, email, name, cpf });
 
       try {
+        // Validações básicas
         if (!amount || amount <= 0) throw new Error('Valor inválido.');
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('E-mail inválido.');
         if (!name || name.length < 3) throw new Error('Nome deve ter pelo menos 3 caracteres.');
         if (!cpf || !/^\d{11}$/.test(cpf)) throw new Error('CPF deve ter 11 dígitos.');
 
-        const response = await fetchWithRetry(backendUrl, {
+        console.log('Passo 1: Enviando requisição para /create-pix...');
+        const response = await fetch(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount, description: 'Compra Wepink', email })
         });
+        console.log('Passo 1: Resposta recebida, status:', response.status);
+
+        if (!response.ok) throw new Error(`Erro ${response.status}: ${response.statusText}`);
 
         const responseBody = await response.text();
         console.log('Passo 1: Resposta bruta do backend:', responseBody);
@@ -116,14 +99,20 @@
           date: new Date().toISOString()
         };
 
-        console.log('Passo 2: Salvando pedido:', order);
-        const saveResponse = await fetchWithRetry(saveOrderUrl, {
+        console.log('Passo 2: Enviando requisição para /save-order...');
+        const saveResponse = await fetch(saveOrderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order)
         });
+        console.log('Passo 2: Resposta recebida, status:', saveResponse.status);
 
-        const saveData = await saveResponse.json();
+        if (!saveResponse.ok) throw new Error(`Erro ${saveResponse.status}: ${saveResponse.statusText}`);
+
+        const saveResponseBody = await saveResponse.text();
+        console.log('Passo 2: Resposta bruta do backend (save-order):', saveResponseBody);
+
+        const saveData = JSON.parse(saveResponseBody);
         console.log('Passo 2: Resposta do salvamento:', saveData);
       } catch (error) {
         console.error('Erro ao gerar QR Code:', error.message);
