@@ -57,7 +57,11 @@
       try {
         const response = await fetch('https://wepink-backend.onrender.com/get-orders');
         if (!response.ok) throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        const orders = await response.json();
+        
+        const responseBody = await response.text();
+        console.log('Passo 3: Resposta bruta do backend:', responseBody);
+
+        const orders = JSON.parse(responseBody);
         console.log('Passo 3: Pedidos recebidos:', orders);
 
         let totalSales = 0;
