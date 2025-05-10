@@ -10,6 +10,12 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use(cors());
 
+// Redirecionar requisições para a raiz (/) para payment.html
+app.get('/', (req, res) => {
+  console.log('Passo 0: Requisição recebida em /, redirecionando para /payment.html');
+  res.redirect('/payment.html');
+});
+
 // Configuração do Mercado Pago com o token de acesso
 MercadoPago.configure({
   access_token: process.env.MP_ACCESS_TOKEN || 'APP_USR-3709341188085811-050219-1dde9cca4db5f1373f043919fdb7c30-220520212'
