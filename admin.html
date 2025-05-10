@@ -53,11 +53,16 @@
       const errorDiv = document.getElementById('error');
       errorDiv.textContent = '';
 
-      console.log('Passo 3: Carregando pedidos...');
+      console.log('Passo 3: Iniciando carregamento de pedidos...');
       try {
-        const response = await fetch('https://wepink-backend.onrender.com/get-orders');
+        const response = await fetch('https://wepink-backend.onrender.com/get-orders', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('Passo 3: Resposta recebida, status:', response.status);
+
         if (!response.ok) throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        
+
         const responseBody = await response.text();
         console.log('Passo 3: Resposta bruta do backend:', responseBody);
 
