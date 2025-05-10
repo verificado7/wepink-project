@@ -7,13 +7,21 @@ const cors = require('cors');
 const app = express();
 
 app.use(express.json());
-app.use(express.static('public'));
 app.use(cors());
+
+// Configurar a pasta public para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/test', (req, res) => {
+  console.log('Passo 0: Requisição recebida em /test');
+  res.status(200).json({ message: 'Servidor funcionando!' });
+});
 
 // Redirecionar requisições para a raiz (/) para payment.html
 app.get('/', (req, res) => {
   console.log('Passo 0: Requisição recebida em /, redirecionando para /payment.html');
-  res.redirect('/payment.html');
+  res.sendFile(path.join(__dirname, 'public', 'payment.html'));
 });
 
 // Configuração do Mercado Pago com o token de acesso
