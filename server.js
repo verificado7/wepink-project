@@ -2,13 +2,13 @@ const express = require('express');
 const MercadoPago = require('mercadopago');
 const fs = require('fs').promises;
 const path = require('path');
-const cors = require('cors'); // Adicionando suporte a CORS
+const cors = require('cors');
 
 const app = express();
 
 app.use(express.json());
-app.use(express.static('public')); // Serve arquivos estáticos (HTML, CSS, JS)
-app.use(cors()); // Habilitar CORS para todas as origens
+app.use(express.static('public'));
+app.use(cors());
 
 // Configuração do Mercado Pago com o token de acesso
 MercadoPago.configure({
