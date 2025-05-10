@@ -1107,7 +1107,8 @@
 
     // Função para formatar valores monetários
     function formatCurrency(value) {
-      return `R$ ${parseFloat(value || 0).toFixed(2).replace('.', ',')}`;
+      if (isNaN(value) || value == null) return 'R$ 0,00';
+      return `R$ ${parseFloat(value).toFixed(2).replace('.', ',')}`;
     }
 
     // Função para formatar o número do cartão
@@ -1134,6 +1135,37 @@
     // Função para validar CPF
     function isValidCPF(cpf) {
       return /^\d{11}$/.test(cpf.replace(/\D/g, ''));
+    }
+
+    // Função para realizar requisições com retry e timeout
+    async function fetchWithRetry(url, options, retries = 3, delay = 2000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // Timeout de 20 segundos
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ${response.status}: ${response.statusText} - ${errorText}`);
+          }
+
+          return response;
+        } catch (error) {
+          if (i === retries - 1) {
+            if (error.name === 'AbortError') {
+              throw new Error('Timeout: O servidor demorou muito para responder. Tente novamente mais tarde.');
+            }
+            throw error;
+          }
+          console.warn(`Passo 3: Tentativa ${i + 1} falhou. Tentando novamente em ${delay}ms...`, error);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
 
     // Função para exibir a tela de erro
@@ -1216,10 +1248,12 @@
             </div>
           `;
           orderItems.appendChild(itemElement);
+        } else {
+          console.warn('Passo 3: Item inválido no carrinho:', item);
         }
       });
 
-      const fee = purchase.address?.deliveryFee || 0;
+      const fee = Number(purchase.address?.deliveryFee) || 0;
       const total = subtotal + fee;
       deliveryFeeElement.textContent = formatCurrency(fee);
       orderTotalElement.textContent = formatCurrency(total);
@@ -1275,6 +1309,7 @@
       }
 
       generateButton.disabled = !isValid;
+      return isValid;
     }
 
     // Função para validar o formulário de cartão
@@ -1387,27 +1422,67 @@
       }
 
       confirmButton.disabled = !isValid;
+      return isValid;
+    }
+
+    // Função para validar o objeto de pedido antes de enviar ao backend
+    function validateOrder(order) {
+      if (!order || typeof order !== 'object') {
+        throw new Error('Pedido inválido: objeto de pedido não fornecido ou mal formado.');
+      }
+
+      if (!order.purchaseData || !order.purchaseData.cartItems || !Array.isArray(order.purchaseData.cartItems)) {
+        throw new Error('Pedido inválido: cartItems não fornecido ou não é um array.');
+      }
+      if (!order.customerDetails || typeof order.customerDetails !== 'object') {
+        throw new Error('Pedido inválido: customerDetails não fornecido ou mal formado.');
+      }
+      if (!order.customerDetails.name || typeof order.customerDetails.name !== 'string') {
+        throw new Error('Pedido inválido: Nome do cliente não fornecido ou inválido.');
+      }
+      if (!order.customerDetails.email || !isValidEmail(order.customerDetails.email)) {
+        throw new Error('Pedido inválido: E-mail do cliente não fornecido ou inválido.');
+      }
+      if (!order.customerDetails.cpf || !isValidCPF(order.customerDetails.cpf)) {
+        throw new Error('Pedido inválido: CPF do cliente não fornecido ou inválido.');
+      }
+      if (!order.paymentMethod || !['Pix', 'Cartão'].includes(order.paymentMethod)) {
+        throw new Error('Pedido inválido: paymentMethod não fornecido ou inválido.');
+      }
+      if (!order.orderDate || isNaN(new Date(order.orderDate).getTime())) {
+        throw new Error('Pedido inválido: orderDate não fornecido ou inválido.');
+      }
+      if (!order.items || !Array.isArray(order.items)) {
+        throw new Error('Pedido inválido: items não fornecido ou não é um array.');
+      }
+      if (!order.status || !['Gerado', 'Efetuado', 'Pendente'].includes(order.status)) {
+        throw new Error('Pedido inválido: status não fornecido ou inválido.');
+      }
+      if (order.paymentMethod === 'Pix') {
+        if (!order.pixDetails || typeof order.pixDetails !== 'object') {
+          throw new Error('Pedido inválido: pixDetails não fornecido ou mal formado para pagamento Pix.');
+        }
+        if (!order.pixDetails.qrCode) {
+          order.pixDetails.qrCode = 'Erro na geração do Pix';
+        }
+      }
     }
 
     // Função para salvar o pedido no backend
     async function saveOrder(order) {
       try {
+        validateOrder(order);
         console.log('Passo 4: Enviando pedido para /save-order:', order);
-        const response = await fetch(saveOrderUrl, {
+        const response = await fetchWithRetry(saveOrderUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order)
-        });
+        }, 3, 2000);
 
-        const responseBody = await response.text(); // Captura a resposta como texto para depuração
+        const responseBody = await response.text();
         console.log('Passo 4: Resposta bruta do backend:', responseBody);
 
-        if (!response.ok) {
-          console.error('Passo 4: Resposta de erro do backend:', responseBody);
-          throw new Error(`Erro ao salvar o pedido no backend: ${response.status} ${response.statusText} - ${responseBody}`);
-        }
-
-        const data = JSON.parse(responseBody); // Converte a resposta para JSON
+        const data = JSON.parse(responseBody);
         console.log('Passo 4: Pedido salvo no backend:', data);
         return data;
       } catch (error) {
@@ -1430,6 +1505,12 @@
       const email = emailInput.value.trim();
 
       console.log('Passo 3: Dados para gerar Pix:', { name, cpf, email });
+
+      // Validação do formulário
+      if (!validatePixForm()) {
+        console.error('Passo 3: Validação do formulário de Pix falhou.');
+        return;
+      }
 
       // Validação dos dados antes de enviar a requisição
       if (!name || name.length < 3) {
@@ -1457,29 +1538,44 @@
         return;
       }
 
+      // Validação dos itens do carrinho
+      purchase.cartItems.forEach((item, index) => {
+        if (!item.priceNew || !item.quantity || item.quantity <= 0) {
+          console.error(`Passo 3: Item inválido no carrinho (índice ${index}):`, item);
+          throw new Error('Erro: Um ou mais itens no carrinho são inválidos (preço ou quantidade).');
+        }
+      });
+
       const subtotal = purchase.cartItems.reduce((sum, item) => sum + (item.priceNew * item.quantity), 0);
-      const fee = purchase.address?.deliveryFee || 0;
+      const fee = Number(purchase.address?.deliveryFee) || 0;
       const total = subtotal + fee;
       const description = 'Compra Wepink';
 
+      if (total <= 0) {
+        console.error('Passo 3: Total inválido:', total);
+        showErrorScreen('Erro: O valor total do pedido deve ser maior que zero.');
+        return;
+      }
+
       try {
         console.log('Passo 3: Enviando requisição para /create-pix:', { amount: total, description, email });
-        const response = await fetch(backendUrl, {
+        const response = await fetchWithRetry(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: total, description, email })
-        });
+        }, 3, 2000);
 
-        const responseBody = await response.text(); // Captura a resposta como texto para depuração
+        const responseBody = await response.text();
         console.log('Passo 3: Resposta bruta do backend:', responseBody);
 
-        if (!response.ok) {
-          console.error('Passo 3: Resposta de erro do backend:', responseBody);
-          throw new Error(`Erro ao gerar o Pix: ${response.status} ${response.statusText} - ${responseBody}`);
-        }
-
-        const pix = JSON.parse(responseBody); // Converte a resposta para JSON
+        const pix = JSON.parse(responseBody);
         console.log('Passo 3: Resposta do backend (JSON):', pix);
+
+        // Validação da resposta do Pix
+        if (!pix.qrCode) {
+          console.error('Passo 3: QR Code não retornado pelo backend:', pix);
+          throw new Error('Erro: QR Code não retornado pelo servidor.');
+        }
 
         const order = {
           purchaseData: purchase,
@@ -1563,49 +1659,13 @@
 
       console.log('Passo 3: Dados do pagamento com cartão:', { cardName, cardCPF, cardEmail, cardNumber, expMonth, expYear, cvv });
 
-      // Validações
-      if (!cardName || cardName.length < 3) {
-        console.error('Passo 3: Nome no cartão inválido:', cardName);
-        showErrorScreen('Erro: Nome no cartão deve ter pelo menos 3 caracteres.');
+      // Validação do formulário
+      if (!validateCardForm()) {
+        console.error('Passo 3: Validação do formulário de cartão falhou.');
         return;
       }
 
-      if (!isValidCPF(cardCPF)) {
-        console.error('Passo 3: CPF inválido:', cardCPF);
-        showErrorScreen('Erro: CPF deve conter exatamente 11 dígitos.');
-        return;
-      }
-
-      if (!isValidEmail(cardEmail)) {
-        console.error('Passo 3: E-mail inválido:', cardEmail);
-        showErrorScreen('Erro: Por favor, insira um e-mail válido (ex.: teste@gmail.com).');
-        return;
-      }
-
-      if (cardNumber.length !== 16) {
-        console.error('Passo 3: Número do cartão inválido:', cardNumber);
-        showErrorScreen('Erro: Número do cartão deve conter 16 dígitos.');
-        return;
-      }
-
-      if (!expMonth) {
-        console.error('Passo 3: Mês de expiração inválido:', expMonth);
-        showErrorScreen('Erro: Mês de expiração é obrigatório.');
-        return;
-      }
-
-      if (!expYear) {
-        console.error('Passo 3: Ano de expiração inválido:', expYear);
-        showErrorScreen('Erro: Ano de expiração é obrigatório.');
-        return;
-      }
-
-      if (cvv.length < 3 || cvv.length > 4) {
-        console.error('Passo 3: CVV inválido:', cvv);
-        showErrorScreen('Erro: CVV deve conter 3 ou 4 dígitos.');
-        return;
-      }
-
+      // Validação adicional dos dados
       if (!purchase || !purchase.cartItems || purchase.cartItems.length === 0 || !purchase.address) {
         console.error('Passo 3: Dados do pedido inválidos:', purchase);
         showErrorScreen('Erro: Dados do pedido não encontrados.');
